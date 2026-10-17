@@ -1,5 +1,8 @@
 # Journal des modifications
 
+## v1.6.9-alpha
+- Centre « SpotiWoW » dans le cartouche du panneau Player Settings.
+
 ## v1.6.8-alpha
 - Ajoute les boutons Shuffle et Repeat au mode compact et élargit légèrement le lecteur pour les garder alignés et visibles.
 - Affiche l’état des modes de façon persistante dans Compact, Square et Expanded : fond accentué pour Shuffle et Repeat All, contour néon pour Repeat 1.
