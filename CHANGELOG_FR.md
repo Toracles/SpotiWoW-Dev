@@ -1,5 +1,10 @@
 # Journal des modifications
 
+## v1.6.10-alpha
+- Garde le contour et l’accent néon des boutons visibles pendant le survol.
+- Ajoute un repère de lecture qui suit le pointeur sur la barre et affiche l’heure visée quand Click to Seek est actif.
+- Ajoute des infobulles explicatives aux réglages, champs HEX et boutons Appliquer, en français et en anglais US.
+
 ## v1.6.9-alpha
 - Centre « SpotiWoW » dans le cartouche du panneau Player Settings.
 
