@@ -2,9 +2,8 @@
 ## Title: SpotiWoW-Dev
 ## Notes: Spotify companion for Turtle WoW through the SuperWoW file bridge.
 ## Author: CloudNine_Ex
-## Version: 1.6.5-alpha
+## Version: 1.6.6-alpha
 ## SavedVariables: SpotifyNowDB
 
 SpotiWoW-Dev_Locale.lua
 SpotiWoW-Dev.lua
-

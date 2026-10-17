@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.6.6-alpha
+- Brings in the metallic frames, dark stone surfaces, and gold titles of classic WoW panels; all four neon themes remain as accents on progress, active controls, and glow details.
+- Slightly reduced Square Mode to 236 × 236 px and its artwork to 68 × 68 px while keeping the control row aligned.
+- Moved the volume readout to a dedicated row above the controls in Square Mode so it stays visible.
+- The top button now cycles Compact → Square → Expanded → Compact.
+- The Player Settings panel now exposes all four themes, accent and progress colors, glow, border, button accents, controls, metadata, progress visibility, click-to-seek, and all three progress styles.
+- Changes persist in the existing saved settings; advanced options remain available through `/spn` commands as well.
+
 ## v1.6.5-alpha
 - Setup is now pinned to the exact release tag and commit SHA that produced it, so it cannot silently switch to a different published version.
 - The workflow embeds the same provenance manifest in setup and both portable bundles. Before extraction, setup verifies the GitHub tag target, commit SHA, ZIP manifest, and GitHub-published SHA-256 asset digest.
@@ -76,4 +84,3 @@
 - Ctrl+Alt+L works without typing a command into the in-game chat. ON/OFF status appears only in the local chat frame.
 - The installer lets users choose a language and downloads the matching package.
 - Technical identifiers and existing SavedVariables are retained for compatibility.
-

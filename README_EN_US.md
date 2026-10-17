@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.6.5-alpha — US English
+# SpotiWoW-Dev v1.6.6-alpha — US English
 
 > **Development version** — this version is still evolving and may include experimental changes. It is intended for testing; bugs or behavior changes may occur.
 
@@ -25,9 +25,9 @@ The installer never asks for a Client Secret and does not download Turtle WoW, V
 ## Features
 - `Ctrl+Alt+L` toggles Lyrics from the companion without typing a command into the in-game chat.
 - `Lyrics mode: ON/OFF` is displayed locally via `DEFAULT_CHAT_FRAME:AddMessage`. The status message is never sent to other players.
-- Charcoal player with neon accents in three layouts: compact (300 × 68 px), square (260 × 260 px), and expanded (460 × 164 px). Spotify artwork, artist, album, time, and controls vary by layout. Choose in `/spn settings` or use `/spn mode compact|square|expanded`.
+- Player inspired by classic WoW panels, with a metallic frame, dark stone backdrop, gold titles, and restrained neon accents in three layouts: compact (300 × 68 px), square (236 × 236 px), and expanded (460 × 164 px). Spotify artwork, artist, album, time, and controls vary by layout. Choose in `/spn settings` or use `/spn mode compact|square|expanded`.
 - Obsidian, Azerite, Fel, and Bloodmoon themes, with customizable accents, glow, borders, and controls; configurable progress bar with click-to-seek.
-- Click `...` on the player (or use `/spn settings`) to choose a theme and layout.
+- Click `...` on the player (or use `/spn settings`) for the full panel, styled like a classic WoW window: theme, layout, colors, glow, border, buttons, metadata, controls, and progress. The top button cycles through compact, square, and expanded layouts.
 - The expanded player's right panel shows Spotify, playback status, volume, and Volume/Lyrics shortcuts.
 - Shuffle, repeat album, and repeat track stay visibly indicated on the player. Obsidian, Azerite, Fel, and Bloodmoon each keep their own neon accent color.
 - Settings persist in WoW. `/spn help` lists themes and options; `/spn expand` toggles the expanded player.
@@ -43,4 +43,3 @@ Lyrics themselves are still sent to the selected channel when that feature is en
 - If auto-detection fails, manually choose the folder that contains `VanillaFixes.exe`.
 
 For an add-on-only update, download `SpotiWoW-Dev-Addon-US.zip` from Releases. The US English version displays system messages in English.
-

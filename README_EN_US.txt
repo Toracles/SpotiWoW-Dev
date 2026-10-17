@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.6.5-alpha — US English
+# SpotiWoW-Dev v1.6.6-alpha — US English
 
 > **Development version** — intended for testing; bugs and behavior changes may occur.
 
@@ -24,7 +24,7 @@ Setup is pinned to its specific GitHub release and verifies the tag, source comm
 ## Features
 - `Ctrl+Alt+L` toggles Lyrics from the companion without typing a command into the in-game chat.
 - `Lyrics mode: ON/OFF` is displayed locally via `DEFAULT_CHAT_FRAME:AddMessage`. The status message is never sent to other players.
-- Charcoal player with neon accents in three layouts: compact (300 × 68 px), square (260 × 260 px), and expanded (460 × 164 px). Spotify artwork, artist, album, time, and controls vary by layout. Choose in `/spn settings` or use `/spn mode compact|square|expanded`.
+- Player inspired by classic WoW panels, with a metallic frame, dark stone backdrop, gold titles, and restrained neon accents in three layouts: compact (300 × 68 px), square (236 × 236 px), and expanded (460 × 164 px). Spotify artwork, artist, album, time, and controls vary by layout. Choose in `/spn settings` or use `/spn mode compact|square|expanded`.
 - Obsidian, Azerite, Fel, and Bloodmoon themes, with customizable accents, glow, borders, and controls; configurable progress bar with click-to-seek.
 - Shuffle, repeat album, and repeat track stay visibly indicated. Obsidian, Azerite, Fel, and Bloodmoon each keep their neon accent.
 - Settings persist in WoW. `/spn help` lists themes and options; `/spn expand` toggles the expanded player.
@@ -39,6 +39,5 @@ Lyrics themselves are still sent to the selected channel when that feature is en
 - If auto-detection fails, manually choose the folder that contains `VanillaFixes.exe`.
 
 For an add-on-only update, download `SpotiWoW-Dev-Addon-US.zip` from Releases. The US English version displays system messages in English.
-
 
 

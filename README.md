@@ -1,10 +1,10 @@
-# SpotiWoW-Dev v1.6.5-alpha
+# SpotiWoW-Dev v1.6.6-alpha
 
 > Development version for testing; changes and bugs are possible.
 
 **Author: CloudNine_Ex**
 
-A Spotify companion for Turtle WoW / OctoWoW clients based on 1.12.1 with SuperWoW. The project ships both French (FR) and US English add-on variants.
+A Spotify companion for Turtle WoW / OctoWoW clients based on 1.12.1 with SuperWoW, styled after classic WoW panels with metallic frames, dark stone surfaces, gold titles, and four neon accents. The project ships both French (FR) and US English add-on variants.
 
 - French end-user readme: `README_FR.md`
 - US English end-user readme: `README_EN_US.md`
@@ -22,4 +22,3 @@ The shared Lua behavior is in `Interface/AddOns/SpotiWoW-Dev/SpotiWoW-Dev.lua`. 
 - Does not distribute the game client or any third-party game DLLs.
 - Each user supplies their own Spotify Client ID. Do not commit `config.json`, `tokens.json`, or `lyrics_cache.json`.
 - The hotkey's Lyrics ON/OFF status is local-only (`DEFAULT_CHAT_FRAME:AddMessage`), not a chat message sent to other players.
-

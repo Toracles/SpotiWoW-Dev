@@ -1,5 +1,13 @@
 # Journal des modifications
 
+## v1.6.6-alpha
+- Reprend les cadres métalliques, fonds pierre sombre et titres dorés des panneaux classiques de WoW ; les quatre néons restent des accents sur la progression, les commandes actives et les détails lumineux.
+- Réduit légèrement le Square Mode à 236 × 236 px et sa pochette à 68 × 68 px ; les commandes restent alignées dans le lecteur.
+- Déplace le volume dans une ligne dédiée au-dessus des commandes en Square Mode afin qu’il reste visible.
+- Le bouton supérieur parcourt désormais Compact → Square → Agrandi → Compact.
+- Le panneau « Réglages du lecteur » donne accès aux quatre thèmes, aux couleurs d’accent et de progression, ainsi qu’à la lueur, la bordure, les accents des boutons, les commandes, les métadonnées, la barre de progression, la recherche au clic et ses trois styles.
+- Les changements sont sauvegardés dans les réglages existants et les options avancées restent aussi accessibles via `/spn`.
+
 ## v1.6.5-alpha
 - Le setup est désormais lié au tag et au SHA exacts du commit qui a produit cette release ; il ne peut plus basculer silencieusement sur une autre version publiée.
 - Le workflow joint le même manifeste de provenance au setup et aux paquets portables. À l’installation, le setup vérifie la cible GitHub du tag, le SHA du commit, le manifeste du ZIP et son empreinte SHA-256 publiée par GitHub avant toute extraction.
@@ -76,4 +84,3 @@
 - Le raccourci Ctrl+Alt+L reste sans saisie de commande dans le chat. Le statut ON/OFF s’affiche uniquement dans la fenêtre de chat locale.
 - L’installeur propose la langue et télécharge le paquet correspondant.
 - Les identifiants techniques et les SavedVariables existants sont conservés pour compatibilité.
-
