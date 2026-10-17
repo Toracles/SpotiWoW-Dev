@@ -1,5 +1,8 @@
 # Journal des modifications
 
+## v1.6.12-alpha
+- Renomme les thèmes #FFFFFF et #FF4FD8 dans le lecteur et les réglages : Aube-Argent et Set du Croc.
+
 ## v1.6.11-alpha
 - Garde le contour et l’accent néon des boutons visibles pendant le survol.
 - Ajoute un repère de lecture qui suit le pointeur sur la barre et affiche l’heure visée quand Click to Seek est actif.
