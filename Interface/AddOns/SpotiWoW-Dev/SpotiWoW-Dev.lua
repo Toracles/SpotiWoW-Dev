@@ -82,7 +82,11 @@ volumeLabelText:SetPoint("TOPLEFT",ui,"TOPLEFT",358,-62); volumeLabelText:SetWid
 local function SkinButton(button)
     button:SetBackdrop({bgFile="Interface\\Tooltips\\UI-Tooltip-Background",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=8,edgeSize=8,insets={left=2,right=2,top=2,bottom=2}})
     button:SetBackdropColor(0.16,0.025,0.035,1); button:SetBackdropBorderColor(0.58,0.50,0.36,1)
-    button:SetHighlightTexture("Interface\\Buttons\\UI-Panel-Button-Highlight")
+    -- The stock panel highlight has a red/black gradient in Turtle WoW.
+    -- Use a flat, restrained charcoal-red overlay for both player and settings buttons.
+    button:SetHighlightTexture("Interface\\Buttons\\WHITE8X8")
+    local highlight=button:GetHighlightTexture()
+    if highlight then highlight:SetVertexColor(0.34,0.025,0.035,0.72) end
     local fs=button:CreateFontString(button:GetName() and (button:GetName().."Text") or nil,"OVERLAY","GameFontNormalSmall")
     fs:SetPoint("CENTER",button,"CENTER",0,0); fs:SetTextColor(1,0.82,0.28)
     return fs
@@ -108,10 +112,12 @@ local settingsHeader=settingsPanel:CreateTexture(nil,"ARTWORK")
 settingsHeader:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
 settingsHeader:SetWidth(210); settingsHeader:SetHeight(42); settingsHeader:SetPoint("TOP",settingsPanel,"TOP",0,14)
 local settingsBrand=settingsPanel:CreateFontString(nil,"OVERLAY","GameFontNormal")
-settingsBrand:SetPoint("CENTER",settingsHeader,"CENTER",0,0); settingsBrand:SetText("SpotiWoW"); settingsBrand:SetTextColor(1,0.82,0.28)
+settingsBrand:SetWidth(180); settingsBrand:SetJustifyH("CENTER")
+settingsBrand:SetPoint("CENTER",settingsPanel,"TOP",0,14); settingsBrand:SetText("SpotiWoW"); settingsBrand:SetTextColor(1,0.82,0.28)
 settingsPanel:SetScript("OnDragStart",function() this:StartMoving() end); settingsPanel:SetScript("OnDragStop",function() this:StopMovingOrSizing() end)
 settingsPanel:Hide()
 local settingsTitle=settingsPanel:CreateFontString(nil,"OVERLAY","GameFontNormal")
+settingsTitle:SetWidth(300); settingsTitle:SetJustifyH("CENTER")
 settingsTitle:SetPoint("TOP",settingsPanel,"TOP",0,-13); settingsTitle:SetText(T("settings_title"))
 settingsTitle:SetTextColor(1,0.82,0.28)
 local settingsClose=CreateFrame("Button",nil,settingsPanel)
@@ -136,7 +142,7 @@ local function NewColorEntry(key,anchor,relativePoint)
     label:SetWidth(114); label:SetJustifyH("LEFT"); label:SetText(T(key))
     label:SetPoint("TOPLEFT",anchor,relativePoint,8,-6)
     local edit=CreateFrame("EditBox",nil,settingsPanel)
-    edit:SetWidth(132); edit:SetHeight(20); edit:SetAutoFocus(false); edit:SetMaxLetters(7)
+    edit:SetWidth(116); edit:SetHeight(20); edit:SetAutoFocus(false); edit:SetMaxLetters(7)
     edit:SetFontObject(GameFontHighlightSmall); edit:SetTextInsets(5,5,0,0); edit:SetJustifyH("LEFT")
     edit:SetBackdrop({bgFile="Interface\\Tooltips\\UI-Tooltip-Background",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=8,edgeSize=8,insets={left=2,right=2,top=2,bottom=2}})
     edit:SetBackdropColor(0.06,0.06,0.06,1); edit:SetBackdropBorderColor(0.58,0.50,0.36,1)
@@ -325,9 +331,10 @@ ApplyStyle=function()
     if mode~="compact" and mode~="square" and mode~="expanded" then mode="compact" end
     s.layout=mode; s.expanded=(mode=="expanded")
     local compact=mode=="compact"; local square=mode=="square"; local expanded=mode=="expanded"
+    topAccent:Hide()
     ui:SetBackdrop({bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",tile=true,tileSize=32,edgeSize=compact and 16 or 24,insets={left=8,right=8,top=8,bottom=8}})
     ui:SetBackdropColor(0.72,0.69,0.62,0.98)
-    ui:SetWidth(compact and 300 or (square and 236 or 460)); ui:SetHeight(compact and 68 or (square and 236 or 164))
+    ui:SetWidth(compact and 310 or (square and 236 or 460)); ui:SetHeight(compact and 68 or (square and 236 or 164))
     progressBg:SetWidth(ui:GetWidth()-16); progressHit:SetWidth(ui:GetWidth()-16)
     topAccent:SetWidth(ui:GetWidth()-36)
     progressSegmentCount=compact and 26 or 38
@@ -389,8 +396,8 @@ ApplyStyle=function()
         controls.voldown:ClearAllPoints(); controls.voldown:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",195,8); controls.voldown:SetWidth(24); controls.voldown:SetHeight(18)
         controls.volup:ClearAllPoints(); controls.volup:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",222,8); controls.volup:SetWidth(24); controls.volup:SetHeight(18)
         sideDivider:Hide(); sourceText:Hide(); sourceStatus:Hide(); volumeLabelText:Hide()
-        controls.shuffle:ClearAllPoints(); controls.shuffle:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",238,7)
-        controls["repeat"]:ClearAllPoints(); controls["repeat"]:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",286,7)
+        controls.shuffle:ClearAllPoints(); controls.shuffle:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",250,7); controls.shuffle:SetWidth(24); controls.shuffle:SetHeight(18)
+        controls["repeat"]:ClearAllPoints(); controls["repeat"]:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",278,7); controls["repeat"]:SetWidth(24); controls["repeat"]:SetHeight(18)
         controls.lyrics:ClearAllPoints(); controls.lyrics:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",0,7)
         artistText:Hide(); albumText:Hide(); timeText:Hide(); SetButtonText(expandButton,"□")
     end
@@ -417,7 +424,7 @@ ApplyStyle=function()
     for _,segment in pairs(progressSegments) do segment:SetHeight(ph) end
     if s.progress==false then progressBg:Hide(); progressFill:Hide(); progressHit:Hide(); for _,segment in pairs(progressSegments) do segment:Hide() end else progressBg:Show(); progressFill:Show(); progressHit:Show() end
     if s.controls==false then for _,button in pairs(controls) do button:Hide() end else for _,button in pairs(controls) do button:Show() end end
-    if compact or s.controls==false then controls.shuffle:Hide(); controls["repeat"]:Hide(); controls.lyrics:Hide() end
+    if compact then controls.lyrics:Hide() end
     if s.metadata==false then titleText:Hide(); volText:Hide(); artistText:Hide(); albumText:Hide(); art:Hide(); artFrame:Hide() else titleText:Show(); volText:Show(); art:Show(); artFrame:Show(); if expanded or square then artistText:Show(); albumText:Show() end end
 end
 
@@ -470,20 +477,27 @@ RefreshUI=function()
     else art:SetTexture("Interface\\Icons\\INV_Misc_Note_01") end
     local function Clock(ms) local n=math.floor((ms or 0)/1000); return string.format("%d:%02d",math.floor(n/60),n%60) end
     timeText:SetText(Clock(pos).." / "..Clock(durationMs))
-    SetButtonText(controls.shuffle,SpotifyNowDB.shuffle and "S ON" or "S")
+    local compact=(SpotifyNowDB.style.layout or (SpotifyNowDB.style.expanded and "expanded" or "compact"))=="compact"
+    SetButtonText(controls.shuffle,compact and "S" or (SpotifyNowDB.shuffle and "S ON" or "S"))
     SetButtonText(controls.lyrics,SpotifyNowDB.lyrics and "L+" or "L-")
     local repeatMode=SpotifyNowDB.repeatMode or "off"
-    SetButtonText(controls["repeat"],repeatMode=="context" and "R ALL" or (repeatMode=="track" and "R 1" or "R"))
+    SetButtonText(controls["repeat"],compact and "R" or (repeatMode=="context" and "R ALL" or (repeatMode=="track" and "R 1" or "R")))
     local ir,ig,ib=HexColor(SpotifyNowDB.style.accent)
     if not ir then local theme=THEMES[SpotifyNowDB.style.theme] or THEMES.obsidian; ir,ig,ib=theme.accent[1],theme.accent[2],theme.accent[3] end
-    local function MarkActive(button,active)
+    local function MarkActive(button,active,filled)
         local fs=buttonLabels[button]
         local useAccent=SpotifyNowDB.style.buttons~=false
-        if fs then if useAccent then fs:SetTextColor(ir,ig,ib) else fs:SetTextColor(1,0.82,0.28) end end
-        button:SetBackdropBorderColor(useAccent and ir or 0.58,useAccent and ig or 0.50,useAccent and ib or 0.36,1)
+        if fs then
+            if active or useAccent then fs:SetTextColor(ir,ig,ib) else fs:SetTextColor(1,0.82,0.28) end
+        end
+        if active then button:SetBackdropBorderColor(ir,ig,ib,1)
+        else button:SetBackdropBorderColor(useAccent and ir or 0.58,useAccent and ig or 0.50,useAccent and ib or 0.36,1) end
+        -- This state styling is shared by compact, square, and expanded layouts.
+        if active and filled then button:SetBackdropColor(0.08+ir*0.42,0.015+ig*0.42,0.02+ib*0.42,1)
+        else button:SetBackdropColor(0.16,0.025,0.035,1) end
     end
-    MarkActive(controls.shuffle,SpotifyNowDB.shuffle)
-    MarkActive(controls["repeat"],repeatMode~="off")
+    MarkActive(controls.shuffle,SpotifyNowDB.shuffle,SpotifyNowDB.shuffle)
+    MarkActive(controls["repeat"],repeatMode~="off",repeatMode=="context")
     local accentHex=string.format("%02x%02x%02x",floor(ir*255),floor(ig*255),floor(ib*255))
     local indicators={}
     if SpotifyNowDB.shuffle then indicators[table.getn(indicators)+1]="|cff"..accentHex..T("mode_shuffle").."|r" end
@@ -611,3 +625,4 @@ SendCommand=function(cmd,value)
     sequence=sequence+1; local payload="SPNC1|"..session.."|"..sequence.."|"..cmd.."|"..(value or "")
     local ok=pcall(ExportFile,"SpotifyNowCommand",payload); if not ok and not commandWriteWarningShown then Print(T("command_write_failed")); commandWriteWarningShown=true end
 end
+
