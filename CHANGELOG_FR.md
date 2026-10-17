@@ -9,7 +9,7 @@
 - Répare Accent Hex et Progress Hex, avec application immédiate de la couleur d’accent au cadre et de la couleur de progression aux segments de la barre.
 - Ajoute des infobulles localisées pour expliquer les champs de couleur, Button Accents et Click to Seek.
 
-## v1.6.7-alpha
+## v1.6.6-alpha
 - Aligne les métadonnées et commandes de Square et Expanded, évite que le panneau d’état croise le séparateur et raccourcit les libellés du menu pour qu’ils restent lisibles.
 - Le menu Player Settings regroupe les personnalisations visuelles, les couleurs personnalisées et les options des paroles (activation et canal), avec leur état visible.
 - Reprend les cadres métalliques, fonds pierre sombre et titres dorés des panneaux classiques de WoW ; les quatre néons restent des accents sur la progression, les commandes actives et les détails lumineux.
