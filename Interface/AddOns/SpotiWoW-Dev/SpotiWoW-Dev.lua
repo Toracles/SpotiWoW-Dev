@@ -7,7 +7,7 @@ local Locale = SPOTIWOW_OCTO_L or {}
 local UI_FALLBACK = {
     settings_title="Player Settings", settings_theme="Theme", settings_layout="Layout", settings_expand="Expand player", settings_compact="Use compact player",
     layout_compact="Compact", layout_square="Square", layout_expanded="Expanded", layout_help="Click options to cycle or toggle them. /spn help for commands.",
-    settings_accent="Accent", settings_progress_color="Progress color", settings_custom_accent="Accent hex", settings_custom_progress="Progress hex", settings_apply="Apply", settings_glow="Glow", settings_border="Border", settings_buttons="Button accents", settings_controls="Controls", settings_metadata="Track details", settings_progress="Progress bar", settings_seek="Click to seek", settings_progress_style="Bar style", setting_on="ON", setting_off="OFF", color_default="Theme default",
+    settings_accent="Accent", settings_progress_color="Progress color", settings_custom_accent="Accent hex", settings_custom_progress="Progress hex", settings_apply="Apply", settings_glow="Glow", settings_border="Border", settings_buttons="Button accents", settings_buttons_hint="When on, player button text and borders use the selected neon accent.", settings_controls="Controls", settings_metadata="Track details", settings_progress="Progress bar", settings_seek="Click to seek", settings_seek_hint="Click the progress bar to jump to that position in the track.", settings_progress_style="Bar style", setting_on="ON", setting_off="OFF", color_default="Theme default",
     theme_obsidian="Obsidian", theme_azerite="Azerite", theme_fel="Fel", theme_bloodmoon="Bloodmoon",
     mode_shuffle="SHUFFLE", mode_repeat_all="REPEAT ALL", mode_repeat_track="REPEAT 1",
     help_1="/spn : show the current track locally", help_2="/spn say|yell|party|guild|raid|emote : announce the current track",
@@ -183,6 +183,10 @@ AddSettingButton("metadata","metadata",1,3)
 AddSettingButton("progress","progress",2,3)
 AddSettingButton("seek","progressSeek",1,4)
 AddSettingButton("progressStyle","progressStyle",2,4)
+settingsButtons.buttons.button:SetScript("OnEnter",function() GameTooltip:SetOwner(this,"ANCHOR_RIGHT"); GameTooltip:SetText(T("settings_buttons_hint")); GameTooltip:Show() end)
+settingsButtons.buttons.button:SetScript("OnLeave",function() GameTooltip:Hide() end)
+settingsButtons.seek.button:SetScript("OnEnter",function() GameTooltip:SetOwner(this,"ANCHOR_RIGHT"); GameTooltip:SetText(T("settings_seek_hint")); GameTooltip:Show() end)
+settingsButtons.seek.button:SetScript("OnLeave",function() GameTooltip:Hide() end)
 local lyricsButton=NewSettingsButton(150,22,"TOPLEFT",settingsPanel,"TOPLEFT",18,-312)
 local channelButton=NewSettingsButton(150,22,"TOPLEFT",settingsPanel,"TOPLEFT",190,-312)
 lyricsButton:SetScript("OnClick",function() SetLyrics(not SpotifyNowDB.lyrics,true); RefreshSettingsPanel() end)
@@ -389,10 +393,13 @@ ApplyStyle=function()
     local alpha=(s.border==false) and 0 or 1
     ui:SetBackdropBorderColor(0.72,0.64,0.48,alpha)
     topAccent:SetTexture(r,g,b,s.glow and 0.95 or 0.58); topAccent:SetHeight(s.glow and 2 or 1); sideDivider:SetTexture(r,g,b,0.55)
+    local buttonTextR,buttonTextG,buttonTextB=1,0.82,0.28
+    local buttonBorderR,buttonBorderG,buttonBorderB=0.58,0.50,0.36
+    if s.buttons~=false then buttonTextR,buttonTextG,buttonTextB=r,g,b; buttonBorderR,buttonBorderG,buttonBorderB=r,g,b end
     for button,fs in pairs(buttonLabels) do
-        if fs and fs.SetTextColor then fs:SetTextColor(1,0.82,0.28) end
+        if fs and fs.SetTextColor then fs:SetTextColor(buttonTextR,buttonTextG,buttonTextB) end
         if button.SetBackdropColor then button:SetBackdropColor(0.16,0.025,0.035,1) end
-        if button.SetBackdropBorderColor then button:SetBackdropBorderColor(0.58,0.50,0.36,0.95) end
+        if button.SetBackdropBorderColor then button:SetBackdropBorderColor(buttonBorderR,buttonBorderG,buttonBorderB,0.95) end
     end
     titleText:SetTextColor(1,0.82,0.28)
     if compact then titleText:SetFontObject(GameFontNormalSmall) else titleText:SetFontObject(GameFontNormal) end
@@ -466,7 +473,7 @@ RefreshUI=function()
     if not ir then local theme=THEMES[SpotifyNowDB.style.theme] or THEMES.obsidian; ir,ig,ib=theme.accent[1],theme.accent[2],theme.accent[3] end
     local function MarkActive(button,active)
         local fs=buttonLabels[button]
-        local useAccent=active and SpotifyNowDB.style.buttons~=false
+        local useAccent=SpotifyNowDB.style.buttons~=false
         if fs then if useAccent then fs:SetTextColor(ir,ig,ib) else fs:SetTextColor(1,0.82,0.28) end end
         button:SetBackdropBorderColor(useAccent and ir or 0.58,useAccent and ig or 0.50,useAccent and ib or 0.36,1)
     end
