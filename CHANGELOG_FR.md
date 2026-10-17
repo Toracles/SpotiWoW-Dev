@@ -3,7 +3,7 @@
 ## v1.6.8-alpha
 - Ajoute les boutons Shuffle et Repeat au mode compact et élargit légèrement le lecteur pour les garder alignés et visibles.
 - Affiche l’état des modes de façon persistante dans Compact, Square et Expanded : fond accentué pour Shuffle et Repeat All, contour néon pour Repeat 1.
-- Repositionne la ligne d’accent au bord supérieur dans les trois formats pour la séparer des titres et des boutons, en conservant la barre de progression inférieure.
+- Repositionne la ligne d’accent au bord supérieur et l’arrête avant les boutons en haut à droite dans les trois formats, en conservant la barre de progression inférieure.
 - Uniformise le survol des boutons du lecteur et des réglages avec un fond rouge charbon, sans dégradé rouge/noir.
 - Centre l’en-tête du panneau Player Settings et aligne les deux champs hexadécimaux ainsi que leurs boutons Apply dans le cadre.
 
