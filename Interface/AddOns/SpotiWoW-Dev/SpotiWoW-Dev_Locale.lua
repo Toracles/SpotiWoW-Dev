@@ -38,6 +38,7 @@ SPOTIWOW_OCTO_L = {
     settings_progress_color = "Couleur de progression",
     settings_custom_accent = "Accent hex",
     settings_custom_progress = "Progression hex",
+    settings_hex_hint = "Saisis une couleur HEX sur 6 chiffres (ex. 1ED760 ou #1ED760), puis clique sur Appliquer.",
     settings_apply = "Appliquer",
     settings_glow = "Lueur",
     settings_border = "Bordure",
