@@ -7,7 +7,7 @@ local Locale = SPOTIWOW_OCTO_L or {}
 local UI_FALLBACK = {
     settings_title="Player Settings", settings_theme="Theme", settings_layout="Layout", settings_expand="Expand player", settings_compact="Use compact player",
     layout_compact="Compact", layout_square="Square", layout_expanded="Expanded", layout_help="Click options to cycle or toggle them. /spn help for commands.",
-    settings_accent="Accent", settings_progress_color="Progress color", settings_custom_accent="Accent hex", settings_custom_progress="Progress hex", settings_apply="Apply", settings_glow="Glow", settings_border="Border", settings_buttons="Button accents", settings_buttons_hint="When on, player button text and borders use the selected neon accent.", settings_controls="Controls", settings_metadata="Track details", settings_progress="Progress bar", settings_seek="Click to seek", settings_seek_hint="Click the progress bar to jump to that position in the track.", settings_progress_style="Bar style", setting_on="ON", setting_off="OFF", color_default="Theme default",
+    settings_accent="Accent", settings_progress_color="Progress color", settings_custom_accent="Accent hex", settings_custom_progress="Progress hex", settings_hex_hint="Enter a 6-digit HEX color (for example 1ED760 or #1ED760), then click Apply.", settings_apply="Apply", settings_glow="Glow", settings_border="Border", settings_buttons="Button accents", settings_buttons_hint="When on, player button text and borders use the selected neon accent.", settings_controls="Controls", settings_metadata="Track details", settings_progress="Progress bar", settings_seek="Click to seek", settings_seek_hint="Click the progress bar to jump to that position in the track.", settings_progress_style="Bar style", setting_on="ON", setting_off="OFF", color_default="Theme default",
     theme_obsidian="Obsidian", theme_azerite="Azerite", theme_fel="Fel", theme_bloodmoon="Bloodmoon",
     mode_shuffle="SHUFFLE", mode_repeat_all="REPEAT ALL", mode_repeat_track="REPEAT 1",
     help_1="/spn : show the current track locally", help_2="/spn say|yell|party|guild|raid|emote : announce the current track",
@@ -139,6 +139,8 @@ local function NewColorEntry(key,anchor,relativePoint)
     edit:SetBackdrop({bgFile="Interface\\Tooltips\\UI-Tooltip-Background",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=8,edgeSize=8,insets={left=2,right=2,top=2,bottom=2}})
     edit:SetBackdropColor(0.06,0.06,0.06,1); edit:SetBackdropBorderColor(0.58,0.50,0.36,1)
     edit:SetPoint("LEFT",label,"RIGHT",6,0)
+    edit:SetScript("OnEnter",function() GameTooltip:SetOwner(this,"ANCHOR_RIGHT"); GameTooltip:SetText(T("settings_hex_hint")); GameTooltip:Show() end)
+    edit:SetScript("OnLeave",function() GameTooltip:Hide() end)
     local apply=NewSettingsButton(70,20,"LEFT",edit,"RIGHT",6,0)
     SetButtonText(apply,T("settings_apply"))
     return {label=label,edit=edit,apply=apply}
@@ -391,7 +393,7 @@ ApplyStyle=function()
         artistText:Hide(); albumText:Hide(); timeText:Hide(); SetButtonText(expandButton,"□")
     end
     local alpha=(s.border==false) and 0 or 1
-    ui:SetBackdropBorderColor(0.72,0.64,0.48,alpha)
+    ui:SetBackdropBorderColor(r,g,b,alpha)
     topAccent:SetTexture(r,g,b,s.glow and 0.95 or 0.58); topAccent:SetHeight(s.glow and 2 or 1); sideDivider:SetTexture(r,g,b,0.55)
     local buttonTextR,buttonTextG,buttonTextB=1,0.82,0.28
     local buttonBorderR,buttonBorderG,buttonBorderB=0.58,0.50,0.36
@@ -406,6 +408,7 @@ ApplyStyle=function()
     art:SetVertexColor(1,1,1,1)
     if s.progressColor then local pr,pg,pb=HexColor(s.progressColor); if pr then r,g,b=pr,pg,pb end end
     progressFill:SetTexture(r,g,b,1)
+    for _,segment in pairs(progressSegments) do segment:SetVertexColor(r,g,b,1) end
     local ph=2
     if s.progressStyle=="thick" then ph=4 elseif s.progressStyle=="segmented" then ph=3 end
     progressBg:SetHeight(ph); progressFill:SetHeight(ph)
