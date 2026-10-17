@@ -7,7 +7,7 @@ SpotiWoW-Dev brings Spotify playback into Turtle WoW through a lightweight Windo
 ## Feature overview
 
 - **Three player layouts:** compact, square, and expanded, with Spotify track, artist, album, cover art, playback progress, and controls arranged for each size.
-- **Four WoW-inspired themes:** Obsidian, Azerite, Fel, and Bloodmoon, with configurable accent and progress colors, glow, borders, and button styling.
+- **Seven WoW-inspired themes:** Obsidian, Azerite, Fel, Bloodmoon, Sunwell, Silver Dawn, and Fang Set, with configurable accent and progress colors, glow, borders, and button styling.
 - **A customizable settings panel:** choose the layout and theme, show or hide controls and track details, and adjust the progress bar and click-to-seek behavior. Settings persist in-game.
 - **Spotify controls:** play/pause, previous/next, seeking, volume, shuffle, and repeat. Shuffle and repeat states remain visibly indicated on the player.
 - **Lyrics:** synchronized multi-source lookup with a local cache, configurable chat channel, and `Ctrl+Alt+L` toggle. The Lyrics status notice is local to your chat window.
@@ -30,7 +30,7 @@ For requirements, Spotify setup, and installation steps, see the guides above. `
 ## Résumé des fonctionnalités
 
 - **Trois formats de lecteur :** compact, carré et agrandi, avec titre, artiste, album, pochette Spotify, progression et commandes adaptés à chaque format.
-- **Quatre thèmes inspirés de WoW :** Obsidian, Azerite, Fel et Bloodmoon. Personnalise les couleurs d’accent et de progression, la lueur, les bordures et les boutons.
+- **Sept thèmes inspirés de WoW :** Obsidian, Azerite, Fel, Bloodmoon, Puits de soleil, Aube-Argent et Set du Croc. Personnalise les couleurs d’accent et de progression, la lueur, les bordures et les boutons.
 - **Panneau de réglages complet :** choix du thème et du format, affichage des commandes et des infos du morceau, apparence de la barre et recherche dans le morceau au clic. Les réglages sont conservés en jeu.
 - **Commandes Spotify :** lecture/pause, morceau précédent/suivant, recherche, volume, aléatoire et répétition. Les états aléatoire et répétition restent visibles sur le lecteur.
 - **Paroles :** recherche synchronisée auprès de plusieurs sources, cache local et choix du canal. `Ctrl+Alt+L` active ou désactive les paroles ; son message de statut reste local à ta fenêtre de chat.
