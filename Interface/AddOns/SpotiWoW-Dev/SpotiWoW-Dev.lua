@@ -81,7 +81,7 @@ local volumeLabelText=ui:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall"
 volumeLabelText:SetPoint("TOPLEFT",ui,"TOPLEFT",358,-62); volumeLabelText:SetWidth(54); volumeLabelText:SetJustifyH("LEFT"); volumeLabelText:SetText(T("volume_label")); volumeLabelText:Hide()
 local function SkinButton(button)
     button:SetBackdrop({bgFile="Interface\\Tooltips\\UI-Tooltip-Background",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=8,edgeSize=8,insets={left=2,right=2,top=2,bottom=2}})
-    button:SetBackdropColor(0.10,0.095,0.085,0.98); button:SetBackdropBorderColor(0.58,0.50,0.36,1)
+    button:SetBackdropColor(0.48,0.045,0.055,1); button:SetBackdropBorderColor(0.58,0.50,0.36,1)
     button:SetHighlightTexture("Interface\\Buttons\\UI-Panel-Button-Highlight")
     local fs=button:CreateFontString(button:GetName() and (button:GetName().."Text") or nil,"OVERLAY","GameFontNormalSmall")
     fs:SetPoint("CENTER",button,"CENTER",0,0); fs:SetTextColor(1,0.82,0.28)
@@ -391,7 +391,7 @@ ApplyStyle=function()
     topAccent:SetTexture(r,g,b,s.glow and 0.95 or 0.58); topAccent:SetHeight(s.glow and 2 or 1); sideDivider:SetTexture(r,g,b,0.55)
     for button,fs in pairs(buttonLabels) do
         if fs and fs.SetTextColor then fs:SetTextColor(1,0.82,0.28) end
-        if button.SetBackdropColor then button:SetBackdropColor(0.10,0.095,0.085,0.98) end
+        if button.SetBackdropColor then button:SetBackdropColor(0.48,0.045,0.055,1) end
         if button.SetBackdropBorderColor then button:SetBackdropBorderColor(0.58,0.50,0.36,0.95) end
     end
     titleText:SetTextColor(1,0.82,0.28)
