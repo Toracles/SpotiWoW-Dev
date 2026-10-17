@@ -8,7 +8,7 @@ local UI_FALLBACK = {
     settings_title="Player Settings", settings_theme="Theme", settings_layout="Layout", settings_expand="Expand player", settings_compact="Use compact player",
     layout_compact="Compact", layout_square="Square", layout_expanded="Expanded", layout_help="Click options to cycle or toggle them. /spn help for commands.",
     settings_accent="Accent", settings_progress_color="Progress color", settings_custom_accent="Accent hex", settings_custom_progress="Progress hex", settings_hex_hint="Enter a 6-digit HEX color (for example 1ED760 or #1ED760), then click Apply.", settings_apply="Apply", settings_glow="Glow", settings_border="Border", settings_buttons="Button accents", settings_buttons_hint="When on, player button text and borders use the selected neon accent.", settings_controls="Controls", settings_metadata="Track details", settings_progress="Progress bar", settings_seek="Click to seek", settings_seek_hint="Hover the progress bar to preview the target time; click to seek there.", settings_seek_off_hint="Click to seek is off. Turn it on in Player Settings to jump to the hovered position.", settings_seek_preview="Target", settings_progress_style="Bar style",
-    settings_theme_hint="Cycle through Obsidian, Azerite, Fel, and Bloodmoon palettes.",
+    settings_theme_hint="Cycle through Obsidian, Azerite, Fel, Bloodmoon, Sunwell, Frostmourne, and Dreamweaver palettes.",
     settings_layout_hint="Cycle the player through Compact, Square, and Expanded layouts. Your saved settings are preserved.",
     settings_accent_hint="Choose a neon accent preset, or enter a custom HEX color below.",
     settings_progress_color_hint="Choose a progress bar color preset, or enter a custom HEX color below.",
@@ -21,15 +21,15 @@ local UI_FALLBACK = {
     settings_lyrics_hint="Toggle synced lyrics in the selected chat channel.",
     settings_channel_hint="Choose where synced lyrics are sent. Use a private channel if you do not want others to see them.",
     settings_hex_apply_hint="Apply the HEX color entered to the left. Use six hexadecimal digits, with an optional #.", setting_on="ON", setting_off="OFF", color_default="Theme default",
-    theme_obsidian="Obsidian", theme_azerite="Azerite", theme_fel="Fel", theme_bloodmoon="Bloodmoon",
+    theme_obsidian="Obsidian", theme_azerite="Azerite", theme_fel="Fel", theme_bloodmoon="Bloodmoon", theme_sunwell="Sunwell", theme_frostmourne="Frostmourne", theme_dreamweaver="Dreamweaver",
     mode_shuffle="SHUFFLE", mode_repeat_all="REPEAT ALL", mode_repeat_track="REPEAT 1",
     help_1="/spn : show the current track locally", help_2="/spn say|yell|party|guild|raid|emote : announce the current track",
     help_3="/spn lyrics [on|off] : lyrics mode; /spn channel <channel> : lyrics channel",
     help_4="/spn ui : show/hide the mini-player; /spn settings : open settings",
     help_5="/spn prev|pause|next|back|fwd|voldown|volup : playback controls",
-    settings_help="/spn mode compact|square|expanded; /spn expand toggles compact/expanded; /spn theme obsidian|azerite|fel|bloodmoon; /spn accent RRGGBB",
+    settings_help="/spn mode compact|square|expanded; /spn expand toggles compact/expanded; /spn theme obsidian|azerite|fel|bloodmoon|sunwell|frostmourne|dreamweaver; /spn accent RRGGBB",
     settings_help2="/spn glow|border|buttons|controls|metadata|progress on|off; /spn progressstyle line|thick|segmented; /spn progresscolor RRGGBB; /spn seek on|off",
-    theme_help="Themes: obsidian, azerite, fel, bloodmoon", color_help="Use RRGGBB (example: 1ED760), or reset.",
+    theme_help="Themes: obsidian, azerite, fel, bloodmoon, sunwell, frostmourne, dreamweaver", color_help="Use RRGGBB (example: 1ED760), or reset.",
     progressstyle_help="Progress styles: line, thick, segmented", spotify_label="SPOTIFY", status_playing="PLAYING", status_paused="PAUSED", lyrics_toggle="Toggle lyrics",
 }
 local function T(key) return Locale[key] or UI_FALLBACK[key] or key end
@@ -253,7 +253,7 @@ local function ColorLabel(value)
 end
 RefreshSettingsPanel=function()
     local style=SpotifyNowDB.style
-    local names={obsidian=T("theme_obsidian"),azerite=T("theme_azerite"),fel=T("theme_fel"),bloodmoon=T("theme_bloodmoon")}
+    local names={obsidian=T("theme_obsidian"),azerite=T("theme_azerite"),fel=T("theme_fel"),bloodmoon=T("theme_bloodmoon"),sunwell=T("theme_sunwell"),frostmourne=T("theme_frostmourne"),dreamweaver=T("theme_dreamweaver")}
     SetButtonText(themeButton,T("settings_theme")..": "..(names[style.theme] or names.obsidian))
     local mode=style.layout or (style.expanded and "expanded" or "compact")
     local modes={compact=T("layout_compact"),square=T("layout_square"),expanded=T("layout_expanded")}
@@ -280,7 +280,7 @@ end
 settingsPanel:SetScript("OnShow",function() RefreshSettingsPanel() end)
 settingsButton:SetScript("OnClick",function() if settingsPanel:IsShown() then settingsPanel:Hide() else RefreshSettingsPanel(); settingsPanel:Show() end end)
 themeButton:SetScript("OnClick",function()
-    local order={"obsidian","azerite","fel","bloodmoon"}; local current=SpotifyNowDB.style.theme or "obsidian"; local nextIndex=1
+    local order={"obsidian","azerite","fel","bloodmoon","sunwell","frostmourne","dreamweaver"}; local current=SpotifyNowDB.style.theme or "obsidian; local nextIndex=1
     for i,name in ipairs(order) do if name==current then nextIndex=(i%table.getn(order))+1; break end end
     SpotifyNowDB.style.theme=order[nextIndex]; SpotifyNowDB.style.accent=nil; SpotifyNowDB.style.progressColor=nil
     ApplyStyle(); RefreshUI(); RefreshSettingsPanel()
@@ -399,6 +399,9 @@ local THEMES={
     azerite={bg={0.025,0.035,0.043},accent={0.08,0.78,0.92}},
     fel={bg={0.032,0.03,0.036},accent={0.24,0.95,0.28}},
     bloodmoon={bg={0.038,0.027,0.032},accent={0.92,0.17,0.20}},
+    sunwell={bg={0.038,0.031,0.024},accent={1.0,0.690196,0.12549}},
+    frostmourne={bg={0.026,0.03,0.038},accent={1.0,1.0,1.0}},
+    dreamweaver={bg={0.038,0.026,0.038},accent={1.0,0.309804,0.847059}},
 }
 HexColor=function(value)
     if not value then return nil end
