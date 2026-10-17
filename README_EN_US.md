@@ -26,7 +26,7 @@ The installer never asks for a Client Secret and does not download Turtle WoW, V
 - `Ctrl+Alt+L` toggles Lyrics from the companion without typing a command into the in-game chat.
 - `Lyrics mode: ON/OFF` is displayed locally via `DEFAULT_CHAT_FRAME:AddMessage`. The status message is never sent to other players.
 - Player inspired by classic WoW panels, with a metallic frame, dark stone backdrop, gold titles, and restrained neon accents in three layouts: compact (300 × 68 px), square (236 × 236 px), and expanded (460 × 164 px). Spotify artwork, artist, album, time, and controls vary by layout. Choose in `/spn settings` or use `/spn mode compact|square|expanded`.
-- Obsidian, Azerite, Fel, and Bloodmoon themes, with customizable accents, glow, borders, and controls; configurable progress bar with click-to-seek.
+- Obsidian, Azerite, Fel, Bloodmoon, Sunwell, Silver Dawn, and Fang Set themes, with customizable accents, glow, borders, and controls; configurable progress bar with click-to-seek.
 - Click `...` on the player (or use `/spn settings`) for the full panel, styled like a classic WoW window: theme, layout, colors, glow, border, buttons, metadata, controls, and progress. The top button cycles through compact, square, and expanded layouts.
 - The expanded player's right panel shows Spotify, playback status, volume, and Volume/Lyrics shortcuts.
 - Shuffle, repeat album, and repeat track stay visibly indicated on the player. Obsidian, Azerite, Fel, and Bloodmoon each keep their own neon accent color.
