@@ -69,8 +69,8 @@ GAME_DIR = Path(CFG.get("game_dir", r"C:\Jeux\OctoWoW"))
 IMPORT_DIR = GAME_DIR / "imports"
 STATE_FILE = IMPORT_DIR / "SpotifyNowState.txt"
 COMMAND_FILE = IMPORT_DIR / "SpotifyNowCommand.txt"
-ADDON_DIR = GAME_DIR / "Interface" / "AddOns" / "SpotiWoW-Octo"
-CUSTOM_ASSET_DIR = GAME_DIR / "Data" / "Interface" / "AddOns" / "SpotiWoW-Octo"
+ADDON_DIR = GAME_DIR / "Interface" / "AddOns" / "SpotiWoW-Dev"
+CUSTOM_ASSET_DIR = GAME_DIR / "Data" / "Interface" / "AddOns" / "SpotiWoW-Dev"
 ARTWORK_SLOT_COUNT = 512
 ARTWORK_SLOT_STATE = HERE / "artwork_slot_counter.txt"
 # The tray launcher sets a unique stop-flag path in the child environment.
@@ -143,7 +143,7 @@ def login():
         server.handle_request()
     server.server_close()
     if stop_requested():
-        raise SystemExit("Bridge stoppato dal menu di SpotiWoW-Octo.")
+        raise SystemExit("Bridge stoppato dal menu di SpotiWoW-Dev.")
     tok = post_form(TOKEN_URL, {
         "grant_type": "authorization_code", "code": result["code"],
         "redirect_uri": REDIRECT, "client_id": CLIENT_ID, "code_verifier": verifier,
@@ -571,7 +571,7 @@ def download_album_art(track_id, image_url):
         from PIL import Image
         target_dir = CUSTOM_ASSET_DIR if custom_assets_enabled() else ADDON_DIR
         with artwork_write_lock:
-            req = urllib.request.Request(image_url, headers={"User-Agent": "SpotiWoW-Octo/1.4.15"})
+            req = urllib.request.Request(image_url, headers={"User-Agent": "SpotiWoW-Dev/1.4.15"})
             with urllib.request.urlopen(req, timeout=12) as response:
                 raw = response.read(6 * 1024 * 1024)
             from PIL import ImageOps

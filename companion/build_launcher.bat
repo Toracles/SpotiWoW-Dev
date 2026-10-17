@@ -4,8 +4,8 @@ cd /d "%~dp0"
 
 rem Resolve absolute paths explicitly so PyInstaller always receives its scriptname.
 set "PY=py -3.15"
-set "SCRIPT=%CD%\SpotiWoW-OctoLauncher.py"
-set "ICON=%CD%\SpotiWoW-Octo.ico"
+set "SCRIPT=%CD%\SpotiWoW-DevLauncher.py"
+set "ICON=%CD%\SpotiWoW-Dev.ico"
 set "OUT=%CD%"
 set "WORK=%CD%\build_temp"
 
@@ -41,7 +41,7 @@ if errorlevel 1 (
 
 if not exist "%WORK%" mkdir "%WORK%"
 echo.
-echo Building SpotiWoW-Octo.exe with no console window...
+echo Building SpotiWoW-Dev.exe with no console window...
 echo Python: %PY%
 echo Script: "%SCRIPT%"
 echo Icon:   "%ICON%"
@@ -49,7 +49,7 @@ echo Output: "%OUT%"
 echo.
 
 rem Keep the source path as the final positional PyInstaller argument.
-%PY% -m PyInstaller --clean --noconfirm --onefile --windowed --name "SpotiWoW-Octo" --icon "%ICON%" --collect-all syncedlyrics --collect-all pystray --collect-all psutil --distpath "%OUT%" --workpath "%WORK%" --specpath "%WORK%" "%SCRIPT%"
+%PY% -m PyInstaller --clean --noconfirm --onefile --windowed --name "SpotiWoW-Dev" --icon "%ICON%" --collect-all syncedlyrics --collect-all pystray --collect-all psutil --distpath "%OUT%" --workpath "%WORK%" --specpath "%WORK%" "%SCRIPT%"
 if errorlevel 1 (
   echo.
   echo Build failed. The full PyInstaller command above includes the source script path.
@@ -58,14 +58,14 @@ if errorlevel 1 (
   exit /b 1
 )
 
-if not exist "%OUT%\SpotiWoW-Octo.exe" (
-  echo Build returned success but SpotiWoW-Octo.exe was not found.
+if not exist "%OUT%\SpotiWoW-Dev.exe" (
+  echo Build returned success but SpotiWoW-Dev.exe was not found.
   pause
   exit /b 1
 )
 echo.
-echo SUCCESS: "%OUT%\SpotiWoW-Octo.exe"
+echo SUCCESS: "%OUT%\SpotiWoW-Dev.exe"
 echo The EXE is built as a Windows GUI app and does not open a CMD window when launched.
-echo Keep it beside spotify_bridge.py, config.json, config.example.json and SpotiWoW-Octo.ico.
+echo Keep it beside spotify_bridge.py, config.json, config.example.json and SpotiWoW-Dev.ico.
 pause
 exit /b 0

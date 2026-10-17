@@ -17,7 +17,7 @@ installer/dist/
 __pycache__/
 *.pyc
 *.spec
-Interface/AddOns/SpotiWoW-Octo/artwork_*.tga
+Interface/AddOns/SpotiWoW-Dev/artwork_*.tga
 
 # Retired maintainer guide files (do not re-add to future release kits)
 /INSTALLER_GITHUB_GUIDE.md

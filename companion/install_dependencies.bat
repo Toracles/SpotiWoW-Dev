@@ -49,5 +49,5 @@ if errorlevel 1 (
   exit /b 1
 )
 echo.
-echo SpotiWoW-Octo dependencies installed for Python 3.15.
+echo SpotiWoW-Dev dependencies installed for Python 3.15.
 pause

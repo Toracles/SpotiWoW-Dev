@@ -37,7 +37,7 @@
 - Le titre défile dans l’interface de l’addon lorsqu’il est trop long, afin de pouvoir le lire en entier.
 
 ## v1.4.5
-- À la fermeture du client WoW, le bridge s’arrête et l’application SpotiWoW-Octo quitte aussi automatiquement la zone de notification.
+- À la fermeture du client WoW, le bridge s’arrête et l’application SpotiWoW-Dev quitte aussi automatiquement la zone de notification.
 - Ajout d’une entrée de journal pour cette fermeture automatique.
 
 ## v1.4.4

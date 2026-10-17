@@ -1,13 +1,13 @@
-# SpotiWoW-Octo v1.4.15 — Français
+# SpotiWoW-Dev v1.4.15 — Français
 
-SpotiWoW-Octo relie Spotify à Turtle WoW / OctoWoW via le bridge de fichiers SuperWoW. Cette version utilise l’interface et les messages en français.
+SpotiWoW-Dev relie Spotify à Turtle WoW / OctoWoW via le bridge de fichiers SuperWoW. Cette version utilise l’interface et les messages en français.
 
 ## Installation simple
-1. Télécharge `SpotiWoW-Octo-Setup.exe` depuis la page **Releases** du dépôt GitHub officiel.
+1. Télécharge `SpotiWoW-Dev-Setup.exe` depuis la page **Releases** du dépôt GitHub officiel.
 2. Ferme Turtle WoW avant l’installation.
 3. Choisis `Français (FR)` dans l’installateur, sélectionne le dossier contenant `VanillaFixes.exe`, puis colle ton Spotify Client ID.
 4. Dans les paramètres de ton application Spotify Developer, ajoute le Redirect URI exact `http://127.0.0.1:8888/callback`.
-5. Termine l’installation puis lance **SpotiWoW-Octo** depuis le raccourci créé.
+5. Termine l’installation puis lance **SpotiWoW-Dev** depuis le raccourci créé.
 
 L’installateur ne demande jamais de Client Secret et ne télécharge pas Turtle WoW, VanillaFixes, SuperWoW, SuperAPI ni leurs DLL.
 
@@ -37,4 +37,4 @@ Les paroles elles-mêmes restent envoyées dans le canal choisi si cette option 
 - Journaux : `logs/bridge.log` et `logs/launcher.log` dans le dossier de l’application compagnon.
 - Si aucun dossier n’est détecté, sélectionne manuellement celui qui contient `VanillaFixes.exe`.
 
-Pour une mise à jour de l’addon uniquement, télécharge `SpotiWoW-Octo-Addon-FR.zip` depuis les Releases. La version française affiche les messages système en français.
+Pour une mise à jour de l’addon uniquement, télécharge `SpotiWoW-Dev-Addon-FR.zip` depuis les Releases. La version française affiche les messages système en français.

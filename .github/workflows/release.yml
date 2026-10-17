@@ -29,8 +29,8 @@ jobs:
           # build/launcher, relative icon paths are later resolved against that folder.
           # Use absolute paths for the icon and entry-point to avoid FileNotFoundError.
           $root = $env:GITHUB_WORKSPACE
-          $iconPath = Join-Path $root "companion/SpotiWoW-Octo.ico"
-          $scriptPath = Join-Path $root "companion/SpotiWoW-OctoLauncher.py"
+          $iconPath = Join-Path $root "companion/SpotiWoW-Dev.ico"
+          $scriptPath = Join-Path $root "companion/SpotiWoW-DevLauncher.py"
           $distPath = Join-Path $root "dist"
           $workPath = Join-Path $root "build/launcher"
 
@@ -43,7 +43,7 @@ jobs:
 
           New-Item -ItemType Directory -Force -Path $distPath | Out-Null
           python -m PyInstaller --clean --noconfirm --onefile --windowed `
-            --name SpotiWoW-Octo `
+            --name SpotiWoW-Dev `
             --icon "$iconPath" `
             --collect-all syncedlyrics --collect-all pystray `
             --collect-all psutil --collect-all PIL `
@@ -56,39 +56,39 @@ jobs:
         run: |
           $root = $PWD
           $variants = @(
-            @{ Code = "FR"; Readme = "README_FR.txt"; AddonSource = "Interface/AddOns/SpotiWoW-Octo" },
-            @{ Code = "US"; Readme = "README_EN_US.txt"; AddonSource = "Interface/AddOns/SpotiWoW-Octo" }
+            @{ Code = "FR"; Readme = "README_FR.txt"; AddonSource = "Interface/AddOns/SpotiWoW-Dev" },
+            @{ Code = "US"; Readme = "README_EN_US.txt"; AddonSource = "Interface/AddOns/SpotiWoW-Dev" }
           )
           foreach ($variant in $variants) {
             $stage = Join-Path $root ("release-stage-" + $variant.Code)
             New-Item -ItemType Directory -Force -Path $stage | Out-Null
             New-Item -ItemType Directory -Force -Path (Join-Path $stage "Interface/AddOns") | Out-Null
             New-Item -ItemType Directory -Force -Path (Join-Path $stage "companion") | Out-Null
-            $addonDest = Join-Path $stage "Interface/AddOns/SpotiWoW-Octo"
+            $addonDest = Join-Path $stage "Interface/AddOns/SpotiWoW-Dev"
             New-Item -ItemType Directory -Force -Path $addonDest | Out-Null
             Copy-Item -Recurse (Join-Path $variant.AddonSource "*") $addonDest -Force
-            $assetSource = Join-Path $root "Data/Interface/AddOns/SpotiWoW-Octo"
+            $assetSource = Join-Path $root "Data/Interface/AddOns/SpotiWoW-Dev"
             if (Test-Path $assetSource) {
-              $assetDest = Join-Path $stage "Data/Interface/AddOns/SpotiWoW-Octo"
+              $assetDest = Join-Path $stage "Data/Interface/AddOns/SpotiWoW-Dev"
               New-Item -ItemType Directory -Force -Path $assetDest | Out-Null
               Copy-Item (Join-Path $assetSource "*") $assetDest -Force
             }
             if ($variant.Code -eq "US") {
-              Copy-Item "variants/US/SpotiWoW-Octo_Locale.lua" (Join-Path $addonDest "SpotiWoW-Octo_Locale.lua") -Force
-              Copy-Item "variants/US/SpotiWoW-Octo.toc" (Join-Path $addonDest "SpotiWoW-Octo.toc") -Force
+              Copy-Item "variants/US/SpotiWoW-Dev_Locale.lua" (Join-Path $addonDest "SpotiWoW-Dev_Locale.lua") -Force
+              Copy-Item "variants/US/SpotiWoW-Dev.toc" (Join-Path $addonDest "SpotiWoW-Dev.toc") -Force
             }
-            Copy-Item "dist/SpotiWoW-Octo.exe" (Join-Path $stage "companion/SpotiWoW-Octo.exe")
+            Copy-Item "dist/SpotiWoW-Dev.exe" (Join-Path $stage "companion/SpotiWoW-Dev.exe")
             Copy-Item "companion/spotify_bridge.py" (Join-Path $stage "companion/spotify_bridge.py")
             Copy-Item "companion/config.example.json" (Join-Path $stage "companion/config.example.json")
             $configExamplePath = Join-Path $stage "companion/config.example.json"
             $configExample = Get-Content $configExamplePath -Raw | ConvertFrom-Json
             $configExample.language = if ($variant.Code -eq "US") { "us" } else { "fr" }
             $configExample | ConvertTo-Json -Depth 8 | Set-Content -Path $configExamplePath -Encoding utf8
-            Copy-Item "companion/SpotiWoW-Octo.ico" (Join-Path $stage "companion/SpotiWoW-Octo.ico")
-            Copy-Item "companion/SpotiWoW-Octo.png" (Join-Path $stage "companion/SpotiWoW-Octo.png")
+            Copy-Item "companion/SpotiWoW-Dev.ico" (Join-Path $stage "companion/SpotiWoW-Dev.ico")
+            Copy-Item "companion/SpotiWoW-Dev.png" (Join-Path $stage "companion/SpotiWoW-Dev.png")
             Copy-Item "companion/THIRD_PARTY_NOTICES.txt" (Join-Path $stage "companion/THIRD_PARTY_NOTICES.txt")
             Copy-Item $variant.Readme (Join-Path $stage $variant.Readme)
-            $out = Join-Path $root ("dist/SpotiWoW-Octo-Portable-" + $variant.Code + ".zip")
+            $out = Join-Path $root ("dist/SpotiWoW-Dev-Portable-" + $variant.Code + ".zip")
             if (Test-Path $out) { Remove-Item $out -Force }
             Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $out -CompressionLevel Optimal
 
@@ -96,13 +96,13 @@ jobs:
             $addonStage = Join-Path $root ("addon-stage-" + $variant.Code)
             $addonStageParent = Join-Path $addonStage "Interface/AddOns"
             New-Item -ItemType Directory -Force -Path $addonStageParent | Out-Null
-            Copy-Item -Recurse (Join-Path $stage "Interface/AddOns/SpotiWoW-Octo") $addonStageParent -Force
-            $addonAssetParent = Join-Path $addonStage "Data/Interface/AddOns/SpotiWoW-Octo"
+            Copy-Item -Recurse (Join-Path $stage "Interface/AddOns/SpotiWoW-Dev") $addonStageParent -Force
+            $addonAssetParent = Join-Path $addonStage "Data/Interface/AddOns/SpotiWoW-Dev"
             if (Test-Path $assetSource) {
               New-Item -ItemType Directory -Force -Path $addonAssetParent | Out-Null
               Copy-Item (Join-Path $assetSource "*") $addonAssetParent -Force
             }
-            $addonOut = Join-Path $root ("dist/SpotiWoW-Octo-Addon-" + $variant.Code + ".zip")
+            $addonOut = Join-Path $root ("dist/SpotiWoW-Dev-Addon-" + $variant.Code + ".zip")
             if (Test-Path $addonOut) { Remove-Item $addonOut -Force }
             Compress-Archive -Path (Join-Path $addonStage "*") -DestinationPath $addonOut -CompressionLevel Optimal
           }
@@ -112,8 +112,8 @@ jobs:
         run: |
           $root = $env:GITHUB_WORKSPACE
           $repoPath = Join-Path $root "installer/repo.txt"
-          $iconPath = Join-Path $root "installer/SpotiWoW-Octo.ico"
-          $scriptPath = Join-Path $root "installer/SpotiWoW-OctoSetup.py"
+          $iconPath = Join-Path $root "installer/SpotiWoW-Dev.ico"
+          $scriptPath = Join-Path $root "installer/SpotiWoW-DevSetup.py"
           $distPath = Join-Path $root "dist"
           $workPath = Join-Path $root "build/setup"
 
@@ -127,7 +127,7 @@ jobs:
 
           New-Item -ItemType Directory -Force -Path $distPath | Out-Null
           python -m PyInstaller --clean --noconfirm --onefile --windowed `
-            --name SpotiWoW-Octo-Setup `
+            --name SpotiWoW-Dev-Setup `
             --icon "$iconPath" `
             --add-data "$repoPath;." `
             --add-data "$iconPath;." `
@@ -139,9 +139,9 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            dist/SpotiWoW-Octo-Setup.exe
-            dist/SpotiWoW-Octo-Portable-FR.zip
-            dist/SpotiWoW-Octo-Portable-US.zip
-            dist/SpotiWoW-Octo-Addon-FR.zip
-            dist/SpotiWoW-Octo-Addon-US.zip
+            dist/SpotiWoW-Dev-Setup.exe
+            dist/SpotiWoW-Dev-Portable-FR.zip
+            dist/SpotiWoW-Dev-Portable-US.zip
+            dist/SpotiWoW-Dev-Addon-FR.zip
+            dist/SpotiWoW-Dev-Addon-US.zip
 

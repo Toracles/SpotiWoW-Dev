@@ -37,7 +37,7 @@
 - Long track titles scroll in the add-on interface so the full title can be read.
 
 ## v1.4.5
-- When the WoW client closes, the bridge stops and SpotiWoW-Octo also exits the system tray automatically.
+- When the WoW client closes, the bridge stops and SpotiWoW-Dev also exits the system tray automatically.
 - Added a log entry for this automatic shutdown.
 
 ## v1.4.4

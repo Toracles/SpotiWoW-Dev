@@ -20,6 +20,6 @@ if not defined PYTHON_CMD (
 %PYTHON_CMD% spotify_bridge.py
 if errorlevel 1 (
   echo.
-  echo SpotiWoW-Octo bridge exited with an error. Review the message above.
+  echo SpotiWoW-Dev bridge exited with an error. Review the message above.
   pause
 )
