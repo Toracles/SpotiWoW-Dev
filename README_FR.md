@@ -26,7 +26,7 @@ L’installateur ne demande jamais de Client Secret et ne télécharge pas Turtl
 - Raccourci `Ctrl+Alt+L` pour activer/désactiver Lyrics depuis le compagnon, sans saisir de commande dans le chat.
 - Message `Mode Lyrics : ON/OFF` affiché localement dans la fenêtre de chat via `DEFAULT_CHAT_FRAME:AddMessage`. Aucun message de statut n’est envoyé aux autres joueurs.
 - Lecteur à fond charbon et accents néon en trois formats : compact (300 × 68 px), carré (236 × 236 px) et agrandi (460 × 164 px). Pochette Spotify, artiste, album, temps et commandes varient selon le format. Sélection dans `/spn settings` ou commande `/spn mode compact|square|expanded`.
-- Thèmes Obsidian, Azerite, Fel et Bloodmoon, avec accents néon, lueur, bordures et commandes personnalisables ; progression réglable et cliquable pour chercher dans le morceau.
+- Thèmes Obsidian, Azerite, Fel, Bloodmoon, Puits de soleil, Aube-Argent et Set du Croc, avec accents néon, lueur, bordures et commandes personnalisables ; progression réglable et cliquable pour chercher dans le morceau.
 - Le bouton `...` ouvre le panneau complet, habillé comme une fenêtre classique de WoW : thème, format, couleurs, lueur, bordure, boutons, métadonnées, commandes et progression. Le bouton supérieur parcourt compact, carré et agrandi.
 - Le panneau droit agrandi affiche Spotify, l’état de lecture, le volume et les raccourcis Volume/Paroles.
 - Les modes aléatoire, répétition album et répétition morceau restent indiqués dans le lecteur. Obsidian, Azerite, Fel et Bloodmoon gardent chacun leur accent néon.
