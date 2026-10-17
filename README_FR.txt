@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.6.13-alpha — Français
+# SpotiWoW-Dev v1.6.14 — Français
 
 > **Version de développement** — destinée aux tests ; des bugs et changements restent possibles.
 
@@ -31,6 +31,7 @@ Le setup est lié à sa release GitHub précise et vérifie son tag, le SHA du c
 - Recherche de paroles horodatées multi-sources et cache local.
 - Lanceur de zone de notification Windows sans console CMD visible.
 - Arrêt automatique du bridge lorsque le processus du client `WoW.exe` se ferme, y compris avec Alt+F4.
+- Vérification des releases GitHub publiées sans clé API : le bridge ne signale une version que lorsque son installateur est disponible. L’addon affiche le rappel dans le chat local à chaque connexion ; le menu de notification Windows indique la version et ouvre directement sa page de release.
 
 Les paroles elles-mêmes restent envoyées dans le canal choisi si cette option est activée. Les noms techniques `SpotifyNowDB`, `SpotifyNowState.txt` et `SpotifyNowCommand.txt` sont conservés pour la compatibilité.
 
