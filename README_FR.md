@@ -34,6 +34,7 @@ L’installateur ne demande jamais de Client Secret et ne télécharge pas Turtl
 Les paroles elles-mêmes restent envoyées dans le canal choisi si cette option est activée. Les noms techniques `SpotifyNowDB`, `SpotifyNowState.txt` et `SpotifyNowCommand.txt` sont conservés pour la compatibilité.
 
 ## Dépannage
+- Consulte le [guide de dépannage en français](TROUBLESHOOTING_FR.md) pour les problèmes de connexion, de jaquette, de métadonnées, de paroles et de commandes.
 - Journaux : `logs/bridge.log` et `logs/launcher.log` dans le dossier de l’application compagnon.
 - Si aucun dossier n’est détecté, sélectionne manuellement celui qui contient `VanillaFixes.exe`.
 
