@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.6.13-alpha
+# SpotiWoW-Dev v1.6.14
 
 > **Development build for Turtle WoW / OctoWoW.** This version is still evolving and may contain bugs or experimental changes.
 
@@ -12,6 +12,7 @@ SpotiWoW-Dev brings Spotify playback into Turtle WoW through a lightweight Windo
 - **Spotify controls:** play/pause, previous/next, seeking, volume, shuffle, and repeat. Shuffle and repeat states remain visibly indicated on the player.
 - **Lyrics:** synchronized multi-source lookup with a local cache, configurable chat channel, and `Ctrl+Alt+L` toggle. The Lyrics status notice is local to your chat window.
 - **Windows companion:** connects to Spotify, supplies live track metadata and artwork to the add-on, and stops the bridge when the game client exits.
+- **Update reminders:** checks published releases without a GitHub API key, shows a local chat notice at every login when the setup is available, and provides a direct release link in the notification-area menu.
 - **French and US English editions:** localized add-on messages and language-specific add-on packages are available in Releases.
 
 ## Documentation
@@ -35,6 +36,7 @@ For requirements, Spotify setup, and installation steps, see the guides above. `
 - **Commandes Spotify :** lecture/pause, morceau précédent/suivant, recherche, volume, aléatoire et répétition. Les états aléatoire et répétition restent visibles sur le lecteur.
 - **Paroles :** recherche synchronisée auprès de plusieurs sources, cache local et choix du canal. `Ctrl+Alt+L` active ou désactive les paroles ; son message de statut reste local à ta fenêtre de chat.
 - **Compagnon Windows :** connexion à Spotify, transmission des métadonnées et des jaquettes en direct à l’addon, puis arrêt du bridge à la fermeture du client.
+- **Rappels de mise à jour :** vérification des releases publiées sans clé API GitHub, message local dans le chat à chaque connexion si le setup est disponible, et lien direct depuis le menu de notification.
 - **Éditions française et anglaise US :** messages traduits et paquets addon par langue disponibles dans les Releases.
 
 ## Versions linguistiques
