@@ -1,39 +1,48 @@
-## 1.4.6
+# Changelog
+
+## v1.4.11
+- Restyled the interface with a dark metallic frame, framed cover art, dark controls, and a neon accent; all four themes retain distinct colors.
+- Enlarged the compact player to 300 × 68 px, separated volume, and constrained long titles to prevent overlap.
+- Added persistent shuffle, repeat album, and repeat track indicators, including in compact mode.
+- Artwork is now generated as RGBA TGA for better compatibility with the 1.12 client.
+- Removed the unconfigured SignPath signing step from the GitHub Actions workflow.
+
+## v1.4.10
+- Added a settings panel, available from the player or `/spn settings`, to choose a theme and switch between compact and expanded layouts.
+
+## v1.4.9
+- Redesigned the WoW mini-player with premium metallic styling and Obsidian, Azerite, Fel, and Bloodmoon themes; accent, border, glow, button, metadata, and progress settings are customizable.
+- Added an expanded player with Spotify cover art, album, playback time, shuffle, and repeat; the compact layout retains its 250 × 58 px dimensions at this version.
+- Settings persist in WoW SavedVariables, with French and US English localization.
+- The companion downloads Spotify covers and converts them to local textures for the add-on.
+
+## v1.4.6
 - The bridge checks Spotify every 10 seconds to refresh track metadata.
 - Long track titles scroll in the add-on interface so the full title can be read.
 
-## 1.4.5
+## v1.4.5
 - When the WoW client closes, the bridge stops and SpotiWoW-Octo also exits the system tray automatically.
 - Added a log entry for this automatic shutdown.
 
-# Changelog
-
 ## v1.4.4
 - Removed the three retired root-level maintainer guides and their obsolete README links. `.gitignore` now prevents them from being reintroduced accidentally.
-- Retains the v1.4.3 fix that monitors the actual `WoW.exe` process to stop the bridge after Alt+F4.
+- Retained the v1.4.3 fix that monitors the actual `WoW.exe` process to stop the bridge after Alt+F4.
 
 ## v1.4.3
-- Fixed automatic bridge shutdown by monitoring the actual `WoW.exe` client instead of every executable in the game folder. This prevents a leftover helper process from keeping the bridge running after Alt+F4.
+- Fixed automatic bridge shutdown by monitoring the actual `WoW.exe` client instead of every executable in the game folder.
 - Added diagnostic logging for the tracked client PID and session closure.
-
 
 ## v1.4.2
 - Fixed the setup installer crash when formatting the completion message: the language selector no longer conflicts with the template’s `{language}` placeholder.
 
 ## v1.4.1
-- Fixed the GitHub Actions release workflow by passing absolute icon and script paths to PyInstaller, preventing it from looking for the icon under `build/launcher`.
-- Updated GitHub Actions to Node.js 24-compatible major versions to address the Node.js 20 deprecation warning.
+- Fixed the GitHub Actions release workflow by passing absolute icon and script paths to PyInstaller.
+- Updated GitHub Actions to Node.js 24-compatible versions to address the Node.js 20 deprecation warning.
 
 ## v1.4.0
 - Added full French (FR) and US English add-on variants.
 - Official add-on author: CloudNine_Ex.
 - Localized local system messages, help, tooltips, and now-playing announcements.
-- Ctrl+Alt+L still works without typing a command into the in-game chat. ON/OFF status is shown only in the local chat frame.
+- Ctrl+Alt+L works without typing a command into the in-game chat. ON/OFF status appears only in the local chat frame.
 - The installer lets users choose a language and downloads the matching package.
 - Technical identifiers and existing SavedVariables are retained for compatibility.
-## 1.4.9
-- Redesigned the WoW mini-player with premium metallic styling and Obsidian, Azerite, Fel, and Bloodmoon themes; accent, border, glow, button, metadata, and progress settings are customizable.
-- Added an expanded player with Spotify cover art, album, playback time, shuffle, and repeat; compact mode retains its 250 × 58 px dimensions.
-- Settings persist in WoW SavedVariables, with French and US English localization.
-- The companion downloads Spotify covers and converts them to local textures for the add-on.
-

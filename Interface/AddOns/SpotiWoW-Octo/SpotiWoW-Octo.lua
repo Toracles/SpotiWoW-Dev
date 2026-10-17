@@ -4,7 +4,12 @@
 local CHANNELS = { say="SAY", yell="YELL", party="PARTY", guild="GUILD", raid="RAID", emote="EMOTE" }
 local CMD = { prev="prev", pause="pause", next="next", back="back", fwd="fwd", voldown="voldown", volup="volup", shuffle="shuffle", ["repeat"]="repeat" }
 local Locale = SPOTIWOW_OCTO_L or {}
-local function T(key) return Locale[key] or key end
+local UI_FALLBACK = {
+    settings_title="Player Settings", settings_theme="Theme", settings_expand="Expand player", settings_compact="Use compact player",
+    theme_obsidian="Obsidian", theme_azerite="Azerite", theme_fel="Fel", theme_bloodmoon="Bloodmoon",
+    mode_shuffle="SHUFFLE", mode_repeat_all="REPEAT ALL", mode_repeat_track="REPEAT 1",
+}
+local function T(key) return Locale[key] or UI_FALLBACK[key] or key end
 local playing, volume, SendCommand = false, -1, nil
 local ApplyStyle, RefreshUI
 local lastLyricsModeSeen = nil
@@ -34,46 +39,65 @@ end
 
 local ui = CreateFrame("Frame", "SpotifyNowFrame", UIParent)
 local currentPosMs,durationMs,stateTick=0,0,0
-ui:SetWidth(250); ui:SetHeight(58); ui:SetPoint("CENTER", UIParent, "CENTER", 0, -200)
+ui:SetWidth(300); ui:SetHeight(68); ui:SetPoint("CENTER", UIParent, "CENTER", 0, -200)
 ui:SetFrameStrata("MEDIUM"); ui:SetMovable(true); ui:EnableMouse(true); ui:SetClampedToScreen(true); ui:RegisterForDrag("LeftButton")
 ui:SetBackdrop({ bgFile="Interface\\Tooltips\\UI-Tooltip-Background", edgeFile="Interface\\Tooltips\\UI-Tooltip-Border", tile=true, tileSize=16, edgeSize=12, insets={left=3,right=3,top=3,bottom=3} })
 ui:SetScript("OnDragStart", function() this:StartMoving() end)
 ui:SetScript("OnDragStop", function() this:StopMovingOrSizing(); local p,_,rp,x,y=this:GetPoint(); SpotifyNowDB.pos={p,rp,x,y} end)
 
-local art = ui:CreateTexture("SpotifyNowArtwork", "ARTWORK")
-art:SetWidth(34); art:SetHeight(34); art:SetPoint("TOPLEFT",ui,"TOPLEFT",7,-6); art:SetTexture("Interface\\Icons\\INV_Misc_Note_01")
+local artFrame=CreateFrame("Frame",nil,ui)
+artFrame:SetFrameLevel(ui:GetFrameLevel()+1)
+artFrame:SetBackdrop({edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=8,insets={left=2,right=2,top=2,bottom=2}})
+artFrame:SetBackdropColor(0,0,0,0)
+local art = artFrame:CreateTexture("SpotifyNowArtwork", "ARTWORK")
+art:SetWidth(34); art:SetHeight(34); art:SetPoint("TOPLEFT",artFrame,"TOPLEFT",3,-3); art:SetTexture("Interface\\Icons\\INV_Misc_Note_01")
 local titleText=ui:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
 titleText:SetPoint("TOPLEFT",ui,"TOPLEFT",46,-8); titleText:SetWidth(128); titleText:SetJustifyH("LEFT")
 local volText=ui:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
-volText:SetPoint("TOPRIGHT",ui,"TOPRIGHT",-30,-8); volText:SetJustifyH("RIGHT")
+volText:SetWidth(40); volText:SetPoint("TOPRIGHT",ui,"TOPRIGHT",-52,-8); volText:SetJustifyH("RIGHT")
+local modeText=ui:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
+modeText:SetPoint("TOPLEFT",ui,"TOPLEFT",46,-29); modeText:SetWidth(168); modeText:SetJustifyH("LEFT"); modeText:Hide()
 local artistText=ui:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
 artistText:SetPoint("TOPLEFT",ui,"TOPLEFT",96,-34); artistText:SetWidth(242); artistText:SetJustifyH("LEFT"); artistText:Hide()
 local albumText=ui:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
 albumText:SetPoint("TOPLEFT",ui,"TOPLEFT",96,-51); albumText:SetWidth(242); albumText:SetJustifyH("LEFT"); albumText:Hide()
 local timeText=ui:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
 timeText:SetPoint("BOTTOMRIGHT",ui,"BOTTOMRIGHT",-8,30); timeText:SetJustifyH("RIGHT"); timeText:Hide()
-local expandButton=CreateFrame("Button","SpotifyNowExpandButton",ui,"UIPanelButtonTemplate")
-expandButton:SetWidth(20); expandButton:SetHeight(17); expandButton:SetPoint("TOPRIGHT",ui,"TOPRIGHT",-5,-4); expandButton:SetText("+")
+local function SkinButton(button)
+    button:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",tile=false,edgeSize=1,insets={left=1,right=1,top=1,bottom=1}})
+    button:SetBackdropColor(0.025,0.03,0.045,0.98); button:SetBackdropBorderColor(0.36,0.36,0.42,1)
+    local fs=button:CreateFontString(button:GetName() and (button:GetName().."Text") or nil,"OVERLAY","GameFontNormalSmall")
+    fs:SetPoint("CENTER",button,"CENTER",0,0); fs:SetTextColor(0.9,0.9,0.94)
+    return fs
+end
+local buttonLabels={}
+local function SetButtonText(button,value) local fs=buttonLabels[button]; if fs then fs:SetText(value) end end
+local expandButton=CreateFrame("Button","SpotifyNowExpandButton",ui)
+expandButton:SetWidth(20); expandButton:SetHeight(17); expandButton:SetPoint("TOPRIGHT",ui,"TOPRIGHT",-5,-4)
+buttonLabels[expandButton]=SkinButton(expandButton); SetButtonText(expandButton,"+")
 expandButton:SetScript("OnClick",function() SpotifyNowDB.style.expanded=not SpotifyNowDB.style.expanded; ApplyStyle(); RefreshUI() end)
-local settingsButton=CreateFrame("Button","SpotifyNowSettingsButton",ui,"UIPanelButtonTemplate")
-settingsButton:SetWidth(20); settingsButton:SetHeight(17); settingsButton:SetPoint("TOPRIGHT",ui,"TOPRIGHT",-28,-4); settingsButton:SetText("...")
+local settingsButton=CreateFrame("Button","SpotifyNowSettingsButton",ui)
+settingsButton:SetWidth(20); settingsButton:SetHeight(17); settingsButton:SetPoint("TOPRIGHT",ui,"TOPRIGHT",-28,-4)
+buttonLabels[settingsButton]=SkinButton(settingsButton); SetButtonText(settingsButton,"...")
 local settingsPanel=CreateFrame("Frame","SpotifyNowSettingsPanel",UIParent)
 settingsPanel:SetWidth(220); settingsPanel:SetHeight(112); settingsPanel:SetPoint("CENTER",UIParent,"CENTER",0,0)
 settingsPanel:SetFrameStrata("DIALOG"); settingsPanel:SetMovable(true); settingsPanel:EnableMouse(true); settingsPanel:RegisterForDrag("LeftButton")
-settingsPanel:SetBackdrop({bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",tile=true,tileSize=32,edgeSize=32,insets={left=8,right=8,top=8,bottom=8}})
+settingsPanel:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=false,edgeSize=14,insets={left=8,right=8,top=8,bottom=8}})
 settingsPanel:SetBackdropColor(0.025,0.035,0.05,0.98)
 settingsPanel:SetScript("OnDragStart",function() this:StartMoving() end); settingsPanel:SetScript("OnDragStop",function() this:StopMovingOrSizing() end)
 settingsPanel:Hide()
 local settingsTitle=settingsPanel:CreateFontString(nil,"OVERLAY","GameFontNormal")
 settingsTitle:SetPoint("TOP",settingsPanel,"TOP",0,-15); settingsTitle:SetText(T("settings_title"))
-local themeButton=CreateFrame("Button",nil,settingsPanel,"UIPanelButtonTemplate")
+local themeButton=CreateFrame("Button",nil,settingsPanel)
 themeButton:SetWidth(186); themeButton:SetHeight(24); themeButton:SetPoint("TOP",settingsPanel,"TOP",0,-38)
-local sizeButton=CreateFrame("Button",nil,settingsPanel,"UIPanelButtonTemplate")
+buttonLabels[themeButton]=SkinButton(themeButton)
+local sizeButton=CreateFrame("Button",nil,settingsPanel)
 sizeButton:SetWidth(186); sizeButton:SetHeight(24); sizeButton:SetPoint("TOP",themeButton,"BOTTOM",0,-6)
+buttonLabels[sizeButton]=SkinButton(sizeButton)
 local function RefreshSettingsPanel()
     local names={obsidian=T("theme_obsidian"),azerite=T("theme_azerite"),fel=T("theme_fel"),bloodmoon=T("theme_bloodmoon")}
-    themeButton:SetText(T("settings_theme")..": "..(names[SpotifyNowDB.style.theme] or names.obsidian))
-    sizeButton:SetText(SpotifyNowDB.style.expanded and T("settings_compact") or T("settings_expand"))
+    SetButtonText(themeButton,T("settings_theme")..": "..(names[SpotifyNowDB.style.theme] or names.obsidian))
+    SetButtonText(sizeButton,SpotifyNowDB.style.expanded and T("settings_compact") or T("settings_expand"))
 end
 settingsPanel:SetScript("OnShow",function() RefreshSettingsPanel() end)
 settingsButton:SetScript("OnClick",function() if settingsPanel:IsShown() then settingsPanel:Hide() else RefreshSettingsPanel(); settingsPanel:Show() end end)
@@ -85,11 +109,12 @@ themeButton:SetScript("OnClick",function()
 end)
 sizeButton:SetScript("OnClick",function() SpotifyNowDB.style.expanded=not SpotifyNowDB.style.expanded; ApplyStyle(); RefreshUI(); RefreshSettingsPanel() end)
 local function MakeButton(name,label,tip,w,x,cmd)
-    local b=CreateFrame("Button","SpotifyNowBtn"..name,ui,"UIPanelButtonTemplate")
-    b:SetWidth(w); b:SetHeight(19); b:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",x,7); b:SetText(label)
+    local b=CreateFrame("Button","SpotifyNowBtn"..name,ui)
+    b:SetWidth(w); b:SetHeight(19); b:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",x,7)
+    buttonLabels[b]=SkinButton(b); SetButtonText(b,label)
     b:SetScript("OnClick",function() SendCommand(cmd) end)
-    b:SetScript("OnEnter",function() GameTooltip:SetOwner(this,"ANCHOR_TOP"); GameTooltip:SetText(tip); GameTooltip:Show() end)
-    b:SetScript("OnLeave",function() GameTooltip:Hide() end)
+    b:SetScript("OnEnter",function() this:SetBackdropBorderColor(0.62,0.4,1,1); GameTooltip:SetOwner(this,"ANCHOR_TOP"); GameTooltip:SetText(tip); GameTooltip:Show() end)
+    b:SetScript("OnLeave",function() this:SetBackdropBorderColor(0.36,0.36,0.42,1); GameTooltip:Hide() end)
     return b
 end
 local controls={}
@@ -100,10 +125,12 @@ controls.back=MakeButton("Back","-10",T("back_10"),30,103,CMD.back)
 controls.fwd=MakeButton("Fwd","+10",T("forward_10"),30,137,CMD.fwd)
 controls.voldown=MakeButton("VolDown","V-",T("volume_down"),27,171,CMD.voldown)
 controls.volup=MakeButton("VolUp","V+",T("volume_up"),27,203,CMD.volup)
-controls.shuffle=MakeButton("Shuffle","S",T("shuffle"),25,238,"shuffle")
-controls["repeat"]=MakeButton("Repeat","R",T("repeat"),25,267,"repeat")
+controls.shuffle=MakeButton("Shuffle","S",T("shuffle"),44,238,"shuffle")
+controls["repeat"]=MakeButton("Repeat","R",T("repeat"),44,286,"repeat")
 
 local progressBg=ui:CreateTexture(nil,"BORDER"); progressBg:SetTexture(0.08,0.09,0.11,1); progressBg:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",8,3); progressBg:SetWidth(234); progressBg:SetHeight(2)
+local topAccent=ui:CreateTexture(nil,"ARTWORK"); topAccent:SetTexture("Interface\\Buttons\\WHITE8X8"); topAccent:SetPoint("TOPLEFT",ui,"TOPLEFT",8,-3); topAccent:SetHeight(1)
+local sideDivider=ui:CreateTexture(nil,"ARTWORK"); sideDivider:SetTexture("Interface\\Buttons\\WHITE8X8")
 local progressFill=ui:CreateTexture(nil,"ARTWORK"); progressFill:SetTexture(0.12,0.84,0.38,1); progressFill:SetPoint("BOTTOMLEFT",progressBg,"BOTTOMLEFT",0,0); progressFill:SetWidth(1); progressFill:SetHeight(2)
 local progressHit=CreateFrame("Button",nil,ui); progressHit:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",8,1); progressHit:SetWidth(234); progressHit:SetHeight(7)
 progressHit:SetScript("OnClick",function()
@@ -114,6 +141,7 @@ progressHit:SetScript("OnClick",function()
 end)
 local progressSegments={}
 local progressSegmentCount=26
+local titleVisibleChars=28
 for i=1,38 do
     local segment=ui:CreateTexture(nil,"ARTWORK")
     segment:SetTexture("Interface\\Buttons\\WHITE8X8")
@@ -123,7 +151,7 @@ for i=1,38 do
 end
 
 local THEMES={
-    obsidian={bg={0.035,0.045,0.06},accent={0.12,0.84,0.38}},
+    obsidian={bg={0.025,0.025,0.04},accent={0.56,0.28,1.0}},
     azerite={bg={0.025,0.12,0.18},accent={0.08,0.78,0.92}},
     fel={bg={0.08,0.035,0.12},accent={0.24,0.95,0.28}},
     bloodmoon={bg={0.14,0.025,0.035},accent={0.92,0.17,0.20}},
@@ -138,29 +166,40 @@ ApplyStyle=function()
     local r,g,b=HexColor(s.accent); if not r then r,g,b=th.accent[1],th.accent[2],th.accent[3] end
     ui:SetBackdropColor(th.bg[1],th.bg[2],th.bg[3],0.96)
     local expanded=s.expanded==true
-    ui:SetWidth(expanded and 360 or 250); ui:SetHeight(expanded and 126 or 58)
+    ui:SetWidth(expanded and 460 or 300); ui:SetHeight(expanded and 164 or 68)
     progressBg:SetWidth(ui:GetWidth()-16); progressHit:SetWidth(ui:GetWidth()-16)
+    topAccent:SetWidth(ui:GetWidth()-16)
     progressSegmentCount=expanded and 38 or 26
     local segmentSpace=(ui:GetWidth()-16)/progressSegmentCount
     for i,segment in pairs(progressSegments) do
         segment:ClearAllPoints(); segment:SetPoint("BOTTOMLEFT",progressBg,"BOTTOMLEFT",(i-1)*segmentSpace,0)
         segment:SetWidth(segmentSpace-1)
     end
-    art:SetWidth(expanded and 78 or 34); art:SetHeight(expanded and 78 or 34)
+    art:SetWidth(expanded and 96 or 44); art:SetHeight(expanded and 96 or 44)
+    artFrame:SetWidth(art:GetWidth()+6); artFrame:SetHeight(art:GetHeight()+6)
     if expanded then
-        art:ClearAllPoints(); art:SetPoint("TOPLEFT",ui,"TOPLEFT",8,-8)
-        titleText:ClearAllPoints(); titleText:SetPoint("TOPLEFT",ui,"TOPLEFT",96,-9); titleText:SetWidth(250)
-        artistText:Show(); albumText:Show(); timeText:Show(); expandButton:SetText("-")
+        artFrame:ClearAllPoints(); artFrame:SetPoint("TOPLEFT",ui,"TOPLEFT",8,-8)
+        titleText:ClearAllPoints(); titleText:SetPoint("TOPLEFT",ui,"TOPLEFT",116,-12); titleText:SetWidth(220); titleVisibleChars=28
+        volText:ClearAllPoints(); volText:SetPoint("TOPRIGHT",ui,"TOPRIGHT",-52,-12); volText:SetWidth(40)
+        artistText:ClearAllPoints(); artistText:SetPoint("TOPLEFT",ui,"TOPLEFT",116,-42); artistText:SetWidth(230)
+        albumText:ClearAllPoints(); albumText:SetPoint("TOPLEFT",ui,"TOPLEFT",116,-60); albumText:SetWidth(230)
+        modeText:ClearAllPoints(); modeText:SetPoint("TOPLEFT",ui,"TOPLEFT",116,-82); modeText:SetWidth(250); modeText:Show()
+        sideDivider:ClearAllPoints(); sideDivider:SetPoint("TOPLEFT",ui,"TOPLEFT",346,-12); sideDivider:SetWidth(1); sideDivider:SetHeight(140); sideDivider:Show()
+        artistText:Show(); albumText:Show(); timeText:Show(); SetButtonText(expandButton,"-")
     else
-        art:ClearAllPoints(); art:SetPoint("TOPLEFT",ui,"TOPLEFT",7,-6)
-        titleText:ClearAllPoints(); titleText:SetPoint("TOPLEFT",ui,"TOPLEFT",46,-8); titleText:SetWidth(128)
-        artistText:Hide(); albumText:Hide(); timeText:Hide(); expandButton:SetText("+")
+        artFrame:ClearAllPoints(); artFrame:SetPoint("TOPLEFT",ui,"TOPLEFT",5,-5)
+        titleText:ClearAllPoints(); titleText:SetPoint("TOPLEFT",ui,"TOPLEFT",60,-9); titleText:SetWidth(132); titleVisibleChars=20
+        volText:ClearAllPoints(); volText:SetPoint("TOPRIGHT",ui,"TOPRIGHT",-52,-9); volText:SetWidth(40)
+        modeText:ClearAllPoints(); modeText:SetPoint("TOPLEFT",ui,"TOPLEFT",60,-30); modeText:SetWidth(185); modeText:Show()
+        sideDivider:Hide()
+        artistText:Hide(); albumText:Hide(); timeText:Hide(); SetButtonText(expandButton,"+")
     end
     local alpha=(s.border==false) and 0 or (s.glow and 1 or 0.55)
     ui:SetBackdropBorderColor(r,g,b,alpha)
-    for _,button in pairs(controls) do
-        local fs=getglobal(button:GetName().."Text")
-        if fs and fs.SetTextColor then if s.buttons==false then fs:SetTextColor(0.88,0.88,0.88) else fs:SetTextColor(r,g,b) end end
+    topAccent:SetTexture(r,g,b,0.8); sideDivider:SetTexture(r,g,b,0.55)
+    for button,fs in pairs(buttonLabels) do
+        if fs and fs.SetTextColor then if s.buttons==false then fs:SetTextColor(0.88,0.88,0.94) else fs:SetTextColor(r,g,b) end end
+        if button.SetBackdropBorderColor then button:SetBackdropBorderColor(r*0.72,g*0.72,b*0.72,0.9) end
     end
     art:SetVertexColor(1,1,1,1)
     if s.progressColor then local pr,pg,pb=HexColor(s.progressColor); if pr then r,g,b=pr,pg,pb end end
@@ -172,15 +211,15 @@ ApplyStyle=function()
     if s.progress==false then progressBg:Hide(); progressFill:Hide(); progressHit:Hide(); for _,segment in pairs(progressSegments) do segment:Hide() end else progressBg:Show(); progressFill:Show(); progressHit:Show() end
     if s.controls==false then for _,button in pairs(controls) do button:Hide() end else for _,button in pairs(controls) do button:Show() end end
     if not expanded or s.controls==false then controls.shuffle:Hide(); controls["repeat"]:Hide() end
-    if s.metadata==false then titleText:Hide(); volText:Hide(); artistText:Hide(); albumText:Hide(); art:Hide() else titleText:Show(); volText:Show(); art:Show(); if expanded then artistText:Show(); albumText:Show() end end
+    if s.metadata==false then titleText:Hide(); volText:Hide(); artistText:Hide(); albumText:Hide(); art:Hide(); artFrame:Hide() else titleText:Show(); volText:Show(); art:Show(); artFrame:Show(); if expanded then artistText:Show(); albumText:Show() end end
 end
 
-local titleSource=""; local titleOffset=1; local titleElapsed=0; local TITLE_VISIBLE_CHARS=28
+local titleSource=""; local titleOffset=1; local titleElapsed=0
 local function RefreshTitle()
     if titleSource=="" then titleText:SetText(T("waiting")); return end
-    if strlen(titleSource)<=TITLE_VISIBLE_CHARS then titleText:SetText(titleSource); return end
-    local cycle=titleSource.."     "; local shown=strsub(cycle,titleOffset,titleOffset+TITLE_VISIBLE_CHARS-1)
-    if strlen(shown)<TITLE_VISIBLE_CHARS then shown=shown..strsub(cycle,1,TITLE_VISIBLE_CHARS-strlen(shown)) end
+    if strlen(titleSource)<=titleVisibleChars then titleText:SetText(titleSource); return end
+    local cycle=titleSource.."     "; local shown=strsub(cycle,titleOffset,titleOffset+titleVisibleChars-1)
+    if strlen(shown)<titleVisibleChars then shown=shown..strsub(cycle,1,titleVisibleChars-strlen(shown)) end
     titleText:SetText(shown); titleOffset=titleOffset+1; if titleOffset>strlen(cycle) then titleOffset=1 end
 end
 RefreshUI=function()
@@ -189,8 +228,8 @@ RefreshUI=function()
     if SpotifyNowDB.style.expanded then displayTitle=SpotifyNowDB.title or "" end
     if displayTitle~=titleSource then titleSource=displayTitle; titleOffset=1; RefreshTitle() end
     artistText:SetText(SpotifyNowDB.artist or ""); albumText:SetText(SpotifyNowDB.album or "")
-    playBtn:SetText(playing and "II" or ">")
-    volText:SetText(volume>=0 and (T("volume_label").." "..volume) or (T("volume_label").." --"))
+    SetButtonText(playBtn,playing and "II" or ">")
+    volText:SetText(volume>=0 and (tostring(volume).."%") or "--%")
     local pos=currentPosMs; if playing then pos=pos+math.max(0,GetTime()-stateTick)*1000 end
     local maxWidth=ui:GetWidth()-16
     local width=2; if durationMs>0 then width=math.max(1,math.min(maxWidth,maxWidth*pos/durationMs)) end
@@ -203,11 +242,19 @@ RefreshUI=function()
         for _,segment in pairs(progressSegments) do segment:Hide() end
     end
     local artwork=SpotifyNowDB.artwork or ""
-    if artwork~="" and string.find(artwork,"^[%w_%-]+%.tga$") then art:SetTexture("Interface\\AddOns\\SpotiWoW-Octo\\"..artwork) else art:SetTexture("Interface\\Icons\\INV_Misc_Note_01") end
+    if artwork~="" and string.find(artwork,"^[%w_%-]+%.tga$") then
+        art:SetTexture("Interface\\AddOns\\SpotiWoW-Octo\\"..artwork)
+    else art:SetTexture("Interface\\Icons\\INV_Misc_Note_01") end
     local function Clock(ms) local n=math.floor((ms or 0)/1000); return string.format("%d:%02d",math.floor(n/60),n%60) end
     timeText:SetText(Clock(pos).." / "..Clock(durationMs))
-    controls.shuffle:SetText(SpotifyNowDB.shuffle and "S*" or "S")
-    controls["repeat"]:SetText(SpotifyNowDB.repeatMode and "R*" or "R")
+    SetButtonText(controls.shuffle,SpotifyNowDB.shuffle and "S ON" or "S")
+    local repeatMode=SpotifyNowDB.repeatMode or "off"
+    SetButtonText(controls["repeat"],repeatMode=="context" and "R ALL" or (repeatMode=="track" and "R 1" or "R"))
+    local indicators={}
+    if SpotifyNowDB.shuffle then indicators[table.getn(indicators)+1]="|cff1ed760"..T("mode_shuffle").."|r" end
+    if repeatMode=="context" then indicators[table.getn(indicators)+1]="|cffffd34e"..T("mode_repeat_all").."|r"
+    elseif repeatMode=="track" then indicators[table.getn(indicators)+1]="|cffffd34e"..T("mode_repeat_track").."|r" end
+    modeText:SetText(table.concat(indicators,"  "))
 end
 
 local function Help()
@@ -272,13 +319,15 @@ local function PollBridgeState()
     local lyrics=f[10]=="1"; if lastLyricsModeSeen==nil then lastLyricsModeSeen=lyrics elseif lyrics~=lastLyricsModeSeen then lastLyricsModeSeen=lyrics; PrintLyricsMode(lyrics) end
     SpotifyNowDB.lyrics=lyrics
     local lyricSequence=tonumber(f[11]); if lyricSequence then if lastLyricsSequence==nil then lastLyricsSequence=lyricSequence elseif lyricSequence~=lastLyricsSequence then lastLyricsSequence=lyricSequence; local lyric=DecodeField(f[12]); if lyric~="" then SingLine(lyric) end end end
-    SpotifyNowDB.artwork=DecodeField(f[13]); SpotifyNowDB.album=DecodeField(f[14]); SpotifyNowDB.shuffle=f[15]=="1"; SpotifyNowDB.repeatMode=f[16]=="1"
+    SpotifyNowDB.artwork=DecodeField(f[13]); SpotifyNowDB.album=DecodeField(f[14]); SpotifyNowDB.shuffle=f[15]=="1"
+    SpotifyNowDB.repeatMode=DecodeField(f[17] or "")
+    if SpotifyNowDB.repeatMode=="" then SpotifyNowDB.repeatMode=(f[16]=="1") and "context" or "off" end
     RefreshUI()
 end
 local progressUiElapsed=0
 local poller=CreateFrame("Frame","SpotifyNowStatePoller")
 poller:SetScript("OnUpdate",function() local elapsed=arg1 or 0; statePollElapsed=statePollElapsed+elapsed; if statePollElapsed>=0.25 then statePollElapsed=0; PollBridgeState() end
-    if strlen(titleSource)>TITLE_VISIBLE_CHARS then titleElapsed=titleElapsed+elapsed; if titleElapsed>=0.28 then titleElapsed=titleElapsed-0.28; RefreshTitle() end end
+    if strlen(titleSource)>titleVisibleChars then titleElapsed=titleElapsed+elapsed; if titleElapsed>=0.28 then titleElapsed=titleElapsed-0.28; RefreshTitle() end end
     progressUiElapsed=progressUiElapsed+elapsed
     if progressUiElapsed>=0.25 then
         progressUiElapsed=0

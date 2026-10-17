@@ -488,7 +488,7 @@ def publish_state() -> None:
             "1" if S["lyrics_on"] else "0", str(int(S["line_seq"])),
             encode_field(S["current_lyric"]), encode_field(S["artwork"]),
             encode_field(S["album"]), "1" if S["shuffle"] else "0",
-            "1" if S["repeat"] else "0",
+            "1" if S["repeat"] else "0", encode_field(S["repeat_mode"]),
         ]
         payload = "|".join(fields) + "\n"
         try:
@@ -531,14 +531,14 @@ def download_album_art(track_id, image_url):
         return
     try:
         from PIL import Image
-        name = "artwork_" + hashlib.sha1(image_url.encode("utf-8")).hexdigest()[:16] + ".tga"
+        name = "artwork_" + hashlib.sha1(image_url.encode("utf-8")).hexdigest()[:16] + "_v2.tga"
         target = ADDON_DIR / name
         with artwork_write_lock:
             if not target.is_file():
                 req = urllib.request.Request(image_url, headers={"User-Agent": "SpotiWoW-Octo/1.4.9"})
                 with urllib.request.urlopen(req, timeout=12) as response:
                     raw = response.read(6 * 1024 * 1024)
-                image = Image.open(io.BytesIO(raw)).convert("RGB")
+                image = Image.open(io.BytesIO(raw)).convert("RGBA")
                 image.thumbnail((256, 256), Image.Resampling.LANCZOS)
                 ADDON_DIR.mkdir(parents=True, exist_ok=True)
                 temporary = ADDON_DIR / (name + ".tmp")

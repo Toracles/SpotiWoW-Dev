@@ -20,9 +20,10 @@ The installer never asks for a Client Secret and does not download Turtle WoW, V
 ## Features
 - `Ctrl+Alt+L` toggles Lyrics from the companion without typing a command into the in-game chat.
 - `Lyrics mode: ON/OFF` is displayed locally via `DEFAULT_CHAT_FRAME:AddMessage`. The status message is never sent to other players.
-- Compact metallic mini-player (250 × 58 px) or expanded player with Spotify cover art, album, playback time, shuffle, and repeat.
+- Compact neon metallic mini-player (300 × 68 px) or expanded player with Spotify cover art, album, playback time, shuffle, and repeat.
 - Obsidian, Azerite, Fel, and Bloodmoon themes, with customizable accents, glow, borders, and controls; configurable progress bar with click-to-seek.
 - Click `...` on the player (or use `/spn settings`) to choose a theme and switch between compact and expanded layouts.
+- Shuffle, repeat album, and repeat track stay visibly indicated on the player. Obsidian, Azerite, Fel, and Bloodmoon each keep their own neon accent color.
 - Settings persist in WoW. `/spn help` lists themes and options; `/spn expand` toggles the expanded player.
 - Multi-source search for timestamped lyrics and a local cache.
 - Windows notification-area launcher with no visible CMD console.
