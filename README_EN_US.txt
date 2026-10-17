@@ -25,7 +25,7 @@ Setup is pinned to its specific GitHub release and verifies the tag, source comm
 - `Ctrl+Alt+L` toggles Lyrics from the companion without typing a command into the in-game chat.
 - `Lyrics mode: ON/OFF` is displayed locally via `DEFAULT_CHAT_FRAME:AddMessage`. The status message is never sent to other players.
 - Player inspired by classic WoW panels, with a metallic frame, dark stone backdrop, gold titles, and restrained neon accents in three layouts: compact (300 × 68 px), square (236 × 236 px), and expanded (460 × 164 px). Spotify artwork, artist, album, time, and controls vary by layout. Choose in `/spn settings` or use `/spn mode compact|square|expanded`.
-- Obsidian, Azerite, Fel, and Bloodmoon themes, with customizable accents, glow, borders, and controls; configurable progress bar with click-to-seek.
+- Obsidian, Azerite, Fel, Bloodmoon, Sunwell, Silver Dawn, and Fang Set themes, with customizable accents, glow, borders, and controls; configurable progress bar with click-to-seek.
 - Shuffle, repeat album, and repeat track stay visibly indicated. Obsidian, Azerite, Fel, and Bloodmoon each keep their neon accent.
 - Settings persist in WoW. `/spn help` lists themes and options; `/spn expand` toggles the expanded player.
 - Multi-source search for timestamped lyrics and a local cache.
