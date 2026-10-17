@@ -1,5 +1,12 @@
 # Journal des modifications
 
+## v1.6.8-alpha
+- Ajoute les boutons Shuffle et Repeat au mode compact et élargit légèrement le lecteur pour les garder alignés et visibles.
+- Affiche l’état des modes de façon persistante dans Compact, Square et Expanded : fond accentué pour Shuffle et Repeat All, contour néon pour Repeat 1.
+- Repositionne la ligne d’accent au bord supérieur dans les trois formats pour la séparer des titres et des boutons, en conservant la barre de progression inférieure.
+- Uniformise le survol des boutons du lecteur et des réglages avec un fond rouge charbon, sans dégradé rouge/noir.
+- Centre l’en-tête du panneau Player Settings et aligne les deux champs hexadécimaux ainsi que leurs boutons Apply dans le cadre.
+
 ## v1.6.7-alpha
 - Corrige l’alignement du panneau Player Settings et garde toutes les options à l’intérieur du cadre.
 - Réorganise les commandes du Square Mode pour garder le volume et chaque bouton visibles, sans chevauchement.
@@ -8,7 +15,6 @@
 - Rend Button Accents visible : l’activation colore les libellés et contours avec l’accent néon choisi ; la désactivation restaure le style doré.
 - Répare Accent Hex et Progress Hex, avec application immédiate de la couleur d’accent au cadre et de la couleur de progression aux segments de la barre.
 - Ajoute des infobulles localisées pour expliquer les champs de couleur, Button Accents et Click to Seek.
-
 ## v1.6.6-alpha
 - Aligne les métadonnées et commandes de Square et Expanded, évite que le panneau d’état croise le séparateur et raccourcit les libellés du menu pour qu’ils restent lisibles.
 - Le menu Player Settings regroupe les personnalisations visuelles, les couleurs personnalisées et les options des paroles (activation et canal), avec leur état visible.
@@ -95,3 +101,4 @@
 - Le raccourci Ctrl+Alt+L reste sans saisie de commande dans le chat. Le statut ON/OFF s’affiche uniquement dans la fenêtre de chat locale.
 - L’installeur propose la langue et télécharge le paquet correspondant.
 - Les identifiants techniques et les SavedVariables existants sont conservés pour compatibilité.
+
