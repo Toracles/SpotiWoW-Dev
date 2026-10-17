@@ -94,4 +94,6 @@ SPOTIWOW_OCTO_L = {
     status_playing = "EN LECTURE",
     status_paused = "EN PAUSE",
     lyrics_toggle = "Activer / désactiver les paroles",
+    update_available = "Nouvelle version de SpotiWoW-Dev disponible : ",
+    update_download = "Télécharger : ",
 }
