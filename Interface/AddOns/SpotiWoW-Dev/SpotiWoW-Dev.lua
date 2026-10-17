@@ -7,7 +7,20 @@ local Locale = SPOTIWOW_OCTO_L or {}
 local UI_FALLBACK = {
     settings_title="Player Settings", settings_theme="Theme", settings_layout="Layout", settings_expand="Expand player", settings_compact="Use compact player",
     layout_compact="Compact", layout_square="Square", layout_expanded="Expanded", layout_help="Click options to cycle or toggle them. /spn help for commands.",
-    settings_accent="Accent", settings_progress_color="Progress color", settings_custom_accent="Accent hex", settings_custom_progress="Progress hex", settings_hex_hint="Enter a 6-digit HEX color (for example 1ED760 or #1ED760), then click Apply.", settings_apply="Apply", settings_glow="Glow", settings_border="Border", settings_buttons="Button accents", settings_buttons_hint="When on, player button text and borders use the selected neon accent.", settings_controls="Controls", settings_metadata="Track details", settings_progress="Progress bar", settings_seek="Click to seek", settings_seek_hint="Click the progress bar to jump to that position in the track.", settings_progress_style="Bar style", setting_on="ON", setting_off="OFF", color_default="Theme default",
+    settings_accent="Accent", settings_progress_color="Progress color", settings_custom_accent="Accent hex", settings_custom_progress="Progress hex", settings_hex_hint="Enter a 6-digit HEX color (for example 1ED760 or #1ED760), then click Apply.", settings_apply="Apply", settings_glow="Glow", settings_border="Border", settings_buttons="Button accents", settings_buttons_hint="When on, player button text and borders use the selected neon accent.", settings_controls="Controls", settings_metadata="Track details", settings_progress="Progress bar", settings_seek="Click to seek", settings_seek_hint="Hover the progress bar to preview the target time; click to seek there.", settings_seek_off_hint="Click to seek is off. Turn it on in Player Settings to jump to the hovered position.", settings_seek_preview="Target", settings_progress_style="Bar style",
+    settings_theme_hint="Cycle through Obsidian, Azerite, Fel, and Bloodmoon palettes.",
+    settings_layout_hint="Cycle the player through Compact, Square, and Expanded layouts. Your saved settings are preserved.",
+    settings_accent_hint="Choose a neon accent preset, or enter a custom HEX color below.",
+    settings_progress_color_hint="Choose a progress bar color preset, or enter a custom HEX color below.",
+    settings_glow_hint="Toggle the bright neon trim and glow effect around the player.",
+    settings_border_hint="Show or hide the player's outer frame border.",
+    settings_controls_hint="Show or hide the playback control buttons.",
+    settings_metadata_hint="Show or hide the track title, artist, album, and cover artwork.",
+    settings_progress_hint="Show or hide the playback progress bar.",
+    settings_progress_style_hint="Cycle the progress bar through Line, Thick, and Segmented styles.",
+    settings_lyrics_hint="Toggle synced lyrics in the selected chat channel.",
+    settings_channel_hint="Choose where synced lyrics are sent. Use a private channel if you do not want others to see them.",
+    settings_hex_apply_hint="Apply the HEX color entered to the left. Use six hexadecimal digits, with an optional #.", setting_on="ON", setting_off="OFF", color_default="Theme default",
     theme_obsidian="Obsidian", theme_azerite="Azerite", theme_fel="Fel", theme_bloodmoon="Bloodmoon",
     mode_shuffle="SHUFFLE", mode_repeat_all="REPEAT ALL", mode_repeat_track="REPEAT 1",
     help_1="/spn : show the current track locally", help_2="/spn say|yell|party|guild|raid|emote : announce the current track",
@@ -86,7 +99,13 @@ local function SkinButton(button)
     -- Use a flat, restrained charcoal-red overlay for both player and settings buttons.
     button:SetHighlightTexture("Interface\\Buttons\\WHITE8X8")
     local highlight=button:GetHighlightTexture()
-    if highlight then highlight:SetVertexColor(0.34,0.025,0.035,0.72) end
+    -- Keep the hover fill inset so the neon border remains visible.
+    if highlight then
+        highlight:ClearAllPoints()
+        highlight:SetPoint("TOPLEFT",button,"TOPLEFT",4,-4)
+        highlight:SetPoint("BOTTOMRIGHT",button,"BOTTOMRIGHT",-4,4)
+        highlight:SetVertexColor(0.34,0.025,0.035,0.50)
+    end
     local fs=button:CreateFontString(button:GetName() and (button:GetName().."Text") or nil,"OVERLAY","GameFontNormalSmall")
     fs:SetPoint("CENTER",button,"CENTER",0,0); fs:SetTextColor(1,0.82,0.28)
     return fs
@@ -193,6 +212,28 @@ AddSettingButton("metadata","metadata",1,3)
 AddSettingButton("progress","progress",2,3)
 AddSettingButton("seek","progressSeek",1,4)
 AddSettingButton("progressStyle","progressStyle",2,4)
+local function SetSettingsTooltip(frame,key)
+    frame:SetScript("OnEnter",function() GameTooltip:SetOwner(this,"ANCHOR_RIGHT"); GameTooltip:SetText(T(key)); GameTooltip:Show() end)
+    frame:SetScript("OnLeave",function() GameTooltip:Hide() end)
+end
+SetSettingsTooltip(themeButton,"settings_theme_hint")
+SetSettingsTooltip(layoutButton,"settings_layout_hint")
+SetSettingsTooltip(accentButton,"settings_accent_hint")
+SetSettingsTooltip(progressColorButton,"settings_progress_color_hint")
+SetSettingsTooltip(accentEntry.edit,"settings_hex_hint")
+SetSettingsTooltip(progressEntry.edit,"settings_hex_hint")
+SetSettingsTooltip(accentEntry.apply,"settings_hex_apply_hint")
+SetSettingsTooltip(progressEntry.apply,"settings_hex_apply_hint")
+SetSettingsTooltip(settingsButtons.glow.button,"settings_glow_hint")
+SetSettingsTooltip(settingsButtons.border.button,"settings_border_hint")
+SetSettingsTooltip(settingsButtons.buttons.button,"settings_buttons_hint")
+SetSettingsTooltip(settingsButtons.controls.button,"settings_controls_hint")
+SetSettingsTooltip(settingsButtons.metadata.button,"settings_metadata_hint")
+SetSettingsTooltip(settingsButtons.progress.button,"settings_progress_hint")
+SetSettingsTooltip(settingsButtons.seek.button,"settings_seek_hint")
+SetSettingsTooltip(settingsButtons.progressStyle.button,"settings_progress_style_hint")
+SetSettingsTooltip(lyricsButton,"settings_lyrics_hint")
+SetSettingsTooltip(channelButton,"settings_channel_hint")
 settingsButtons.buttons.button:SetScript("OnEnter",function() GameTooltip:SetOwner(this,"ANCHOR_RIGHT"); GameTooltip:SetText(T("settings_buttons_hint")); GameTooltip:Show() end)
 settingsButtons.buttons.button:SetScript("OnLeave",function() GameTooltip:Hide() end)
 settingsButtons.seek.button:SetScript("OnEnter",function() GameTooltip:SetOwner(this,"ANCHOR_RIGHT"); GameTooltip:SetText(T("settings_seek_hint")); GameTooltip:Show() end)
@@ -268,13 +309,14 @@ end
 accentButton:SetScript("OnClick",function() CycleColor("accent") end)
 progressColorButton:SetScript("OnClick",function() CycleColor("progressColor") end)
 
+local currentButtonBorderR,currentButtonBorderG,currentButtonBorderB=0.58,0.50,0.36
 local function MakeButton(name,label,tip,w,x,cmd)
     local b=CreateFrame("Button","SpotifyNowBtn"..name,ui)
     b:SetWidth(w); b:SetHeight(19); b:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",x,7)
     buttonLabels[b]=SkinButton(b); SetButtonText(b,label)
     b:SetScript("OnClick",function() SendCommand(cmd) end)
-    b:SetScript("OnEnter",function() this:SetBackdropBorderColor(1,0.78,0.28,1); GameTooltip:SetOwner(this,"ANCHOR_TOP"); GameTooltip:SetText(tip); GameTooltip:Show() end)
-    b:SetScript("OnLeave",function() this:SetBackdropBorderColor(0.58,0.50,0.36,1); GameTooltip:Hide() end)
+    b:SetScript("OnEnter",function() this:SetBackdropBorderColor(currentButtonBorderR,currentButtonBorderG,currentButtonBorderB,1); GameTooltip:SetOwner(this,"ANCHOR_TOP"); GameTooltip:SetText(tip); GameTooltip:Show() end)
+    b:SetScript("OnLeave",function() this:SetBackdropBorderColor(currentButtonBorderR,currentButtonBorderG,currentButtonBorderB,0.95); GameTooltip:Hide() end)
     return b
 end
 local controls={}
@@ -294,12 +336,52 @@ local progressBg=ui:CreateTexture(nil,"BORDER"); progressBg:SetTexture(0.08,0.09
 local topAccent=ui:CreateTexture(nil,"ARTWORK"); topAccent:SetTexture("Interface\\Buttons\\WHITE8X8"); topAccent:SetPoint("TOPLEFT",ui,"TOPLEFT",18,-2); topAccent:SetHeight(1)
 local sideDivider=ui:CreateTexture(nil,"ARTWORK"); sideDivider:SetTexture("Interface\\Buttons\\WHITE8X8")
 local progressFill=ui:CreateTexture(nil,"ARTWORK"); progressFill:SetTexture(0.12,0.84,0.38,1); progressFill:SetPoint("BOTTOMLEFT",progressBg,"BOTTOMLEFT",0,0); progressFill:SetWidth(1); progressFill:SetHeight(2)
+local seekMarker=ui:CreateTexture(nil,"OVERLAY"); seekMarker:SetTexture("Interface\\Buttons\\WHITE8X8"); seekMarker:SetWidth(2); seekMarker:SetHeight(10); seekMarker:Hide()
+local seekPreview=ui:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall"); seekPreview:SetWidth(68); seekPreview:SetJustifyH("CENTER"); seekPreview:Hide()
 local progressHit=CreateFrame("Button",nil,ui); progressHit:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",8,1); progressHit:SetWidth(234); progressHit:SetHeight(7)
-progressHit:SetScript("OnClick",function()
-    if not SpotifyNowDB.style.progressSeek or durationMs <= 0 then return end
+local function SeekRatio()
     local x=GetCursorPosition(); local scale=UIParent:GetEffectiveScale() or 1; x=x/scale
     local left=progressHit:GetLeft() or 0; local width=progressHit:GetWidth() or 234
-    SendCommand("seek", tostring(floor(math.max(0,math.min(1,(x-left)/width))*durationMs)))
+    return math.max(0,math.min(1,(x-left)/width))
+end
+local lastSeekPreviewSecond=-1
+local function UpdateSeekPreview()
+    if not SpotifyNowDB.style.progressSeek or durationMs<=0 then seekMarker:Hide(); seekPreview:Hide(); return end
+    local ratio=SeekRatio(); local width=progressBg:GetWidth() or 234
+    local markerX=math.max(1,math.min(width-1,ratio*width))
+    seekMarker:ClearAllPoints(); seekMarker:SetPoint("BOTTOMLEFT",progressBg,"BOTTOMLEFT",markerX-1,0); seekMarker:Show()
+    local target=math.floor((durationMs/1000)*ratio)
+    if target~=lastSeekPreviewSecond then
+        lastSeekPreviewSecond=target
+        local targetText=string.format("%d:%02d",math.floor(target/60),target%60)
+        seekPreview:SetText(targetText)
+        GameTooltip:SetOwner(progressHit,"ANCHOR_TOP")
+        GameTooltip:SetText(T("settings_seek_preview")..": "..targetText)
+        GameTooltip:Show()
+    end
+    seekPreview:ClearAllPoints()
+    local labelX=math.max(0,math.min(math.max(0,width-68),markerX-34))
+    seekPreview:SetPoint("BOTTOMLEFT",progressBg,"BOTTOMLEFT",labelX,8)
+    seekPreview:Show()
+end
+progressHit:SetScript("OnEnter",function()
+    lastSeekPreviewSecond=-1
+    if SpotifyNowDB.style.progressSeek and durationMs>0 then
+        UpdateSeekPreview()
+        progressHit:SetScript("OnUpdate",function() UpdateSeekPreview() end)
+    else
+        seekMarker:Hide(); seekPreview:Hide()
+        GameTooltip:SetOwner(this,"ANCHOR_TOP")
+        GameTooltip:SetText(T("settings_seek_off_hint"))
+        GameTooltip:Show()
+    end
+end)
+progressHit:SetScript("OnLeave",function()
+    progressHit:SetScript("OnUpdate",nil); seekMarker:Hide(); seekPreview:Hide(); GameTooltip:Hide()
+end)
+progressHit:SetScript("OnClick",function()
+    if not SpotifyNowDB.style.progressSeek or durationMs <= 0 then return end
+    SendCommand("seek", tostring(floor(SeekRatio()*durationMs)))
 end)
 local progressSegments={}
 local progressSegmentCount=26
@@ -407,6 +489,7 @@ ApplyStyle=function()
     local buttonTextR,buttonTextG,buttonTextB=1,0.82,0.28
     local buttonBorderR,buttonBorderG,buttonBorderB=0.58,0.50,0.36
     if s.buttons~=false then buttonTextR,buttonTextG,buttonTextB=r,g,b; buttonBorderR,buttonBorderG,buttonBorderB=r,g,b end
+    currentButtonBorderR,currentButtonBorderG,currentButtonBorderB=buttonBorderR,buttonBorderG,buttonBorderB
     for button,fs in pairs(buttonLabels) do
         if fs and fs.SetTextColor then fs:SetTextColor(buttonTextR,buttonTextG,buttonTextB) end
         if button.SetBackdropColor then button:SetBackdropColor(0.16,0.025,0.035,1) end
@@ -416,13 +499,14 @@ ApplyStyle=function()
     if compact then titleText:SetFontObject(GameFontNormalSmall) else titleText:SetFontObject(GameFontNormal) end
     art:SetVertexColor(1,1,1,1)
     if s.progressColor then local pr,pg,pb=HexColor(s.progressColor); if pr then r,g,b=pr,pg,pb end end
+    seekMarker:SetVertexColor(r,g,b,1)
     progressFill:SetTexture(r,g,b,1)
     for _,segment in pairs(progressSegments) do segment:SetVertexColor(r,g,b,1) end
     local ph=2
     if s.progressStyle=="thick" then ph=4 elseif s.progressStyle=="segmented" then ph=3 end
     progressBg:SetHeight(ph); progressFill:SetHeight(ph)
     for _,segment in pairs(progressSegments) do segment:SetHeight(ph) end
-    if s.progress==false then progressBg:Hide(); progressFill:Hide(); progressHit:Hide(); for _,segment in pairs(progressSegments) do segment:Hide() end else progressBg:Show(); progressFill:Show(); progressHit:Show() end
+    if s.progress==false then progressBg:Hide(); progressFill:Hide(); progressHit:Hide(); seekMarker:Hide(); seekPreview:Hide(); GameTooltip:Hide(); for _,segment in pairs(progressSegments) do segment:Hide() end else progressBg:Show(); progressFill:Show(); progressHit:Show() end
     if s.controls==false then for _,button in pairs(controls) do button:Hide() end else for _,button in pairs(controls) do button:Show() end end
     if compact then controls.lyrics:Hide() end
     if s.metadata==false then titleText:Hide(); volText:Hide(); artistText:Hide(); albumText:Hide(); art:Hide(); artFrame:Hide() else titleText:Show(); volText:Show(); art:Show(); artFrame:Show(); if expanded or square then artistText:Show(); albumText:Show() end end
