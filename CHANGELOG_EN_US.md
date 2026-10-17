@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6.16
+- Corrects the vertical alignment of “SpotiWoW” inside the Player Settings header plaque.
+
 ## v1.6.15
 - Fixes add-on initialization by attaching the Lyrics and Channel tooltips only after their buttons are created, restoring the player and `/spn` commands.
 

@@ -4,7 +4,7 @@
 local CHANNELS = { say="SAY", yell="YELL", party="PARTY", guild="GUILD", raid="RAID", emote="EMOTE" }
 local CMD = { prev="prev", pause="pause", next="next", back="back", fwd="fwd", voldown="voldown", volup="volup", shuffle="shuffle", ["repeat"]="repeat" }
 local Locale = SPOTIWOW_OCTO_L or {}
-local ADDON_VERSION = "1.6.15"
+local ADDON_VERSION = "1.6.16"
 local UI_FALLBACK = {
     settings_title="Player Settings", settings_theme="Theme", settings_layout="Layout", settings_expand="Expand player", settings_compact="Use compact player",
     layout_compact="Compact", layout_square="Square", layout_expanded="Expanded", layout_help="Click options to cycle or toggle them. /spn help for commands.",
@@ -133,7 +133,7 @@ settingsHeader:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
 settingsHeader:SetWidth(210); settingsHeader:SetHeight(42); settingsHeader:SetPoint("TOP",settingsPanel,"TOP",0,14)
 local settingsBrand=settingsPanel:CreateFontString(nil,"OVERLAY","GameFontNormal")
 settingsBrand:SetWidth(180); settingsBrand:SetJustifyH("CENTER")
-settingsBrand:SetPoint("CENTER",settingsPanel,"TOP",0,-7); settingsBrand:SetText("SpotiWoW"); settingsBrand:SetTextColor(1,0.82,0.28)
+settingsBrand:SetPoint("CENTER",settingsHeader,"CENTER",0,7); settingsBrand:SetText("SpotiWoW"); settingsBrand:SetTextColor(1,0.82,0.28)
 settingsPanel:SetScript("OnDragStart",function() this:StartMoving() end); settingsPanel:SetScript("OnDragStop",function() this:StopMovingOrSizing() end)
 settingsPanel:Hide()
 local settingsTitle=settingsPanel:CreateFontString(nil,"OVERLAY","GameFontNormal")

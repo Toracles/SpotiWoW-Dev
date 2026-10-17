@@ -1,5 +1,8 @@
 # Journal des modifications
 
+## v1.6.16
+- Corrige l’alignement vertical de « SpotiWoW » dans le cartouche du menu Player Settings.
+
 ## v1.6.15
 - Corrige le chargement de l’addon : les infobulles des boutons Lyrics et Channel sont maintenant reliées après leur création, ce qui rétablit le lecteur et les commandes `/spn`.
 
