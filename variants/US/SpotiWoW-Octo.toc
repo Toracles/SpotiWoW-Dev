@@ -1,0 +1,9 @@
+## Interface: 11200
+## Title: SpotiWoW-Octo
+## Notes: Spotify companion for Turtle WoW through the SuperWoW file bridge.
+## Author: CloudNine_Ex
+## Version: 1.4.10
+## SavedVariables: SpotifyNowDB
+
+SpotiWoW-Octo_Locale.lua
+SpotiWoW-Octo.lua

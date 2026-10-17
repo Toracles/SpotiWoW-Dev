@@ -1,0 +1,25 @@
+# Local configuration and Spotify credentials
+a*/config.json
+companion/config.json
+companion/tokens.json
+companion/lyrics_cache.json
+companion/.spotiwow_bridge_stop.flag
+companion/logs/
+companion/repo.txt
+installer/repo.txt
+
+# Build output
+build/
+build_temp/
+dist/
+release-stage-*/
+installer/dist/
+__pycache__/
+*.pyc
+*.spec
+Interface/AddOns/SpotiWoW-Octo/artwork_*.tga
+
+# Retired maintainer guide files (do not re-add to future release kits)
+/INSTALLER_GITHUB_GUIDE.md
+/INSTALLER_GITHUB_GUIDE_EN_US.md
+/INSTALLER_GITHUB_GUIDE_FR.md
