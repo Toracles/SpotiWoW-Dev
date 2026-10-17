@@ -1,5 +1,7 @@
 # SpotiWoW-Dev v1.4.15 — US English
 
+> **Development version** — this version is still evolving and may include experimental changes. It is intended for testing; bugs or behavior changes may occur.
+
 SpotiWoW-Dev connects Spotify to Turtle WoW / OctoWoW through the SuperWoW file bridge. This package uses the US English interface and in-game messages.
 
 ## Easy installation
