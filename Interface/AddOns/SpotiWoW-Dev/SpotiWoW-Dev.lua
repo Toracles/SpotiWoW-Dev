@@ -4,6 +4,7 @@
 local CHANNELS = { say="SAY", yell="YELL", party="PARTY", guild="GUILD", raid="RAID", emote="EMOTE" }
 local CMD = { prev="prev", pause="pause", next="next", back="back", fwd="fwd", voldown="voldown", volup="volup", shuffle="shuffle", ["repeat"]="repeat" }
 local Locale = SPOTIWOW_OCTO_L or {}
+local ADDON_VERSION = "1.6.14"
 local UI_FALLBACK = {
     settings_title="Player Settings", settings_theme="Theme", settings_layout="Layout", settings_expand="Expand player", settings_compact="Use compact player",
     layout_compact="Compact", layout_square="Square", layout_expanded="Expanded", layout_help="Click options to cycle or toggle them. /spn help for commands.",
@@ -30,7 +31,7 @@ local UI_FALLBACK = {
     settings_help="/spn mode compact|square|expanded; /spn expand toggles compact/expanded; /spn theme obsidian|azerite|fel|bloodmoon|sunwell|frostmourne|dreamweaver; /spn accent RRGGBB",
     settings_help2="/spn glow|border|buttons|controls|metadata|progress on|off; /spn progressstyle line|thick|segmented; /spn progresscolor RRGGBB; /spn seek on|off",
     theme_help="Themes: obsidian, azerite, fel, bloodmoon, sunwell, frostmourne, dreamweaver", color_help="Use RRGGBB (example: 1ED760), or reset.",
-    progressstyle_help="Progress styles: line, thick, segmented", spotify_label="SPOTIFY", status_playing="PLAYING", status_paused="PAUSED", lyrics_toggle="Toggle lyrics",
+    progressstyle_help="Progress styles: line, thick, segmented", spotify_label="SPOTIFY", status_playing="PLAYING", status_paused="PAUSED", lyrics_toggle="Toggle lyrics", update_available="Update available: ", update_download="Download: ",
 }
 local function T(key) return Locale[key] or UI_FALLBACK[key] or key end
 local playing, volume, SendCommand = false, -1, nil
@@ -637,6 +638,8 @@ end
 
 local lastLyricsSequence=nil; local statePollElapsed=0; local importWarningShown=false
 local lastStateSequence=nil
+local loginUpdateNoticePending=false; local loginUpdateNoticeShown=false
+local availableUpdateVersion=nil; local availableUpdateUrl=nil
 local function DecodeField(value)
     return gsub(value or "","%%(%x%x)",function(hex) return strchar(tonumber(hex,16)) end)
 end
@@ -648,6 +651,38 @@ local function SplitState(payload)
         fields[index]=strsub(payload,startAt,stopAt-1); index=index+1; startAt=stopAt+1
     end
     return fields
+end
+local function IsNewerVersion(candidate)
+    local _,_,ma,mi,pa=strfind(candidate or "", "^v?(%d+)%.(%d+)%.(%d+)")
+    if not ma then return false end
+    local _,_,ca,ci,cp=strfind(ADDON_VERSION, "^v?(%d+)%.(%d+)%.(%d+)")
+    if not ca then return false end
+    ma,mi,pa,ca,ci,cp=tonumber(ma),tonumber(mi),tonumber(pa),tonumber(ca),tonumber(ci),tonumber(cp)
+    if ma~=ca then return ma>ca end
+    if mi~=ci then return mi>ci end
+    return pa>cp
+end
+local function ShowLoginUpdateNotice()
+    if not loginUpdateNoticePending or loginUpdateNoticeShown or not availableUpdateVersion then return end
+    loginUpdateNoticePending=false; loginUpdateNoticeShown=true
+    Print(T("update_available") .. availableUpdateVersion)
+    Print(T("update_download") .. availableUpdateUrl)
+end
+local function PollBridgeUpdate()
+    if type(ImportFile)~="function" then return end
+    local ok,payload=pcall(ImportFile,"SpotifyNowUpdate")
+    if not ok or type(payload)~="string" or payload=="" then return end
+    payload=gsub(payload,"[\r\n]+$","")
+    local f=SplitState(payload)
+    if not f or f[1]~="SPNU1" then return end
+    local version=DecodeField(f[2])
+    local url=DecodeField(f[3])
+    if version=="" or not IsNewerVersion(version) or not strfind(url,"^https://github.com/Toracles/SpotiWoW%-Dev/releases/tag/") then
+        availableUpdateVersion=nil; availableUpdateUrl=nil
+        return
+    end
+    availableUpdateVersion=version; availableUpdateUrl=url
+    ShowLoginUpdateNotice()
 end
 local function PollBridgeState()
     if not SpotifyNowDB then return end
@@ -667,7 +702,7 @@ local function PollBridgeState()
 end
 local progressUiElapsed=0
 local poller=CreateFrame("Frame","SpotifyNowStatePoller")
-poller:SetScript("OnUpdate",function() local elapsed=arg1 or 0; statePollElapsed=statePollElapsed+elapsed; if statePollElapsed>=0.25 then statePollElapsed=0; PollBridgeState() end
+poller:SetScript("OnUpdate",function() local elapsed=arg1 or 0; statePollElapsed=statePollElapsed+elapsed; if statePollElapsed>=0.25 then statePollElapsed=0; PollBridgeUpdate(); PollBridgeState() end
     if table.getn(titleChars)>titleVisibleChars then titleElapsed=titleElapsed+elapsed; if titleElapsed>=0.28 then titleElapsed=titleElapsed-0.28; RefreshTitle() end end
     progressUiElapsed=progressUiElapsed+elapsed
     if progressUiElapsed>=0.25 then
@@ -686,8 +721,9 @@ poller:SetScript("OnUpdate",function() local elapsed=arg1 or 0; statePollElapsed
 end)
 
 local function ValidTheme(v) return THEMES[v] and v or "obsidian" end
-local frame=CreateFrame("Frame"); frame:RegisterEvent("ADDON_LOADED")
+local frame=CreateFrame("Frame"); frame:RegisterEvent("ADDON_LOADED"); frame:RegisterEvent("PLAYER_LOGIN")
 frame:SetScript("OnEvent",function()
+    if event=="PLAYER_LOGIN" then loginUpdateNoticePending=true; loginUpdateNoticeShown=false; ShowLoginUpdateNotice(); if SendCommand then SendCommand("checkupdates") end; return end
     if event~="ADDON_LOADED" or arg1~="SpotiWoW-Dev" then return end
     if not SpotifyNowDB then SpotifyNowDB={} end
     if SpotifyNowDB.artist==nil then SpotifyNowDB.artist="" end; if SpotifyNowDB.title==nil then SpotifyNowDB.title="" end
