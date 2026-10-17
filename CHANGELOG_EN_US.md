@@ -3,7 +3,7 @@
 ## v1.6.8-alpha
 - Adds Shuffle and Repeat buttons to compact mode and slightly widens the player so both remain aligned and visible.
 - Keeps mode activity visible in Compact, Square, and Expanded layouts: accent fill for Shuffle and Repeat All, neon outline for Repeat 1.
-- Repositions the top accent line at the upper edge in all three layouts so it stays clear of titles and buttons, while preserving the bottom progress bar.
+- Repositions the top accent line at the upper edge and stops it before the top-right buttons in all three layouts, while preserving the bottom progress bar.
 - Gives player and settings buttons a consistent charcoal-red hover fill without the red/black gradient.
 - Centers the Player Settings header and aligns both hex fields and their Apply buttons within the panel.
 
