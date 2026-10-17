@@ -34,6 +34,7 @@ The installer never asks for a Client Secret and does not download Turtle WoW, V
 Lyrics themselves are still sent to the selected channel when that feature is enabled. Technical identifiers `SpotifyNowDB`, `SpotifyNowState.txt`, and `SpotifyNowCommand.txt` are retained for compatibility.
 
 ## Troubleshooting
+- See the [US English troubleshooting guide](TROUBLESHOOTING_EN_US.md) for connection, artwork, metadata, lyrics, and command issues.
 - Logs: `logs/bridge.log` and `logs/launcher.log` in the companion app folder.
 - If auto-detection fails, manually choose the folder that contains `VanillaFixes.exe`.
 
