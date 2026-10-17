@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6.9-alpha
+- Centers “SpotiWoW” inside the Player Settings header plaque.
+
 ## v1.6.8-alpha
 - Adds Shuffle and Repeat buttons to compact mode and slightly widens the player so both remain aligned and visible.
 - Keeps mode activity visible in Compact, Square, and Expanded layouts: accent fill for Shuffle and Repeat All, neon outline for Repeat 1.
