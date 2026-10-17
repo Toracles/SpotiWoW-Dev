@@ -336,7 +336,7 @@ ApplyStyle=function()
     ui:SetBackdropColor(0.72,0.69,0.62,0.98)
     ui:SetWidth(compact and 310 or (square and 236 or 460)); ui:SetHeight(compact and 68 or (square and 236 or 164))
     progressBg:SetWidth(ui:GetWidth()-16); progressHit:SetWidth(ui:GetWidth()-16)
-    topAccent:SetWidth(ui:GetWidth()-36)
+    topAccent:SetWidth(ui:GetWidth()-66)
     progressSegmentCount=compact and 26 or 38
     local segmentSpace=(ui:GetWidth()-16)/progressSegmentCount
     for i,segment in pairs(progressSegments) do
