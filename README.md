@@ -1,24 +1,47 @@
 # SpotiWoW-Dev v1.6.6-alpha
 
-> Development version for testing; changes and bugs are possible.
+> **Development build for Turtle WoW / OctoWoW.** This version is still evolving and may contain bugs or experimental changes.
 
-**Author: CloudNine_Ex**
+SpotiWoW-Dev brings Spotify playback into Turtle WoW through a lightweight Windows companion and the SuperWoW file bridge. It supports French and US English.
 
-A Spotify companion for Turtle WoW / OctoWoW clients based on 1.12.1 with SuperWoW, styled after classic WoW panels with metallic frames, dark stone surfaces, gold titles, and four neon accents. The project ships both French (FR) and US English add-on variants.
+## Feature overview
 
-- French end-user readme: `README_FR.md`
-- US English end-user readme: `README_EN_US.md`
+- **Three player layouts:** compact, square, and expanded, with Spotify track, artist, album, cover art, playback progress, and controls arranged for each size.
+- **Four WoW-inspired themes:** Obsidian, Azerite, Fel, and Bloodmoon, with configurable accent and progress colors, glow, borders, and button styling.
+- **A customizable settings panel:** choose the layout and theme, show or hide controls and track details, and adjust the progress bar and click-to-seek behavior. Settings persist in-game.
+- **Spotify controls:** play/pause, previous/next, seeking, volume, shuffle, and repeat. Shuffle and repeat states remain visibly indicated on the player.
+- **Lyrics:** synchronized multi-source lookup with a local cache, configurable chat channel, and `Ctrl+Alt+L` toggle. The Lyrics status notice is local to your chat window.
+- **Windows companion:** connects to Spotify, supplies live track metadata and artwork to the add-on, and stops the bridge when the game client exits.
+- **French and US English editions:** localized add-on messages and language-specific add-on packages are available in Releases.
 
-## For players
-Download `SpotiWoW-Dev-Setup.exe` from the release you want. Setup is pinned to that release and verifies its GitHub tag, commit SHA, package manifest, and SHA-256 digest before installation.
-/spn help for all commands.
+## Documentation
 
-## For maintainers
-The shared Lua behavior is in `Interface/AddOns/SpotiWoW-Dev/SpotiWoW-Dev.lua`. French locale and metadata are in that add-on folder. US English locale and metadata are under `variants/US`. Publishing a GitHub Release triggers `.github/workflows/release.yml` to build the tray launcher, installer, and both language bundles.
+- [Guide utilisateur français](README_FR.md)
+- [US English user guide](README_EN_US.md)
+- [Changelog français](CHANGELOG_FR.md)
+- [US English changelog](CHANGELOG_EN_US.md)
 
-## Compatibility and privacy
-- Requires Turtle WoW / OctoWoW, SuperWoW file functions `ImportFile` and `ExportFile`, and `VanillaFixes.exe`.
-- Live Spotify artwork uses `customassets.dll` to load the add-on's predeclared loose textures from `Data/`; the installer enables that DLL only when it is already installed.
-- Does not distribute the game client or any third-party game DLLs.
-- Each user supplies their own Spotify Client ID. Do not commit `config.json`, `tokens.json`, or `lyrics_cache.json`.
-- The hotkey's Lyrics ON/OFF status is local-only (`DEFAULT_CHAT_FRAME:AddMessage`), not a chat message sent to other players.
+## Download
+
+Download `SpotiWoW-Dev-Setup.exe` from [GitHub Releases](https://github.com/Toracles/SpotiWoW-Dev/releases). The installer is pinned to its release and verifies the tag, source commit, package manifest, and SHA-256 digest before installation.
+
+For requirements, Spotify setup, and installation steps, see the guides above. `/spn help` lists the in-game commands.
+
+## Résumé des fonctionnalités
+
+- **Trois formats de lecteur :** compact, carré et agrandi, avec titre, artiste, album, pochette Spotify, progression et commandes adaptés à chaque format.
+- **Quatre thèmes inspirés de WoW :** Obsidian, Azerite, Fel et Bloodmoon. Personnalise les couleurs d’accent et de progression, la lueur, les bordures et les boutons.
+- **Panneau de réglages complet :** choix du thème et du format, affichage des commandes et des infos du morceau, apparence de la barre et recherche dans le morceau au clic. Les réglages sont conservés en jeu.
+- **Commandes Spotify :** lecture/pause, morceau précédent/suivant, recherche, volume, aléatoire et répétition. Les états aléatoire et répétition restent visibles sur le lecteur.
+- **Paroles :** recherche synchronisée auprès de plusieurs sources, cache local et choix du canal. `Ctrl+Alt+L` active ou désactive les paroles ; son message de statut reste local à ta fenêtre de chat.
+- **Compagnon Windows :** connexion à Spotify, transmission des métadonnées et des jaquettes en direct à l’addon, puis arrêt du bridge à la fermeture du client.
+- **Éditions française et anglaise US :** messages traduits et paquets addon par langue disponibles dans les Releases.
+
+## Versions linguistiques
+
+- [Guide utilisateur français](README_FR.md)
+- [Guide utilisateur anglais US](README_EN_US.md)
+- [Changelog français](CHANGELOG_FR.md)
+- [Changelog anglais US](CHANGELOG_EN_US.md)
+
+> SpotiWoW-Dev reste une version de développement destinée aux tests.
