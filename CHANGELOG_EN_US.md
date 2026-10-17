@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.6.8-alpha
+- Adds Shuffle and Repeat buttons to compact mode and slightly widens the player so both remain aligned and visible.
+- Keeps mode activity visible in Compact, Square, and Expanded layouts: accent fill for Shuffle and Repeat All, neon outline for Repeat 1.
+- Repositions the top accent line at the upper edge in all three layouts so it stays clear of titles and buttons, while preserving the bottom progress bar.
+- Gives player and settings buttons a consistent charcoal-red hover fill without the red/black gradient.
+- Centers the Player Settings header and aligns both hex fields and their Apply buttons within the panel.
+
 ## v1.6.7-alpha
 - Fixes the Player Settings panel alignment and keeps every option inside its frame.
 - Rearranges Square Mode controls so the volume and every button remain visible without overlap.
@@ -8,7 +15,6 @@
 - Makes Button Accents visible: enabling it colors button labels and borders with the selected neon accent; disabling it restores the gold styling.
 - Fixes Accent Hex and Progress Hex, applying the accent color to the player frame and the progress color to segmented bars.
 - Adds localized tooltips explaining the color fields, Button Accents, and Click to Seek.
-
 ## v1.6.6-alpha
 - Aligns Square and Expanded metadata and controls, keeps the status row clear of the divider, and shortens settings labels to prevent clipping.
 - Player Settings groups visual customization, custom colors, and lyrics options (toggle and channel), with their current states visible.
@@ -95,3 +101,4 @@
 - Ctrl+Alt+L works without typing a command into the in-game chat. ON/OFF status appears only in the local chat frame.
 - The installer lets users choose a language and downloads the matching package.
 - Technical identifiers and existing SavedVariables are retained for compatibility.
+
