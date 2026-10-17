@@ -1,4 +1,4 @@
-# SpotiWoW-Octo v1.4.9 — Français
+# SpotiWoW-Octo v1.4.13 — Français
 
 SpotiWoW-Octo relie Spotify à Turtle WoW / OctoWoW via le bridge de fichiers SuperWoW. Cette version utilise l’interface et les messages en français.
 

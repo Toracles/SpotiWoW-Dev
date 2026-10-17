@@ -48,7 +48,7 @@ TEXT = {
     "fr": {
         "window_title": "SpotiWoW-Octo — Installation",
         "language_label": "Langue de l’addon / Add-on language",
-        "intro": "Ferme Turtle WoW avant l’installation. L’assistant installe l’addon et le compagnon ; il ne télécharge pas le client WoW ni ses DLL.",
+        "intro": "Ferme Turtle WoW avant l’installation. L’assistant installe l’addon et le compagnon ; si customassets.dll est déjà présent, il l’active pour les jaquettes Spotify dynamiques.",
         "game_dir_label": "Dossier du client WoW (VanillaFixes.exe)",
         "browse": "Parcourir…",
         "detect_fail": "Détection automatique non concluante : sélectionne le dossier contenant VanillaFixes.exe.",
@@ -73,7 +73,7 @@ TEXT = {
         "bad_hash": "La vérification SHA-256 a échoué. Aucun fichier n’a été installé.",
         "incomplete": "Le paquet est incomplet : addon, lanceur, bridge ou icône manquant.",
         "done_title": "Installation terminée",
-        "done_message": "Installation terminée !\n\nAddon : {addon}\nCompagnon : {companion}\nLangue : {language}\n\nLance SpotiWoW-Octo depuis le raccourci. Le premier lancement peut ouvrir le navigateur pour autoriser Spotify.",
+        "done_message": "Installation terminée !\n\nAddon : {addon}\nCompagnon : {companion}\nLangue : {language}\n\nRelance le client WoW avant de tester les jaquettes. Le premier lancement du compagnon peut ouvrir le navigateur pour autoriser Spotify.",
         "http_error": "GitHub a répondu HTTP {code}. Vérifie que le dépôt est public et qu’une Release est publiée.",
         "failed": "L’installation a échoué :\n\n{error}",
         "busy_close": "L’installation est en cours. Attends sa fin avant de fermer cette fenêtre.",
@@ -82,7 +82,7 @@ TEXT = {
     "us": {
         "window_title": "SpotiWoW-Octo — Setup",
         "language_label": "Add-on language / Langue de l’addon",
-        "intro": "Close Turtle WoW before installing. Setup installs the add-on and companion; it does not download the WoW client or its DLLs.",
+        "intro": "Close Turtle WoW before installing. Setup installs the add-on and companion; if customassets.dll is already present, it enables it for live Spotify cover art.",
         "game_dir_label": "WoW client folder (VanillaFixes.exe)",
         "browse": "Browse…",
         "detect_fail": "Automatic detection did not find the client. Select the folder containing VanillaFixes.exe.",
@@ -107,7 +107,7 @@ TEXT = {
         "bad_hash": "SHA-256 verification failed. No files were installed.",
         "incomplete": "The package is incomplete: add-on, launcher, bridge, or icon is missing.",
         "done_title": "Installation complete",
-        "done_message": "Installation complete!\n\nAdd-on: {addon}\nCompanion: {companion}\nLanguage: {language}\n\nLaunch SpotiWoW-Octo from the shortcut. The first launch may open a browser to authorize Spotify.",
+        "done_message": "Installation complete!\n\nAdd-on: {addon}\nCompanion: {companion}\nLanguage: {language}\n\nRestart the WoW client before testing cover art. The companion's first launch may open a browser to authorize Spotify.",
         "http_error": "GitHub returned HTTP {code}. Check that the repository is public and a Release has been published.",
         "failed": "Installation failed:\n\n{error}",
         "busy_close": "Installation is in progress. Wait for it to finish before closing this window.",
@@ -187,6 +187,27 @@ def safe_extract(bundle: Path, destination: Path) -> None:
             except ValueError as exc:
                 raise RuntimeError("Unsafe ZIP path in downloaded package / chemin ZIP non sûr dans le paquet téléchargé.") from exc
         archive.extractall(destination)
+
+
+def enable_custom_assets(game_dir: Path) -> bool:
+    """Enable the already-installed loose asset loader without changing other DLL entries."""
+    if not (game_dir / "customassets.dll").is_file():
+        return False
+    dll_list = game_dir / "dlls.txt"
+    try:
+        contents = dll_list.read_text(encoding="utf-8", errors="replace") if dll_list.is_file() else ""
+    except OSError:
+        return False
+    if any(line.strip().casefold() == "customassets.dll" for line in contents.splitlines()):
+        return True
+    newline = "\r\n" if "\r\n" in contents else "\n"
+    if contents and not contents.endswith(("\n", "\r")):
+        contents += newline
+    try:
+        dll_list.write_text(contents + "customassets.dll" + newline, encoding="utf-8", newline="")
+        return True
+    except OSError:
+        return False
 
 
 def powershell_quote(value: str) -> str:
@@ -410,6 +431,12 @@ class SetupApp:
                 if addon_dest.exists():
                     shutil.rmtree(addon_dest)
                 shutil.copytree(addon_src, addon_dest)
+                data_src = extracted / "Data" / "Interface" / "AddOns" / ADDON_NAME
+                if data_src.is_dir():
+                    data_dest = game_dir / "Data" / "Interface" / "AddOns" / ADDON_NAME
+                    data_dest.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copytree(data_src, data_dest, dirs_exist_ok=True)
+                enable_custom_assets(game_dir)
                 (game_dir / "imports").mkdir(parents=True, exist_ok=True)
 
                 app_root = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))) / "Programs" / APP_NAME

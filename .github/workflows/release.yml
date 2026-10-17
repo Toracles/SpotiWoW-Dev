@@ -67,6 +67,12 @@ jobs:
             $addonDest = Join-Path $stage "Interface/AddOns/SpotiWoW-Octo"
             New-Item -ItemType Directory -Force -Path $addonDest | Out-Null
             Copy-Item -Recurse (Join-Path $variant.AddonSource "*") $addonDest -Force
+            $assetSource = Join-Path $root "Data/Interface/AddOns/SpotiWoW-Octo"
+            if (Test-Path $assetSource) {
+              $assetDest = Join-Path $stage "Data/Interface/AddOns/SpotiWoW-Octo"
+              New-Item -ItemType Directory -Force -Path $assetDest | Out-Null
+              Copy-Item (Join-Path $assetSource "*") $assetDest -Force
+            }
             if ($variant.Code -eq "US") {
               Copy-Item "variants/US/SpotiWoW-Octo_Locale.lua" (Join-Path $addonDest "SpotiWoW-Octo_Locale.lua") -Force
               Copy-Item "variants/US/SpotiWoW-Octo.toc" (Join-Path $addonDest "SpotiWoW-Octo.toc") -Force
@@ -91,6 +97,11 @@ jobs:
             $addonStageParent = Join-Path $addonStage "Interface/AddOns"
             New-Item -ItemType Directory -Force -Path $addonStageParent | Out-Null
             Copy-Item -Recurse (Join-Path $stage "Interface/AddOns/SpotiWoW-Octo") $addonStageParent -Force
+            $addonAssetParent = Join-Path $addonStage "Data/Interface/AddOns/SpotiWoW-Octo"
+            if (Test-Path $assetSource) {
+              New-Item -ItemType Directory -Force -Path $addonAssetParent | Out-Null
+              Copy-Item (Join-Path $assetSource "*") $addonAssetParent -Force
+            }
             $addonOut = Join-Path $root ("dist/SpotiWoW-Octo-Addon-" + $variant.Code + ".zip")
             if (Test-Path $addonOut) { Remove-Item $addonOut -Force }
             Compress-Archive -Path (Join-Path $addonStage "*") -DestinationPath $addonOut -CompressionLevel Optimal

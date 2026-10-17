@@ -1,5 +1,14 @@
 # Journal des modifications
 
+## v1.4.13
+- Répare le chargement des locales FR et US : `/spn help`, `/spn say` et les autres messages ne révèlent plus les clés internes.
+- Jaquettes compatibles avec le chargeur CustomAssets : textures TGA 24 bits en 128 × 128, distribuées sur 512 chemins déjà connus du client et mises à jour par le bridge.
+- L’installateur ajoute `customassets.dll` à `dlls.txt` uniquement si la DLL existe, sans toucher aux autres entrées ; les archives ajoutent les textures sous `Data/`.
+- Complète le panneau droit du lecteur agrandi avec l’état Spotify, le volume, ses commandes et un bouton Lyrics.
+
+## v1.4.12
+- Correction du fichier de traduction français : le nom réservé `repeat` empêchait le chargement de toute la locale, et `/spn help` affichait les clés internes à la place des commandes.
+
 ## v1.4.11
 - Refonte néon métallique de l’interface : cadre sombre, jaquette encadrée, boutons assombris et accent violet par défaut ; les quatre thèmes gardent leurs couleurs propres.
 - Lecteur compact agrandi à 300 × 68 px, volume isolé et titres longs limités pour éviter les chevauchements.

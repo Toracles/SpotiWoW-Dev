@@ -44,5 +44,9 @@ SPOTIWOW_OCTO_L = {
     mode_repeat_track = "RÉPÉT. 1",
     setting_updated = "Réglage enregistré.",
     shuffle = "Activer / désactiver le mode aléatoire",
-    repeat = "Changer le mode de répétition : désactivé, album, morceau",
+    ["repeat"] = "Changer le mode de répétition : désactivé, album, morceau",
+    spotify_label = "SPOTIFY",
+    status_playing = "EN LECTURE",
+    status_paused = "EN PAUSE",
+    lyrics_toggle = "Activer / désactiver les paroles",
 }

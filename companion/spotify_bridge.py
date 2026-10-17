@@ -58,6 +58,9 @@ IMPORT_DIR = GAME_DIR / "imports"
 STATE_FILE = IMPORT_DIR / "SpotifyNowState.txt"
 COMMAND_FILE = IMPORT_DIR / "SpotifyNowCommand.txt"
 ADDON_DIR = GAME_DIR / "Interface" / "AddOns" / "SpotiWoW-Octo"
+CUSTOM_ASSET_DIR = GAME_DIR / "Data" / "Interface" / "AddOns" / "SpotiWoW-Octo"
+ARTWORK_SLOT_COUNT = 512
+ARTWORK_SLOT_STATE = HERE / "artwork_slot_counter.txt"
 # The tray launcher sets a unique stop-flag path in the child environment.
 # A file-based signal allows Stop/Quit to shut down cleanly without a console.
 _PARENT_STOP_FLAG = os.environ.get("SPOTIWOW_STOP_FLAG")
@@ -462,6 +465,26 @@ state_write_lock = threading.Lock()
 artwork_write_lock = threading.Lock()
 
 
+def custom_assets_enabled() -> bool:
+    """Check whether the optional loose-asset loader is enabled for this client."""
+    try:
+        dll_list = (GAME_DIR / "dlls.txt").read_text(encoding="utf-8", errors="ignore")
+        return any(line.strip().casefold() == "customassets.dll" for line in dll_list.splitlines())
+    except OSError:
+        return False
+
+
+def next_artwork_slot() -> str:
+    """Choose an un-cached, predeclared texture path for this running client."""
+    try:
+        index = int(ARTWORK_SLOT_STATE.read_text(encoding="ascii").strip())
+    except (OSError, ValueError):
+        index = 0
+    index = (index % ARTWORK_SLOT_COUNT) + 1
+    atomic_write(ARTWORK_SLOT_STATE, str(index))
+    return f"artwork_slot_{index:03d}.tga"
+
+
 def encode_field(value) -> str:
     """Percent-encode a field so the protocol delimiter (|) is never ambiguous."""
     return urllib.parse.quote(str(value or ""), safe="")
@@ -526,24 +549,27 @@ S = {
 
 
 def download_album_art(track_id, image_url):
-    """Save Spotify's cover as a local texture the addon can load."""
+    """Write Spotify cover art into a predeclared loose-asset texture slot."""
     if not image_url:
         return
     try:
         from PIL import Image
-        name = "artwork_" + hashlib.sha1(image_url.encode("utf-8")).hexdigest()[:16] + "_v2.tga"
-        target = ADDON_DIR / name
+        target_dir = CUSTOM_ASSET_DIR if custom_assets_enabled() else ADDON_DIR
         with artwork_write_lock:
-            if not target.is_file():
-                req = urllib.request.Request(image_url, headers={"User-Agent": "SpotiWoW-Octo/1.4.9"})
-                with urllib.request.urlopen(req, timeout=12) as response:
-                    raw = response.read(6 * 1024 * 1024)
-                image = Image.open(io.BytesIO(raw)).convert("RGBA")
-                image.thumbnail((256, 256), Image.Resampling.LANCZOS)
-                ADDON_DIR.mkdir(parents=True, exist_ok=True)
-                temporary = ADDON_DIR / (name + ".tmp")
-                image.save(temporary, format="TGA")
-                os.replace(str(temporary), str(target))
+            req = urllib.request.Request(image_url, headers={"User-Agent": "SpotiWoW-Octo/1.4.13"})
+            with urllib.request.urlopen(req, timeout=12) as response:
+                raw = response.read(6 * 1024 * 1024)
+            from PIL import ImageOps
+            image = Image.open(io.BytesIO(raw)).convert("RGB")
+            image = ImageOps.fit(image, (128, 128), method=Image.Resampling.LANCZOS)
+            name = next_artwork_slot()
+            target_dir.mkdir(parents=True, exist_ok=True)
+            target = target_dir / name
+            temporary = target_dir / (name + ".tmp")
+            image.save(temporary, format="TGA")
+            os.replace(str(temporary), str(target))
+            if not custom_assets_enabled():
+                print("[Artwork] customassets.dll is not enabled; live cover loading may fail in WoW 1.12.")
         if track_id == S["track_id"]:
             S["artwork"] = name
             publish_state()

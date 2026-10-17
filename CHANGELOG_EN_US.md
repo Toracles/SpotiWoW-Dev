@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.4.13
+- Fixed FR and US locale loading so `/spn help`, `/spn say`, and other messages display text instead of internal keys.
+- Added live-cover support for CustomAssets: 24-bit 128 × 128 TGA artwork rotates through 512 texture paths declared before the client starts.
+- The installer enables `customassets.dll` only when the DLL already exists, preserving every other `dlls.txt` entry; release archives include the texture paths under `Data/`.
+- Filled the expanded player's right panel with Spotify status, volume controls, and a Lyrics toggle.
+
+## v1.4.12
+- Fixed the French locale file: the reserved key `repeat` prevented the locale from loading, causing `/spn help` to show internal keys instead of command descriptions.
+
 ## v1.4.11
 - Restyled the interface with a dark metallic frame, framed cover art, dark controls, and a neon accent; all four themes retain distinct colors.
 - Enlarged the compact player to 300 × 68 px, separated volume, and constrained long titles to prevent overlap.

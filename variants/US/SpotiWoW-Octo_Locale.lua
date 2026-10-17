@@ -44,5 +44,9 @@ SPOTIWOW_OCTO_L = {
     mode_repeat_track = "REPEAT 1",
     setting_updated = "Setting saved.",
     shuffle = "Toggle shuffle",
-    repeat = "Cycle repeat mode: off, context, track",
+    ["repeat"] = "Cycle repeat mode: off, context, track",
+    spotify_label = "SPOTIFY",
+    status_playing = "PLAYING",
+    status_paused = "PAUSED",
+    lyrics_toggle = "Toggle lyrics",
 }

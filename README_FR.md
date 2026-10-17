@@ -1,4 +1,4 @@
-# SpotiWoW-Octo v1.4.9 — Français
+# SpotiWoW-Octo v1.4.13 — Français
 
 SpotiWoW-Octo relie Spotify à Turtle WoW / OctoWoW via le bridge de fichiers SuperWoW. Cette version utilise l’interface et les messages en français.
 
@@ -16,6 +16,7 @@ L’installateur ne demande jamais de Client Secret et ne télécharge pas Turtl
 - SuperWoW avec les fonctions `ImportFile` et `ExportFile`.
 - `VanillaFixes.exe` présent dans le dossier du client.
 - Une application Spotify Developer configurée avec le Redirect URI indiqué ci-dessus.
+- `customassets.dll` activée dans `dlls.txt` pour le chargement des jaquettes Spotify en direct. L’installateur active la DLL si elle est déjà présente.
 
 ## Fonctionnalités
 - Raccourci `Ctrl+Alt+L` pour activer/désactiver Lyrics depuis le compagnon, sans saisir de commande dans le chat.
@@ -23,6 +24,7 @@ L’installateur ne demande jamais de Client Secret et ne télécharge pas Turtl
 - Mini-lecteur néon métallique compact (300 × 68 px) ou agrandi avec jaquette Spotify, album, temps de lecture, lecture aléatoire et répétition.
 - Thèmes Obsidian, Azerite, Fel et Bloodmoon, avec couleurs, lueur, bordures et commandes personnalisables ; progression réglable et cliquable pour chercher dans le morceau.
 - Bouton `...` sur le lecteur (ou `/spn settings`) : ouvre les réglages visuels pour choisir le thème et basculer entre le format compact et agrandi.
+- Le panneau droit agrandi affiche Spotify, l’état de lecture, le volume et les raccourcis Volume/Paroles.
 - Les modes aléatoire, répétition album et répétition morceau restent indiqués dans le lecteur. Obsidian, Azerite, Fel et Bloodmoon gardent chacun leur accent néon.
 - Réglages sauvegardés dans WoW. `/spn help` affiche les thèmes et options ; `/spn expand` bascule le mode agrandi.
 - Recherche de paroles horodatées multi-sources et cache local.

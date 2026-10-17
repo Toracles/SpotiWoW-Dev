@@ -1,4 +1,4 @@
-# SpotiWoW-Octo v1.4.11
+# SpotiWoW-Octo v1.4.13
 
 **Author: CloudNine_Ex**
 
@@ -16,6 +16,7 @@ The shared Lua behavior is in `Interface/AddOns/SpotiWoW-Octo/SpotiWoW-Octo.lua`
 
 ## Compatibility and privacy
 - Requires Turtle WoW / OctoWoW, SuperWoW file functions `ImportFile` and `ExportFile`, and `VanillaFixes.exe`.
+- Live Spotify artwork uses `customassets.dll` to load the add-on's predeclared loose textures from `Data/`; the installer enables that DLL only when it is already installed.
 - Does not distribute the game client or any third-party game DLLs.
 - Each user supplies their own Spotify Client ID. Do not commit `config.json`, `tokens.json`, or `lyrics_cache.json`.
 - The hotkey's Lyrics ON/OFF status is local-only (`DEFAULT_CHAT_FRAME:AddMessage`), not a chat message sent to other players.
