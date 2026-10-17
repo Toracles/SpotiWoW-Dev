@@ -1,6 +1,8 @@
 # Journal des modifications
 
 ## v1.6.6-alpha
+- Aligne les métadonnées et commandes de Square et Expanded, évite que le panneau d’état croise le séparateur et raccourcit les libellés du menu pour qu’ils restent lisibles.
+- Le menu Player Settings regroupe les personnalisations visuelles, les couleurs personnalisées et les options des paroles (activation et canal), avec leur état visible.
 - Reprend les cadres métalliques, fonds pierre sombre et titres dorés des panneaux classiques de WoW ; les quatre néons restent des accents sur la progression, les commandes actives et les détails lumineux.
 - Réduit légèrement le Square Mode à 236 × 236 px et sa pochette à 68 × 68 px ; les commandes restent alignées dans le lecteur.
 - Déplace le volume dans une ligne dédiée au-dessus des commandes en Square Mode afin qu’il reste visible.

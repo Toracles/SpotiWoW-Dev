@@ -1,6 +1,8 @@
 # Changelog
 
 ## v1.6.6-alpha
+- Aligns Square and Expanded metadata and controls, keeps the status row clear of the divider, and shortens settings labels to prevent clipping.
+- Player Settings groups visual customization, custom colors, and lyrics options (toggle and channel), with their current states visible.
 - Brings in the metallic frames, dark stone surfaces, and gold titles of classic WoW panels; all four neon themes remain as accents on progress, active controls, and glow details.
 - Slightly reduced Square Mode to 236 × 236 px and its artwork to 68 × 68 px while keeping the control row aligned.
 - Moved the volume readout to a dedicated row above the controls in Square Mode so it stays visible.

@@ -7,7 +7,7 @@ local Locale = SPOTIWOW_OCTO_L or {}
 local UI_FALLBACK = {
     settings_title="Player Settings", settings_theme="Theme", settings_layout="Layout", settings_expand="Expand player", settings_compact="Use compact player",
     layout_compact="Compact", layout_square="Square", layout_expanded="Expanded", layout_help="Click options to cycle or toggle them. /spn help for commands.",
-    settings_accent="Accent", settings_progress_color="Progress color", settings_glow="Glow", settings_border="Border", settings_buttons="Button accents", settings_controls="Controls", settings_metadata="Track details", settings_progress="Progress bar", settings_seek="Click to seek", settings_progress_style="Progress style", setting_on="ON", setting_off="OFF", color_default="Theme default",
+    settings_accent="Accent", settings_progress_color="Progress color", settings_custom_accent="Accent hex", settings_custom_progress="Progress hex", settings_apply="Apply", settings_glow="Glow", settings_border="Border", settings_buttons="Button accents", settings_controls="Controls", settings_metadata="Track details", settings_progress="Progress bar", settings_seek="Click to seek", settings_progress_style="Bar style", setting_on="ON", setting_off="OFF", color_default="Theme default",
     theme_obsidian="Obsidian", theme_azerite="Azerite", theme_fel="Fel", theme_bloodmoon="Bloodmoon",
     mode_shuffle="SHUFFLE", mode_repeat_all="REPEAT ALL", mode_repeat_track="REPEAT 1",
     help_1="/spn : show the current track locally", help_2="/spn say|yell|party|guild|raid|emote : announce the current track",
@@ -21,7 +21,7 @@ local UI_FALLBACK = {
 }
 local function T(key) return Locale[key] or UI_FALLBACK[key] or key end
 local playing, volume, SendCommand = false, -1, nil
-local ApplyStyle, RefreshUI
+local ApplyStyle, RefreshUI, HexColor
 local lastLyricsModeSeen = nil
 local function Print(msg) DEFAULT_CHAT_FRAME:AddMessage("|cff1ed760[Spotify]|r " .. msg) end
 local function NowPlaying()
@@ -74,9 +74,9 @@ albumText:SetPoint("TOPLEFT",ui,"TOPLEFT",96,-51); albumText:SetWidth(242); albu
 local timeText=ui:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
 timeText:SetPoint("BOTTOMRIGHT",ui,"BOTTOMRIGHT",-8,30); timeText:SetJustifyH("RIGHT"); timeText:Hide()
 local sourceText=ui:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
-sourceText:SetPoint("TOPLEFT",ui,"TOPLEFT",358,-22); sourceText:SetWidth(86); sourceText:SetJustifyH("LEFT"); sourceText:SetText(T("spotify_label")); sourceText:Hide()
+sourceText:SetPoint("TOPLEFT",ui,"TOPLEFT",358,-30); sourceText:SetWidth(86); sourceText:SetJustifyH("LEFT"); sourceText:SetText(T("spotify_label")); sourceText:Hide()
 local sourceStatus=ui:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
-sourceStatus:SetPoint("TOPLEFT",ui,"TOPLEFT",358,-42); sourceStatus:SetWidth(86); sourceStatus:SetJustifyH("LEFT"); sourceStatus:Hide()
+sourceStatus:SetPoint("TOPLEFT",ui,"TOPLEFT",358,-48); sourceStatus:SetWidth(86); sourceStatus:SetJustifyH("LEFT"); sourceStatus:Hide()
 local volumeLabelText=ui:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
 volumeLabelText:SetPoint("TOPLEFT",ui,"TOPLEFT",358,-62); volumeLabelText:SetWidth(54); volumeLabelText:SetJustifyH("LEFT"); volumeLabelText:SetText(T("volume_label")); volumeLabelText:Hide()
 local function SkinButton(button)
@@ -102,7 +102,7 @@ local settingsButton=CreateFrame("Button","SpotifyNowSettingsButton",ui)
 settingsButton:SetWidth(20); settingsButton:SetHeight(17); settingsButton:SetPoint("TOPRIGHT",ui,"TOPRIGHT",-28,-4)
 buttonLabels[settingsButton]=SkinButton(settingsButton); SetButtonText(settingsButton,"...")
 local settingsPanel=CreateFrame("Frame","SpotifyNowSettingsPanel",UIParent)
-settingsPanel:SetWidth(328); settingsPanel:SetHeight(282); settingsPanel:SetPoint("CENTER",UIParent,"CENTER",0,0)
+settingsPanel:SetWidth(360); settingsPanel:SetHeight(390); settingsPanel:SetPoint("CENTER",UIParent,"CENTER",0,0)
 settingsPanel:SetFrameStrata("DIALOG"); settingsPanel:SetMovable(true); settingsPanel:EnableMouse(true); settingsPanel:RegisterForDrag("LeftButton")
 settingsPanel:SetBackdrop({bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",tile=true,tileSize=32,edgeSize=32,insets={left=11,right=12,top=12,bottom=11}})
 settingsPanel:SetBackdropColor(0.52,0.49,0.43,0.98)
@@ -126,15 +126,45 @@ local function NewSettingsButton(width,height,anchor,relative,relativePoint,x,y)
     buttonLabels[button]=SkinButton(button)
     return button
 end
-local themeButton=NewSettingsButton(296,22,"TOP",settingsPanel,"TOP",0,-34)
+local themeButton=NewSettingsButton(328,22,"TOP",settingsPanel,"TOP",0,-34)
 local layoutButton=NewSettingsButton(296,22,"TOP",themeButton,"BOTTOM",0,-4)
-local accentButton=NewSettingsButton(296,22,"TOP",layoutButton,"BOTTOM",0,-4)
-local progressColorButton=NewSettingsButton(296,22,"TOP",accentButton,"BOTTOM",0,-4)
+layoutButton:SetWidth(328)
+local accentButton=NewSettingsButton(328,22,"TOP",layoutButton,"BOTTOM",0,-4)
+local progressColorButton=NewSettingsButton(328,22,"TOP",accentButton,"BOTTOM",0,-4)
+local function NewColorEntry(key,anchor,relativePoint)
+    local label=settingsPanel:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
+    label:SetWidth(114); label:SetJustifyH("LEFT"); label:SetText(T(key))
+    label:SetPoint("TOPLEFT",anchor,relativePoint,8,-6)
+    local edit=CreateFrame("EditBox",nil,settingsPanel)
+    edit:SetWidth(132); edit:SetHeight(20); edit:SetAutoFocus(false); edit:SetMaxLetters(7)
+    edit:SetFontObject(GameFontHighlightSmall); edit:SetTextInsets(5,5,0,0); edit:SetJustifyH("LEFT")
+    edit:SetBackdrop({bgFile="Interface\\Tooltips\\UI-Tooltip-Background",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=8,edgeSize=8,insets={left=2,right=2,top=2,bottom=2}})
+    edit:SetBackdropColor(0.06,0.06,0.06,1); edit:SetBackdropBorderColor(0.58,0.50,0.36,1)
+    edit:SetPoint("LEFT",label,"RIGHT",6,0)
+    local apply=NewSettingsButton(70,20,"LEFT",edit,"RIGHT",6,0)
+    SetButtonText(apply,T("settings_apply"))
+    return {label=label,edit=edit,apply=apply}
+end
+local accentEntry=NewColorEntry("settings_custom_accent",progressColorButton,"BOTTOMLEFT")
+local progressEntry=NewColorEntry("settings_custom_progress",accentEntry.label,"BOTTOMLEFT")
+local function ApplyEditedColor(field,edit)
+    local value=string.gsub(edit:GetText() or "","[#%s]","")
+    local r=HexColor(value)
+    if not r then Print(T("color_help")); return end
+    SpotifyNowDB.style[field]=string.upper(value)
+    edit:ClearFocus(); ApplyStyle(); RefreshUI(); RefreshSettingsPanel()
+end
+accentEntry.apply:SetScript("OnClick",function() ApplyEditedColor("accent",accentEntry.edit) end)
+accentEntry.edit:SetScript("OnEnterPressed",function() ApplyEditedColor("accent",accentEntry.edit) end)
+accentEntry.edit:SetScript("OnEscapePressed",function() this:ClearFocus(); RefreshSettingsPanel() end)
+progressEntry.apply:SetScript("OnClick",function() ApplyEditedColor("progressColor",progressEntry.edit) end)
+progressEntry.edit:SetScript("OnEnterPressed",function() ApplyEditedColor("progressColor",progressEntry.edit) end)
+progressEntry.edit:SetScript("OnEscapePressed",function() this:ClearFocus(); RefreshSettingsPanel() end)
 local settingsHint=settingsPanel:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
-settingsHint:SetPoint("BOTTOM",settingsPanel,"BOTTOM",0,10); settingsHint:SetText(T("layout_help"))
+settingsHint:SetPoint("BOTTOM",settingsPanel,"BOTTOM",0,10); settingsHint:SetWidth(320); settingsHint:SetJustifyH("CENTER"); settingsHint:SetText(T("layout_help"))
 local settingsButtons={}
 local function AddSettingButton(key,field,x,y)
-    local button=NewSettingsButton(142,22,"TOP",progressColorButton,"BOTTOM",x,y)
+    local button=NewSettingsButton(150,22,"TOP",progressEntry.apply,"BOTTOM",x,y)
     settingsButtons[key]={button=button,field=field}
     button:SetScript("OnClick",function()
         local style=SpotifyNowDB.style
@@ -147,14 +177,23 @@ local function AddSettingButton(key,field,x,y)
     end)
     return button
 end
-AddSettingButton("glow","glow",-74,-33)
-AddSettingButton("border","border",74,-33)
-AddSettingButton("buttons","buttons",-74,-59)
-AddSettingButton("controls","controls",74,-59)
-AddSettingButton("metadata","metadata",-74,-85)
-AddSettingButton("progress","progress",74,-85)
-AddSettingButton("seek","progressSeek",-74,-111)
-AddSettingButton("progressStyle","progressStyle",74,-111)
+AddSettingButton("glow","glow",-78,-18)
+AddSettingButton("border","border",78,-18)
+AddSettingButton("buttons","buttons",-78,-43)
+AddSettingButton("controls","controls",78,-43)
+AddSettingButton("metadata","metadata",-78,-68)
+AddSettingButton("progress","progress",78,-68)
+AddSettingButton("seek","progressSeek",-78,-93)
+AddSettingButton("progressStyle","progressStyle",78,-93)
+local lyricsButton=NewSettingsButton(150,22,"TOP",progressEntry.apply,"BOTTOM",-78,-118)
+local channelButton=NewSettingsButton(150,22,"TOP",progressEntry.apply,"BOTTOM",78,-118)
+lyricsButton:SetScript("OnClick",function() SetLyrics(not SpotifyNowDB.lyrics,true); RefreshSettingsPanel() end)
+local CHANNEL_ORDER={"say","yell","party","guild","raid","emote"}
+channelButton:SetScript("OnClick",function()
+    local index=1
+    for i,name in ipairs(CHANNEL_ORDER) do if name==SpotifyNowDB.channel then index=(i%table.getn(CHANNEL_ORDER))+1; break end end
+    SpotifyNowDB.channel=CHANNEL_ORDER[index]; RefreshSettingsPanel()
+end)
 local function ColorLabel(value)
     if value and value~="" then return "#"..value end
     return T("color_default")
@@ -168,7 +207,11 @@ RefreshSettingsPanel=function()
     SetButtonText(layoutButton,T("settings_layout")..": "..(modes[mode] or modes.compact))
     SetButtonText(accentButton,T("settings_accent")..": "..ColorLabel(style.accent))
     SetButtonText(progressColorButton,T("settings_progress_color")..": "..ColorLabel(style.progressColor))
+    if not accentEntry.edit:HasFocus() then accentEntry.edit:SetText(style.accent or "") end
+    if not progressEntry.edit:HasFocus() then progressEntry.edit:SetText(style.progressColor or "") end
     local labels={glow="settings_glow",border="settings_border",buttons="settings_buttons",controls="settings_controls",metadata="settings_metadata",progress="settings_progress",seek="settings_seek",progressStyle="settings_progress_style"}
+    SetButtonText(lyricsButton,T("settings_lyrics")..": "..(SpotifyNowDB.lyrics and T("setting_on") or T("setting_off")))
+    SetButtonText(channelButton,T("settings_lyrics_channel")..": "..strupper(SpotifyNowDB.channel or "say"))
     for key,item in pairs(settingsButtons) do
         local value=style[item.field]
         if item.field=="progressStyle" then
@@ -263,7 +306,7 @@ local THEMES={
     fel={bg={0.032,0.03,0.036},accent={0.24,0.95,0.28}},
     bloodmoon={bg={0.038,0.027,0.032},accent={0.92,0.17,0.20}},
 }
-local function HexColor(value)
+HexColor=function(value)
     if not value then return nil end
     value=string.gsub(value,"#",""); if string.len(value)~=6 or string.find(value,"[^%x]") then return nil end
     return tonumber(string.sub(value,1,2),16)/255,tonumber(string.sub(value,3,4),16)/255,tonumber(string.sub(value,5,6),16)/255
@@ -294,20 +337,20 @@ ApplyStyle=function()
         artFrame:ClearAllPoints(); artFrame:SetPoint("TOPLEFT",ui,"TOPLEFT",8,-8)
         titleText:ClearAllPoints(); titleText:SetPoint("TOPLEFT",ui,"TOPLEFT",116,-12); titleText:SetWidth(212); titleVisibleChars=28
         volText:ClearAllPoints(); volText:SetPoint("TOPRIGHT",ui,"TOPRIGHT",-8,-62); volText:SetWidth(40)
-        artistText:ClearAllPoints(); artistText:SetPoint("TOPLEFT",ui,"TOPLEFT",116,-42); artistText:SetWidth(230)
-        albumText:ClearAllPoints(); albumText:SetPoint("TOPLEFT",ui,"TOPLEFT",116,-60); albumText:SetWidth(230)
-        modeText:ClearAllPoints(); modeText:SetPoint("TOPLEFT",ui,"TOPLEFT",116,-82); modeText:SetWidth(250); modeText:Show()
+        artistText:ClearAllPoints(); artistText:SetPoint("TOPLEFT",ui,"TOPLEFT",116,-42); artistText:SetWidth(218)
+        albumText:ClearAllPoints(); albumText:SetPoint("TOPLEFT",ui,"TOPLEFT",116,-60); albumText:SetWidth(218)
+        modeText:ClearAllPoints(); modeText:SetPoint("TOPLEFT",ui,"TOPLEFT",116,-82); modeText:SetWidth(218); modeText:Show()
         sideDivider:ClearAllPoints(); sideDivider:SetPoint("TOPLEFT",ui,"TOPLEFT",346,-12); sideDivider:SetWidth(1); sideDivider:SetHeight(140); sideDivider:Show()
         controls.prev:ClearAllPoints(); controls.prev:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",116,7)
         playBtn:ClearAllPoints(); playBtn:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",147,7)
         controls.next:ClearAllPoints(); controls.next:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",178,7)
         controls.back:ClearAllPoints(); controls.back:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",209,7); controls.back:SetWidth(27)
         controls.fwd:ClearAllPoints(); controls.fwd:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",239,7); controls.fwd:SetWidth(27)
-        controls.shuffle:ClearAllPoints(); controls.shuffle:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",269,7); controls.shuffle:SetWidth(34)
-        controls["repeat"]:ClearAllPoints(); controls["repeat"]:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",306,7); controls["repeat"]:SetWidth(34)
-        controls.voldown:ClearAllPoints(); controls.voldown:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",356,7)
-        controls.volup:ClearAllPoints(); controls.volup:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",388,7)
-        controls.lyrics:ClearAllPoints(); controls.lyrics:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",420,7)
+        controls.shuffle:ClearAllPoints(); controls.shuffle:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",266,7); controls.shuffle:SetWidth(38)
+        controls["repeat"]:ClearAllPoints(); controls["repeat"]:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",306,7); controls["repeat"]:SetWidth(40)
+        controls.voldown:ClearAllPoints(); controls.voldown:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",352,7); controls.voldown:SetWidth(26)
+        controls.volup:ClearAllPoints(); controls.volup:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",380,7); controls.volup:SetWidth(26)
+        controls.lyrics:ClearAllPoints(); controls.lyrics:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",408,7); controls.lyrics:SetWidth(26)
         sourceText:Show(); sourceStatus:Show(); volumeLabelText:Show()
         artistText:Show(); albumText:Show(); timeText:Show(); SetButtonText(expandButton,"-")
     elseif square then
