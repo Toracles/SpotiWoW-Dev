@@ -1,5 +1,11 @@
 # Journal des modifications
 
+## v1.6.14
+- Ajoute une vérification périodique des releases publiques GitHub, sans clé API ; une mise à jour n’est annoncée que lorsque le setup est publié.
+- Affiche un rappel local dans le chat WoW à chaque connexion de personnage, avec la version et le lien de la release.
+- Ajoute au menu de l’icône de notification un accès direct à la release, une vérification manuelle et une alerte Windows quand une mise à jour est prête.
+- Conserve la dernière information connue si GitHub est temporairement inaccessible et vérifie à nouveau périodiquement.
+
 ## v1.6.13-alpha
 - Corrige une erreur de syntaxe dans le sélecteur de thème du paquet anglais, qui empêchait le chargement du Lua, du lecteur et des commandes `/spn`.
 - Aligne la version du TOC anglais sur la version de la release.
