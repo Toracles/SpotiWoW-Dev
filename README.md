@@ -1,4 +1,4 @@
-# SpotiWoW-Octo v1.4.13
+# SpotiWoW-Octo v1.4.15
 
 **Author: CloudNine_Ex**
 

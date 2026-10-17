@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.4.15
+- The bridge keeps polling when Windows cannot encode a track name; metadata transport remains UTF-8.
+- Ctrl+Alt+S triggers an immediate Spotify scan; stale metadata is cleared when playback stops.
+
+## v1.4.14
+- Reduced compact-mode artwork so it stays clear of the control row.
+
 ## v1.4.13
 - Fixed FR and US locale loading so `/spn help`, `/spn say`, and other messages display text instead of internal keys.
 - Added live-cover support for CustomAssets: 24-bit 128 × 128 TGA artwork rotates through 512 texture paths declared before the client starts.

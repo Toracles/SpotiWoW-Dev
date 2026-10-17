@@ -6,7 +6,7 @@ in <game_dir>\\imports. No slash-command injection, pixel strip, or screen captu
 is used. Lyrics are sent to the addon as events; the addon posts them to the
 configured in-game channel only while Lyrics mode is enabled.
 
-Global hotkeys: Ctrl+Alt+L toggles Lyrics; Ctrl+Alt+S refreshes addon state.
+Global hotkeys: Ctrl+Alt+L toggles Lyrics; Ctrl+Alt+S refreshes Spotify/add-on state.
 """
 import base64
 import bisect
@@ -19,6 +19,7 @@ import logging
 import os
 import re
 import secrets
+import sys
 import threading
 import time
 import urllib.error
@@ -28,6 +29,17 @@ import webbrowser
 from ctypes import wintypes
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+
+# The tray launcher redirects the bridge to a Windows log file. On some
+# installations stdout defaults to cp1252, which cannot encode Japanese,
+# Cyrillic, emoji, or many other Spotify metadata characters. A failed print
+# must never terminate the Spotify polling thread.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        if _stream is not None and hasattr(_stream, "reconfigure"):
+            _stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except (OSError, ValueError):
+        pass
 
 try:
     import syncedlyrics  # Optional dependency, installed through requirements.txt.
@@ -163,6 +175,9 @@ def get_token():
     return _tokens["access_token"]
 
 
+NO_ACTIVE_PLAYBACK = object()
+
+
 def player_state():
     req = urllib.request.Request(
         "https://api.spotify.com/v1/me/player",
@@ -171,7 +186,7 @@ def player_state():
     try:
         with urllib.request.urlopen(req, timeout=10) as r:
             if r.status == 204:
-                return None
+                return NO_ACTIVE_PLAYBACK
             return json.load(r)
     except urllib.error.HTTPError as e:
         if e.code == 429:
@@ -556,7 +571,7 @@ def download_album_art(track_id, image_url):
         from PIL import Image
         target_dir = CUSTOM_ASSET_DIR if custom_assets_enabled() else ADDON_DIR
         with artwork_write_lock:
-            req = urllib.request.Request(image_url, headers={"User-Agent": "SpotiWoW-Octo/1.4.13"})
+            req = urllib.request.Request(image_url, headers={"User-Agent": "SpotiWoW-Octo/1.4.15"})
             with urllib.request.urlopen(req, timeout=12) as response:
                 raw = response.read(6 * 1024 * 1024)
             from PIL import ImageOps
@@ -592,46 +607,76 @@ def load_track_lyrics(track_id, artist, title, album, duration_s):
 
 def poll_loop():
     while not stop_requested():
-        data = player_state()
-        item = (data or {}).get("item")
-        if item and data.get("currently_playing_type") == "track":
-            S["progress_ms"] = data.get("progress_ms") or 0
-            S["stamp"] = time.time()
-            S["duration_ms"] = item.get("duration_ms") or 0
-            S["playing"] = bool(data.get("is_playing"))
-            S["volume"] = (data.get("device") or {}).get("volume_percent")
-            S["shuffle"] = bool(data.get("shuffle_state"))
-            S["repeat_mode"] = data.get("repeat_state") or "off"
-            S["repeat"] = S["repeat_mode"] != "off"
-            if item["id"] != S["track_id"]:
-                S["track_id"] = item["id"]
-                S["artist"] = ", ".join(a["name"] for a in item.get("artists", []))
-                S["title"] = item.get("name") or ""
-                S["sent_idx"] = -1
-                S["lines"], S["times"] = [], []
-                S["current_lyric"] = ""
-                S["artwork"] = ""
-                print(f"[Spotify] {S['artist']} - {S['title']}")
-                publish_state()
-                first_artist = (item.get("artists") or [{}])[0].get("name", "")
-                album = (item.get("album") or {}).get("name", "")
-                S["album"] = album
-                images = (item.get("album") or {}).get("images") or []
-                artwork_url = images[0].get("url") if images else None
-                if artwork_url:
-                    threading.Thread(target=download_album_art, args=(item["id"], artwork_url), daemon=True).start()
-                duration_s = round((item.get("duration_ms") or 0) / 1000)
-                threading.Thread(
-                    target=load_track_lyrics,
-                    args=(item["id"], first_artist, S["title"], album, duration_s),
-                    daemon=True,
-                ).start()
-            publish_state()
-        else:
-            if S["playing"]:
-                S["playing"] = False
+        try:
+            data = player_state()
+            if data is NO_ACTIVE_PLAYBACK or (
+                isinstance(data, dict)
+                and (data.get("currently_playing_type") != "track" or not data.get("item"))
+            ):
+                # A Spotify 204 means nothing is playing. Clear stale track
+                # metadata so the add-on cannot keep showing a previous song.
+                changed = any((S["track_id"], S["artist"], S["title"], S["album"], S["artwork"], S["playing"]))
+                if changed:
+                    S["track_id"] = None
+                    S["artist"] = S["title"] = S["album"] = S["artwork"] = ""
+                    S["progress_ms"] = S["duration_ms"] = 0
+                    S["playing"] = False
+                    S["shuffle"] = S["repeat"] = False
+                    S["repeat_mode"] = "off"
+                    S["stamp"] = time.time()
+                    S["sent_idx"] = -1
+                    S["lines"], S["times"] = [], []
+                    S["current_lyric"] = ""
+                    publish_state()
+            elif isinstance(data, dict) and data.get("item"):
+                item = data["item"]
+                track_id = item.get("id")
+                artists = item.get("artists") or []
+                artist = ", ".join(a.get("name", "") for a in artists if isinstance(a, dict) and a.get("name"))
+                title = item.get("name") or ""
+                album_info = item.get("album") or {}
+                album = album_info.get("name", "") if isinstance(album_info, dict) else ""
+                changed_track = track_id != S["track_id"]
+                changed_metadata = changed_track or artist != S["artist"] or title != S["title"] or album != S["album"]
+
+                S["progress_ms"] = data.get("progress_ms") or 0
                 S["stamp"] = time.time()
+                S["duration_ms"] = item.get("duration_ms") or 0
+                S["playing"] = bool(data.get("is_playing"))
+                S["volume"] = (data.get("device") or {}).get("volume_percent")
+                S["shuffle"] = bool(data.get("shuffle_state"))
+                S["repeat_mode"] = data.get("repeat_state") or "off"
+                S["repeat"] = S["repeat_mode"] != "off"
+
+                if changed_metadata:
+                    S["track_id"], S["artist"], S["title"], S["album"] = track_id, artist, title, album
+                    S["sent_idx"] = -1
+                    S["lines"], S["times"] = [], []
+                    S["current_lyric"] = ""
+                    if changed_track:
+                        S["artwork"] = ""
+                    print(f"[Spotify] {artist} - {title}")
+
+                    if changed_track:
+                        images = album_info.get("images") or [] if isinstance(album_info, dict) else []
+                        artwork_url = images[0].get("url") if images and isinstance(images[0], dict) else None
+                        if artwork_url and track_id:
+                            threading.Thread(target=download_album_art, args=(track_id, artwork_url), daemon=True).start()
+                        duration_s = round((item.get("duration_ms") or 0) / 1000)
+                        first_artist = artists[0].get("name", "") if artists and isinstance(artists[0], dict) else ""
+                        threading.Thread(
+                            target=load_track_lyrics,
+                            args=(track_id, first_artist, title, album, duration_s),
+                            daemon=True,
+                        ).start()
+                # Publish after all metadata fields have been updated together.
                 publish_state()
+            # A None response represents a temporary API/network failure. Keep
+            # the last known state and retry on the next normal scan.
+        except Exception as exc:
+            # Keep the scanner alive even if one unusual API payload or log
+            # message fails. In particular, track names can use any language.
+            print(f"[Spotify] Scan error; retrying: {type(exc).__name__}: {exc}")
         # Refresh Spotify's current-track metadata every 10 seconds. Addon file
         # synchronization remains independent and can still react to commands.
         wake.wait(10)
@@ -810,7 +855,7 @@ def main():
     user32.RegisterHotKey(None, 1, MOD_CONTROL | MOD_ALT, ord("L"))
     user32.RegisterHotKey(None, 2, MOD_CONTROL | MOD_ALT, ord("S"))
     print(f"Pret. Dossier de bridge: {IMPORT_DIR}")
-    print("Ctrl+Alt+L = mode Lyrics, Ctrl+Alt+S = actualiser l'etat. Ctrl+C pour quitter.")
+    print("Ctrl+Alt+L = mode Lyrics, Ctrl+Alt+S = actualiser Spotify et l'etat addon. Ctrl+C pour quitter.")
     msg = wintypes.MSG()
     PM_REMOVE = 0x0001
     WM_QUIT = 0x0012
@@ -825,6 +870,7 @@ def main():
                     if msg.wParam == 1:
                         toggle_lyrics()
                     elif msg.wParam == 2:
+                        wake.set()
                         publish_state()
             time.sleep(0.05)
     finally:

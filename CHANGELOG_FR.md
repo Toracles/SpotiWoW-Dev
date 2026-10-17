@@ -1,5 +1,12 @@
 # Journal des modifications
 
+## v1.4.15
+- Le bridge conserve son scan Spotify si un nom de morceau ne peut pas être encodé par Windows ; les métadonnées sont transportées en UTF-8.
+- Ctrl+Alt+S relance immédiatement le scan Spotify ; les métadonnées périmées sont effacées quand rien n’est en lecture.
+
+## v1.4.14
+- Réduit la jaquette en mode compact pour la séparer clairement de la rangée de commandes.
+
 ## v1.4.13
 - Répare le chargement des locales FR et US : `/spn help`, `/spn say` et les autres messages ne révèlent plus les clés internes.
 - Jaquettes compatibles avec le chargeur CustomAssets : textures TGA 24 bits en 128 × 128, distribuées sur 512 chemins déjà connus du client et mises à jour par le bridge.

@@ -191,7 +191,7 @@ ApplyStyle=function()
         segment:ClearAllPoints(); segment:SetPoint("BOTTOMLEFT",progressBg,"BOTTOMLEFT",(i-1)*segmentSpace,0)
         segment:SetWidth(segmentSpace-1)
     end
-    art:SetWidth(expanded and 96 or 44); art:SetHeight(expanded and 96 or 44)
+    art:SetWidth(expanded and 96 or 34); art:SetHeight(expanded and 96 or 34)
     artFrame:SetWidth(art:GetWidth()+6); artFrame:SetHeight(art:GetHeight()+6)
     if expanded then
         artFrame:ClearAllPoints(); artFrame:SetPoint("TOPLEFT",ui,"TOPLEFT",8,-8)
