@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.4.15 — US English
+# SpotiWoW-Dev v1.6.4-alpha — US English
 
 SpotiWoW-Dev connects Spotify to Turtle WoW / OctoWoW through the SuperWoW file bridge. This package uses the US English interface and in-game messages.
 
@@ -18,9 +18,11 @@ The installer never asks for a Client Secret and does not download Turtle WoW, V
 - A Spotify Developer app configured with the Redirect URI shown above.
 
 ## Features
+- Three saved layouts: compact (300 × 68 px), square (260 × 260 px), and expanded (460 × 164 px). Choose one in the ... panel or use /spn mode compact|square|expanded.
+- Three persistent layouts: compact (300 × 68 px), square (260 × 260 px), and expanded (460 × 164 px). Choose one in /spn settings or use /spn mode compact|square|expanded.
 - `Ctrl+Alt+L` toggles Lyrics from the companion without typing a command into the in-game chat.
 - `Lyrics mode: ON/OFF` is displayed locally via `DEFAULT_CHAT_FRAME:AddMessage`. The status message is never sent to other players.
-- Compact neon metallic mini-player (300 × 68 px) or expanded player with Spotify cover art, album, playback time, shuffle, and repeat.
+- Charcoal player with neon accents in three layouts: compact (300 × 68 px), square (260 × 260 px), and expanded (460 × 164 px). Spotify artwork, artist, album, time, and controls are available according to the selected layout.
 - Obsidian, Azerite, Fel, and Bloodmoon themes, with customizable accents, glow, borders, and controls; configurable progress bar with click-to-seek.
 - Shuffle, repeat album, and repeat track stay visibly indicated. Obsidian, Azerite, Fel, and Bloodmoon each keep their neon accent.
 - Settings persist in WoW. `/spn help` lists themes and options; `/spn expand` toggles the expanded player.

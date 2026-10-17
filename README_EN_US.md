@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.4.15 — US English
+# SpotiWoW-Dev v1.6.4-alpha — US English
 
 > **Development version** — this version is still evolving and may include experimental changes. It is intended for testing; bugs or behavior changes may occur.
 
@@ -21,9 +21,11 @@ The installer never asks for a Client Secret and does not download Turtle WoW, V
 - `customassets.dll` enabled in `dlls.txt` for live Spotify covers. Setup enables it if the DLL is already present.
 
 ## Features
+- Three saved layouts: compact (300 × 68 px), square (260 × 260 px), and expanded (460 × 164 px). Choose one in the ... panel or use /spn mode compact|square|expanded.
+- Three persistent layouts: compact (300 × 68 px), square (260 × 260 px), and expanded (460 × 164 px). Choose one in /spn settings or use /spn mode compact|square|expanded.
 - `Ctrl+Alt+L` toggles Lyrics from the companion without typing a command into the in-game chat.
 - `Lyrics mode: ON/OFF` is displayed locally via `DEFAULT_CHAT_FRAME:AddMessage`. The status message is never sent to other players.
-- Compact neon metallic mini-player (300 × 68 px) or expanded player with Spotify cover art, album, playback time, shuffle, and repeat.
+- Charcoal player with neon accents in three layouts: compact (300 × 68 px), square (260 × 260 px), and expanded (460 × 164 px). Spotify artwork, artist, album, time, and controls are available according to the selected layout.
 - Obsidian, Azerite, Fel, and Bloodmoon themes, with customizable accents, glow, borders, and controls; configurable progress bar with click-to-seek.
 - Click `...` on the player (or use `/spn settings`) to choose a theme and switch between compact and expanded layouts.
 - The expanded player's right panel shows Spotify, playback status, volume, and Volume/Lyrics shortcuts.

@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.6.4-alpha
+- Reworked the player around a cleaner charcoal surface with the Obsidian, Azerite, Fel, and Bloodmoon neon accents preserved.
+- Added a dedicated square layout with cover art, title, artist, album, progress, elapsed time, and the full control set.
+- Reorganized compact mode while keeping its 300 × 68 px dimensions; artwork and controls now occupy separate areas.
+- Refined the expanded 460 × 164 px control layout without adding background polling or artwork work.
+- Added a layout selector in /spn settings and /spn mode compact|square|expanded. /spn expand and legacy saved settings remain compatible.
+- Made scrolling titles UTF-8 character-aware so multilingual names are not split mid-character.
+- Preserved existing settings, commands, live artwork, shortcuts, shuffle/repeat indicators, and clickable progress seeking.
+
 ## v1.4.15
 - The bridge keeps polling when Windows cannot encode a track name; metadata transport remains UTF-8.
 - Ctrl+Alt+S triggers an immediate Spotify scan; stale metadata is cleared when playback stops.

@@ -1,5 +1,14 @@
 # Journal des modifications
 
+## v1.6.4-alpha
+- Refonte de l’interface du lecteur sur une base charbon sombre, plus nette et plus cohérente avec les quatre accents néon Obsidian, Azerite, Fel et Bloodmoon.
+- Ajout d’un format carré dédié avec pochette, titre, artiste, album, progression, temps et commandes complètes.
+- Réorganisation du compact en conservant ses dimensions de 300 × 68 px ; la pochette et la rangée de boutons disposent maintenant de zones distinctes.
+- Mise en page de contrôle revue dans le format agrandi (460 × 164 px) ; aucun nouveau traitement en arrière-plan n’est ajouté.
+- Nouveau choix de format dans /spn settings et commande /spn mode compact|square|expanded. /spn expand et les anciennes sauvegardes restent compatibles.
+- Défilement des titres découpé en caractères UTF-8 pour ne pas couper les titres multilingues.
+- Tous les réglages existants, commandes, jaquettes dynamiques, raccourcis, modes aléatoire/répétition et progression cliquable sont conservés.
+
 ## v1.4.15
 - Le bridge conserve son scan Spotify si un nom de morceau ne peut pas être encodé par Windows ; les métadonnées sont transportées en UTF-8.
 - Ctrl+Alt+S relance immédiatement le scan Spotify ; les métadonnées périmées sont effacées quand rien n’est en lecture.
