@@ -69,6 +69,14 @@ GAME_DIR = Path(CFG.get("game_dir", r"C:\Jeux\OctoWoW"))
 IMPORT_DIR = GAME_DIR / "imports"
 STATE_FILE = IMPORT_DIR / "SpotifyNowState.txt"
 COMMAND_FILE = IMPORT_DIR / "SpotifyNowCommand.txt"
+UPDATE_FILE = IMPORT_DIR / "SpotifyNowUpdate.txt"
+APP_VERSION = "1.6.14"
+LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
+LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"
+UPDATE_CHECK_INTERVAL_SECONDS = 30 * 60
+UPDATE_CHECK_MIN_INTERVAL_SECONDS = 5 * 60
+_last_update_check = 0.0
+_update_check_lock = threading.Lock()
 ADDON_DIR = GAME_DIR / "Interface" / "AddOns" / "SpotiWoW-Dev"
 CUSTOM_ASSET_DIR = GAME_DIR / "Data" / "Interface" / "AddOns" / "SpotiWoW-Dev"
 ARTWORK_SLOT_COUNT = 512
@@ -535,6 +543,91 @@ def publish_state() -> None:
             print(f"[Bridge] Impossible d'ecrire {STATE_FILE}: {exc}")
 
 
+def _version_tuple(value: str):
+    match = re.search(r"(\d+)\.(\d+)\.(\d+)", str(value or ""))
+    return tuple(int(part) for part in match.groups()) if match else None
+
+
+def check_latest_release():
+    """Return the newest published release only after its setup asset is ready."""
+    request = urllib.request.Request(
+        LATEST_RELEASE_API,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": f"SpotiWoW-Dev/{APP_VERSION}",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=10) as response:
+        release = json.load(response)
+
+    if not isinstance(release, dict) or release.get("draft") or not release.get("published_at"):
+        return None
+    tag = str(release.get("tag_name") or "").strip()
+    latest_version = _version_tuple(tag)
+    installed_version = _version_tuple(APP_VERSION)
+    if not latest_version or not installed_version or latest_version <= installed_version:
+        return None
+
+    assets = release.get("assets") or []
+    setup_ready = any(
+        isinstance(asset, dict)
+        and asset.get("name") == "SpotiWoW-Dev-Setup.exe"
+        and asset.get("state") == "uploaded"
+        and int(asset.get("size") or 0) > 0
+        for asset in assets
+    )
+    release_url = str(release.get("html_url") or "")
+    if not setup_ready or not release_url.startswith(LATEST_RELEASE_PREFIX):
+        return None
+    return tag, release_url
+
+
+def publish_update_notice(release) -> None:
+    """Expose update metadata through SuperWoW for the add-on to read at login."""
+    if release:
+        tag, release_url = release
+        payload = "SPNU1|" + encode_field(tag) + "|" + encode_field(release_url) + "\n"
+    else:
+        payload = "SPNU1||\n"
+    try:
+        atomic_write(UPDATE_FILE, payload)
+    except Exception as exc:
+        print(f"[Bridge] Impossible d'ecrire l'etat des mises a jour {UPDATE_FILE}: {exc}")
+
+
+def check_update_once():
+    """Fetch the latest public release, throttled to avoid excessive API requests."""
+    global _last_update_check
+    with _update_check_lock:
+        now = time.monotonic()
+        if now - _last_update_check < UPDATE_CHECK_MIN_INTERVAL_SECONDS:
+            return
+        _last_update_check = now
+
+    try:
+        release = check_latest_release()
+        publish_update_notice(release)
+        if release:
+            print(f"[Update] Version disponible: {release[0]} — {release[1]}")
+        else:
+            print(f"[Update] SpotiWoW-Dev {APP_VERSION} est a jour.")
+    except Exception as exc:
+        # Keep the last successful notice if GitHub is temporarily unreachable.
+        print(f"[Update] Verification GitHub impossible pour le moment: {exc}")
+        with _update_check_lock:
+            _last_update_check = max(0.0, time.monotonic() - UPDATE_CHECK_MIN_INTERVAL_SECONDS + 60)
+
+
+def update_check_loop():
+    """Check GitHub at startup and periodically, without requiring an API key."""
+    while not stop_requested():
+        check_update_once()
+        for _ in range(UPDATE_CHECK_INTERVAL_SECONDS):
+            if stop_requested():
+                return
+            time.sleep(1)
+
+
 def read_command_payload() -> str:
     try:
         return COMMAND_FILE.read_text(encoding="utf-8").strip()
@@ -793,6 +886,8 @@ def handle_command(cmd, argument=""):
 def handle_bridge_command(cmd, argument):
     if cmd == "lyrics":
         set_lyrics(argument == "1")
+    elif cmd == "checkupdates":
+        threading.Thread(target=check_update_once, name="update-check-on-login", daemon=True).start()
     elif cmd in {"prev", "pause", "next", "back", "fwd", "voldown", "volup", "seek", "shuffle", "repeat"}:
         threading.Thread(target=handle_command, args=(cmd, argument), daemon=True).start()
     else:
@@ -846,6 +941,7 @@ def main():
     # Capture the current command before OAuth; commands made during login aren't lost.
     initial_command = read_command_payload()
     publish_state()
+    threading.Thread(target=update_check_loop, name="update-checker", daemon=True).start()
     get_token()  # opens the browser on first run
     threading.Thread(target=poll_loop, daemon=True).start()
     threading.Thread(target=lyrics_loop, daemon=True).start()
