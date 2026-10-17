@@ -133,6 +133,3 @@ jobs:
             dist/SpotiWoW-Octo-Portable-US.zip
             dist/SpotiWoW-Octo-Addon-FR.zip
             dist/SpotiWoW-Octo-Addon-US.zip
-
-      - name: Submit a Signing Request
-        uses: SignPath/github-action-submit-signing-request@v2
