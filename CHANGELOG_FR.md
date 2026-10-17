@@ -1,5 +1,8 @@
 # Journal des modifications
 
+## v1.6.15
+- Corrige le chargement de l’addon : les infobulles des boutons Lyrics et Channel sont maintenant reliées après leur création, ce qui rétablit le lecteur et les commandes `/spn`.
+
 ## v1.6.14
 - Ajoute une vérification périodique des releases publiques GitHub, sans clé API ; une mise à jour n’est annoncée que lorsque le setup est publié.
 - Affiche un rappel local dans le chat WoW à chaque connexion de personnage, avec la version et le lien de la release.

@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.6.14
+# SpotiWoW-Dev v1.6.15
 
 > **Development build for Turtle WoW / OctoWoW.** This version is still evolving and may contain bugs or experimental changes.
 

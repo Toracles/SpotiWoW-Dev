@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6.15
+- Fixes add-on initialization by attaching the Lyrics and Channel tooltips only after their buttons are created, restoring the player and `/spn` commands.
+
 ## v1.6.14
 - Adds periodic checks for public GitHub releases without an API key; an update is announced only after the setup installer has been published.
 - Shows a local WoW chat reminder with the version and release link at every character login.
