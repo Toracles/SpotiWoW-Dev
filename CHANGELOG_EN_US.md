@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6.12-alpha
+- Renames the #FFFFFF and #FF4FD8 themes in the player and settings to Silver Dawn and Fang Set.
+
 ## v1.6.11-alpha
 - Keeps player button borders and neon accents visible while hovering.
 - Adds a seek marker that follows the pointer and previews the target time when Click to Seek is enabled.
