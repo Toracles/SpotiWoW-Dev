@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.6.5-alpha
+- Setup is now pinned to the exact release tag and commit SHA that produced it, so it cannot silently switch to a different published version.
+- The workflow embeds the same provenance manifest in setup and both portable bundles. Before extraction, setup verifies the GitHub tag target, commit SHA, ZIP manifest, and GitHub-published SHA-256 asset digest.
+- French and US English installers use the same checks. If the release or package manifest does not match, installation stops before modifying game files.
+
 ## v1.6.4-alpha
 - Reworked the player around a cleaner charcoal surface with the Obsidian, Azerite, Fel, and Bloodmoon neon accents preserved.
 - Added a dedicated square layout with cover art, title, artist, album, progress, elapsed time, and the full control set.
@@ -71,3 +76,4 @@
 - Ctrl+Alt+L works without typing a command into the in-game chat. ON/OFF status appears only in the local chat frame.
 - The installer lets users choose a language and downloads the matching package.
 - Technical identifiers and existing SavedVariables are retained for compatibility.
+

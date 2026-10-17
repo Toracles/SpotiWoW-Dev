@@ -4,6 +4,7 @@ cd /d "%~dp0"
 
 set "PY=py -3.15"
 set "SOURCE=%~dp0SpotiWoW-DevSetup.py"
+set "MANIFEST=%~dp0release-manifest.json"
 set "ICON=%~dp0SpotiWoW-Dev.ico"
 set "OUT=%~dp0dist"
 set "WORK=%~dp0build_temp"
@@ -28,6 +29,11 @@ if not exist "%ICON%" (
   pause
   exit /b 2
 )
+if not exist "%MANIFEST%" (
+  echo ERROR: Missing release-manifest.json. Build setup from a prepared release checkout.
+  pause
+  exit /b 2
+)
 %PY% --version >nul 2>nul
 if errorlevel 1 (
   echo Python 3.15 was not found. Install Python 3.15 first.
@@ -41,7 +47,7 @@ if errorlevel 1 (
   exit /b 1
 )
 if not exist "%OUT%" mkdir "%OUT%"
-%PY% -m PyInstaller --clean --noconfirm --onefile --windowed --name "SpotiWoW-Dev-Setup" --icon "%ICON%" --add-data "%~dp0repo.txt;." --add-data "%ICON%;." --distpath "%OUT%" --workpath "%WORK%" --specpath "%WORK%" "%SOURCE%"
+%PY% -m PyInstaller --clean --noconfirm --onefile --windowed --name "SpotiWoW-Dev-Setup" --icon "%ICON%" --add-data "%~dp0repo.txt;." --add-data "%MANIFEST%;." --add-data "%ICON%;." --distpath "%OUT%" --workpath "%WORK%" --specpath "%WORK%" "%SOURCE%"
 if errorlevel 1 (
   echo Setup EXE build failed. See the error output above.
   pause
@@ -49,5 +55,6 @@ if errorlevel 1 (
 )
 echo.
 echo SUCCESS: "%OUT%\SpotiWoW-Dev-Setup.exe"
-echo The setup downloads the latest SpotiWoW-Dev-Portable.zip from the selected public GitHub repository.
+echo The setup downloads and verifies the portable package for its exact GitHub release tag and commit.
 pause
+

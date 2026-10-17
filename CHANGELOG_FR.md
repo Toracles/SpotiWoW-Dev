@@ -1,5 +1,10 @@
 # Journal des modifications
 
+## v1.6.5-alpha
+- Le setup est désormais lié au tag et au SHA exacts du commit qui a produit cette release ; il ne peut plus basculer silencieusement sur une autre version publiée.
+- Le workflow joint le même manifeste de provenance au setup et aux paquets portables. À l’installation, le setup vérifie la cible GitHub du tag, le SHA du commit, le manifeste du ZIP et son empreinte SHA-256 publiée par GitHub avant toute extraction.
+- La version française et la version US appliquent les mêmes contrôles. En cas d’écart ou de manifeste absent, l’installation s’arrête avant de modifier les fichiers du jeu.
+
 ## v1.6.4-alpha
 - Refonte de l’interface du lecteur sur une base charbon sombre, plus nette et plus cohérente avec les quatre accents néon Obsidian, Azerite, Fel et Bloodmoon.
 - Ajout d’un format carré dédié avec pochette, titre, artiste, album, progression, temps et commandes complètes.
@@ -71,3 +76,4 @@
 - Le raccourci Ctrl+Alt+L reste sans saisie de commande dans le chat. Le statut ON/OFF s’affiche uniquement dans la fenêtre de chat locale.
 - L’installeur propose la langue et télécharge le paquet correspondant.
 - Les identifiants techniques et les SavedVariables existants sont conservés pour compatibilité.
+

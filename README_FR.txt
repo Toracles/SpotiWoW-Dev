@@ -1,4 +1,6 @@
-# SpotiWoW-Dev v1.6.4-alpha — Français
+# SpotiWoW-Dev v1.6.5-alpha — Français
+
+> **Version de développement** — destinée aux tests ; des bugs et changements restent possibles.
 
 SpotiWoW-Dev relie Spotify à Turtle WoW / OctoWoW via le bridge de fichiers SuperWoW. Cette version utilise l’interface et les messages en français.
 
@@ -11,6 +13,8 @@ SpotiWoW-Dev relie Spotify à Turtle WoW / OctoWoW via le bridge de fichiers Sup
 
 L’installateur ne demande jamais de Client Secret et ne télécharge pas Turtle WoW, VanillaFixes, SuperWoW, SuperAPI ni leurs DLL.
 
+Le setup est lié à sa release GitHub précise et vérifie son tag, le SHA du commit source, le manifeste du paquet et son empreinte SHA-256 avant l’installation.
+
 ## Prérequis
 - Client Turtle WoW / OctoWoW basé sur WoW 1.12.1.
 - SuperWoW avec les fonctions `ImportFile` et `ExportFile`.
@@ -18,11 +22,9 @@ L’installateur ne demande jamais de Client Secret et ne télécharge pas Turtl
 - Une application Spotify Developer configurée avec le Redirect URI indiqué ci-dessus.
 
 ## Fonctionnalités
-- Trois formats persistants : compact (300 × 68 px), carré (260 × 260 px) et agrandi (460 × 164 px). Le panneau ... permet de les choisir ; /spn mode compact|square|expanded sélectionne un format directement.
-- Trois formats persistants : compact (300 × 68 px), carré (260 × 260 px) et agrandi (460 × 164 px). Le sélecteur est dans /spn settings ; /spn mode compact|square|expanded choisit directement le format.
 - Raccourci `Ctrl+Alt+L` pour activer/désactiver Lyrics depuis le compagnon, sans saisir de commande dans le chat.
 - Message `Mode Lyrics : ON/OFF` affiché localement dans la fenêtre de chat via `DEFAULT_CHAT_FRAME:AddMessage`. Aucun message de statut n’est envoyé aux autres joueurs.
-- Mini-lecteur à fond charbon et accents néon, en trois formats : compact (300 × 68 px), carré (260 × 260 px) et agrandi (460 × 164 px). Pochette Spotify, artiste, album, temps et commandes restent disponibles selon le format.
+- Lecteur à fond charbon et accents néon en trois formats : compact (300 × 68 px), carré (260 × 260 px) et agrandi (460 × 164 px). Pochette Spotify, artiste, album, temps et commandes varient selon le format. Sélection dans `/spn settings` ou commande `/spn mode compact|square|expanded`.
 - Thèmes Obsidian, Azerite, Fel et Bloodmoon, avec couleurs, lueur, bordures et commandes personnalisables ; progression réglable et cliquable pour chercher dans le morceau.
 - Les modes aléatoire, répétition album et répétition morceau restent indiqués dans le lecteur. Les thèmes Obsidian, Azerite, Fel et Bloodmoon gardent chacun leur accent néon.
 - Réglages sauvegardés dans WoW. `/spn help` affiche les thèmes et options ; `/spn expand` bascule le mode agrandi.
@@ -37,5 +39,6 @@ Les paroles elles-mêmes restent envoyées dans le canal choisi si cette option 
 - Si aucun dossier n’est détecté, sélectionne manuellement celui qui contient `VanillaFixes.exe`.
 
 Pour une mise à jour de l’addon uniquement, télécharge `SpotiWoW-Dev-Addon-FR.zip` depuis les Releases. La version française affiche les messages système en français.
+
 
 

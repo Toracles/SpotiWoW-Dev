@@ -14,6 +14,21 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v7
 
+      - name: Create release tag and commit manifest
+        shell: pwsh
+        run: |
+          $root = $env:GITHUB_WORKSPACE
+          $tag = $env:GITHUB_REF_NAME
+          $commit = (git rev-parse HEAD).Trim().ToLowerInvariant()
+          $eventCommit = $env:GITHUB_SHA.Trim().ToLowerInvariant()
+          if ($commit -ne $eventCommit) {
+            throw "Checked-out commit $commit does not match release event commit $eventCommit"
+          }
+          $manifest = [ordered]@{ tag = $tag; commit_sha = $commit }
+          $manifestPath = Join-Path $root "release-manifest.json"
+          $json = $manifest | ConvertTo-Json -Compress
+          [System.IO.File]::WriteAllText($manifestPath, $json + "`n", [System.Text.UTF8Encoding]::new($false))
+
       - name: Set up Python for packaging
         uses: actions/setup-python@v7
         with:
@@ -87,6 +102,7 @@ jobs:
             Copy-Item "companion/SpotiWoW-Dev.ico" (Join-Path $stage "companion/SpotiWoW-Dev.ico")
             Copy-Item "companion/SpotiWoW-Dev.png" (Join-Path $stage "companion/SpotiWoW-Dev.png")
             Copy-Item "companion/THIRD_PARTY_NOTICES.txt" (Join-Path $stage "companion/THIRD_PARTY_NOTICES.txt")
+            Copy-Item "release-manifest.json" (Join-Path $stage "companion/release-manifest.json")
             Copy-Item $variant.Readme (Join-Path $stage $variant.Readme)
             $out = Join-Path $root ("dist/SpotiWoW-Dev-Portable-" + $variant.Code + ".zip")
             if (Test-Path $out) { Remove-Item $out -Force }
@@ -112,6 +128,7 @@ jobs:
         run: |
           $root = $env:GITHUB_WORKSPACE
           $repoPath = Join-Path $root "installer/repo.txt"
+          $manifestPath = Join-Path $root "release-manifest.json"
           $iconPath = Join-Path $root "installer/SpotiWoW-Dev.ico"
           $scriptPath = Join-Path $root "installer/SpotiWoW-DevSetup.py"
           $distPath = Join-Path $root "dist"
@@ -130,6 +147,7 @@ jobs:
             --name SpotiWoW-Dev-Setup `
             --icon "$iconPath" `
             --add-data "$repoPath;." `
+            --add-data "$manifestPath;." `
             --add-data "$iconPath;." `
             --distpath "$distPath" --workpath "$workPath" --specpath "$workPath" `
             "$scriptPath"
@@ -144,4 +162,5 @@ jobs:
             dist/SpotiWoW-Dev-Portable-US.zip
             dist/SpotiWoW-Dev-Addon-FR.zip
             dist/SpotiWoW-Dev-Addon-US.zip
+
 

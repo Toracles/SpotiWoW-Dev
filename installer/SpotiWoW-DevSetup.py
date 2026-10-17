@@ -2,9 +2,9 @@ from __future__ import annotations
 
 """Windows setup wizard for SpotiWoW-Dev.
 
-The installer downloads the latest public GitHub Release portable bundle, installs
-only the addon/companion (never the Turtle WoW client or third-party DLLs), writes
-config.json, and creates Start Menu/Desktop shortcuts.
+The installer downloads the portable bundle for its own GitHub release, verifies
+the release tag, commit SHA, package manifest, and GitHub asset digest, then installs
+only the addon/companion (never the Turtle WoW client or third-party DLLs).
 """
 
 import hashlib
@@ -19,6 +19,7 @@ import sys
 import tempfile
 import threading
 import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 
@@ -62,15 +63,17 @@ TEXT = {
         "invalid_game": "Ce dossier ne semble pas contenir le client attendu.\n\nVanillaFixes.exe est introuvable dans :\n{path}",
         "invalid_id": "Le Client ID semble vide ou invalide. Copie le Client ID depuis ton application Spotify Developer.",
         "repo_missing": "Cet installateur n’est pas encore relié au dépôt GitHub du projet.\n\nLe mainteneur doit configurer le dépôt puis publier une Release.",
-        "status_release": "Recherche de la dernière version publiée…",
+        "status_release": "Vérification de la version liée à cet installateur…",
         "status_download": "Téléchargement de {tag}…",
-        "status_verify": "Vérification du paquet téléchargé…",
+        "status_verify": "Vérification du paquet et de son commit GitHub…",
         "status_addon": "Installation de l’addon dans le client WoW…",
         "status_companion": "Installation du compagnon et configuration Spotify…",
         "status_shortcuts": "Création des raccourcis Windows…",
         "unsafe_zip": "Le paquet téléchargé contient un chemin ZIP non sûr.",
-        "asset_missing": "La dernière Release ne contient pas {asset}. Vérifie que le workflow de publication a terminé.",
+        "asset_missing": "La release liée à cet installateur ne contient pas {asset}. Vérifie que le workflow de publication a terminé.",
         "bad_hash": "La vérification SHA-256 a échoué. Aucun fichier n’a été installé.",
+        "bad_manifest": "Le paquet ne correspond pas au commit GitHub attendu. Aucun fichier n’a été installé.",
+        "manifest_missing": "La version de cet installateur est introuvable. Télécharge-le depuis la page Releases du dépôt.",
         "incomplete": "Le paquet est incomplet : addon, lanceur, bridge ou icône manquant.",
         "done_title": "Installation terminée",
         "done_message": "Installation terminée !\n\nAddon : {addon}\nCompagnon : {companion}\nLangue : {language}\n\nRelance le client WoW avant de tester les jaquettes. Le premier lancement du compagnon peut ouvrir le navigateur pour autoriser Spotify.",
@@ -96,15 +99,17 @@ TEXT = {
         "invalid_game": "This folder does not appear to contain the expected client.\n\nVanillaFixes.exe was not found in:\n{path}",
         "invalid_id": "The Client ID looks empty or invalid. Copy the Client ID from your Spotify Developer app.",
         "repo_missing": "This setup has not been connected to the project's GitHub repository yet.\n\nThe maintainer must configure the repository and publish a Release.",
-        "status_release": "Checking the latest published release…",
+        "status_release": "Checking the release linked to this setup…",
         "status_download": "Downloading {tag}…",
-        "status_verify": "Verifying downloaded package…",
+        "status_verify": "Verifying the package and its GitHub commit…",
         "status_addon": "Installing the add-on into the WoW client…",
         "status_companion": "Installing the companion and configuring Spotify…",
         "status_shortcuts": "Creating Windows shortcuts…",
         "unsafe_zip": "The downloaded package contains an unsafe ZIP path.",
-        "asset_missing": "The latest Release does not contain {asset}. Make sure the release workflow completed.",
+        "asset_missing": "The release linked to this setup does not contain {asset}. Make sure the release workflow completed.",
         "bad_hash": "SHA-256 verification failed. No files were installed.",
+        "bad_manifest": "The package does not match the expected GitHub commit. No files were installed.",
+        "manifest_missing": "This setup's release information is missing. Download setup from the repository Releases page.",
         "incomplete": "The package is incomplete: add-on, launcher, bridge, or icon is missing.",
         "done_title": "Installation complete",
         "done_message": "Installation complete!\n\nAdd-on: {addon}\nCompanion: {companion}\nLanguage: {language}\n\nRestart the WoW client before testing cover art. The companion's first launch may open a browser to authorize Spotify.",
@@ -130,6 +135,36 @@ def resource_dir() -> Path:
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         return Path(sys._MEIPASS)
     return Path(__file__).resolve().parent
+
+
+def read_release_manifest() -> dict[str, str]:
+    """Read the tag and commit this setup was built for."""
+    path = resource_dir() / "release-manifest.json"
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError) as exc:
+        raise RuntimeError("release-manifest.json is missing or invalid") from exc
+    tag = manifest.get("tag") if isinstance(manifest, dict) else None
+    commit_sha = manifest.get("commit_sha") if isinstance(manifest, dict) else None
+    if not isinstance(tag, str) or not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?", tag):
+        raise RuntimeError("release tag in manifest is invalid")
+    if not isinstance(commit_sha, str) or not re.fullmatch(r"[0-9a-fA-F]{40}", commit_sha):
+        raise RuntimeError("release commit in manifest is invalid")
+    return {"tag": tag, "commit_sha": commit_sha.lower()}
+
+
+def verify_bundle_manifest(bundle: Path, expected: dict[str, str]) -> None:
+    """Require the downloaded portable archive to declare this setup's exact release commit."""
+    manifest_path = "companion/release-manifest.json"
+    try:
+        with zipfile.ZipFile(bundle, "r") as archive:
+            payload = json.loads(archive.read(manifest_path).decode("utf-8-sig"))
+    except (OSError, KeyError, ValueError, zipfile.BadZipFile) as exc:
+        raise RuntimeError("portable release manifest is missing or invalid") from exc
+    actual_tag = payload.get("tag") if isinstance(payload, dict) else None
+    actual_sha = payload.get("commit_sha") if isinstance(payload, dict) else None
+    if actual_tag != expected["tag"] or not isinstance(actual_sha, str) or actual_sha.lower() != expected["commit_sha"]:
+        raise RuntimeError("portable package does not match the setup release commit")
 
 
 def read_repository_slug() -> str:
@@ -379,16 +414,30 @@ class SetupApp:
         language_label = "Français (FR)" if language == "fr" else "English (US)"
         try:
             self.set_status(t(language, "status_release"))
+            try:
+                expected = read_release_manifest()
+            except RuntimeError as exc:
+                raise RuntimeError(t(language, "manifest_missing")) from exc
+            headers = {
+                "Accept": "application/vnd.github+json",
+                "User-Agent": "SpotiWoW-Dev-Setup",
+                "X-GitHub-Api-Version": "2022-11-28",
+            }
+            tag_path = urllib.parse.quote(expected["tag"], safe="")
             request = urllib.request.Request(
-                f"https://api.github.com/repos/{repo}/releases/latest",
-                headers={
-                    "Accept": "application/vnd.github+json",
-                    "User-Agent": "SpotiWoW-Dev-Setup",
-                    "X-GitHub-Api-Version": "2022-11-28",
-                },
+                f"https://api.github.com/repos/{repo}/releases/tags/{tag_path}", headers=headers,
             )
             with urllib.request.urlopen(request, timeout=30) as response:
                 release = json.loads(response.read().decode("utf-8"))
+            if release.get("draft") or release.get("tag_name") != expected["tag"]:
+                raise RuntimeError(t(language, "bad_manifest"))
+            commit_request = urllib.request.Request(
+                f"https://api.github.com/repos/{repo}/commits/{tag_path}", headers=headers,
+            )
+            with urllib.request.urlopen(commit_request, timeout=30) as response:
+                remote_commit = json.loads(response.read().decode("utf-8")).get("sha", "")
+            if not isinstance(remote_commit, str) or remote_commit.casefold() != expected["commit_sha"]:
+                raise RuntimeError(t(language, "bad_manifest"))
             asset = next((a for a in release.get("assets", []) if a.get("name") == asset_name), None)
             if not asset or not asset.get("browser_download_url"):
                 raise RuntimeError(t(language, "asset_missing", asset=asset_name))
@@ -410,10 +459,16 @@ class SetupApp:
                         out.write(chunk)
                         digest.update(chunk)
                 remote_digest = str(asset.get("digest") or "")
-                if remote_digest.startswith("sha256:") and digest.hexdigest().casefold() != remote_digest.split(":", 1)[1].casefold():
+                if not re.fullmatch(r"sha256:[0-9a-fA-F]{64}", remote_digest):
+                    raise RuntimeError(t(language, "bad_hash"))
+                if digest.hexdigest().casefold() != remote_digest.split(":", 1)[1].casefold():
                     raise RuntimeError(t(language, "bad_hash"))
 
                 self.set_status(t(language, "status_verify"))
+                try:
+                    verify_bundle_manifest(bundle, expected)
+                except RuntimeError as exc:
+                    raise RuntimeError(t(language, "bad_manifest")) from exc
                 extracted = temp / "extracted"
                 extracted.mkdir()
                 safe_extract(bundle, extracted)
@@ -522,3 +577,4 @@ class SetupApp:
 
 if __name__ == "__main__":
     SetupApp().run()
+

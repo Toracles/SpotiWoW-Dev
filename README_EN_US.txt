@@ -1,4 +1,6 @@
-# SpotiWoW-Dev v1.6.4-alpha — US English
+# SpotiWoW-Dev v1.6.5-alpha — US English
+
+> **Development version** — intended for testing; bugs and behavior changes may occur.
 
 SpotiWoW-Dev connects Spotify to Turtle WoW / OctoWoW through the SuperWoW file bridge. This package uses the US English interface and in-game messages.
 
@@ -11,6 +13,8 @@ SpotiWoW-Dev connects Spotify to Turtle WoW / OctoWoW through the SuperWoW file 
 
 The installer never asks for a Client Secret and does not download Turtle WoW, VanillaFixes, SuperWoW, SuperAPI, or their DLLs.
 
+Setup is pinned to its specific GitHub release and verifies the tag, source commit SHA, package manifest, and SHA-256 digest before installation.
+
 ## Requirements
 - Turtle WoW / OctoWoW client based on WoW 1.12.1.
 - SuperWoW with the `ImportFile` and `ExportFile` functions.
@@ -18,11 +22,9 @@ The installer never asks for a Client Secret and does not download Turtle WoW, V
 - A Spotify Developer app configured with the Redirect URI shown above.
 
 ## Features
-- Three saved layouts: compact (300 × 68 px), square (260 × 260 px), and expanded (460 × 164 px). Choose one in the ... panel or use /spn mode compact|square|expanded.
-- Three persistent layouts: compact (300 × 68 px), square (260 × 260 px), and expanded (460 × 164 px). Choose one in /spn settings or use /spn mode compact|square|expanded.
 - `Ctrl+Alt+L` toggles Lyrics from the companion without typing a command into the in-game chat.
 - `Lyrics mode: ON/OFF` is displayed locally via `DEFAULT_CHAT_FRAME:AddMessage`. The status message is never sent to other players.
-- Charcoal player with neon accents in three layouts: compact (300 × 68 px), square (260 × 260 px), and expanded (460 × 164 px). Spotify artwork, artist, album, time, and controls are available according to the selected layout.
+- Charcoal player with neon accents in three layouts: compact (300 × 68 px), square (260 × 260 px), and expanded (460 × 164 px). Spotify artwork, artist, album, time, and controls vary by layout. Choose in `/spn settings` or use `/spn mode compact|square|expanded`.
 - Obsidian, Azerite, Fel, and Bloodmoon themes, with customizable accents, glow, borders, and controls; configurable progress bar with click-to-seek.
 - Shuffle, repeat album, and repeat track stay visibly indicated. Obsidian, Azerite, Fel, and Bloodmoon each keep their neon accent.
 - Settings persist in WoW. `/spn help` lists themes and options; `/spn expand` toggles the expanded player.
@@ -37,5 +39,6 @@ Lyrics themselves are still sent to the selected channel when that feature is en
 - If auto-detection fails, manually choose the folder that contains `VanillaFixes.exe`.
 
 For an add-on-only update, download `SpotiWoW-Dev-Addon-US.zip` from Releases. The US English version displays system messages in English.
+
 
 

@@ -7,6 +7,8 @@ companion/.spotiwow_bridge_stop.flag
 companion/logs/
 companion/repo.txt
 installer/repo.txt
+installer/release-manifest.json
+/release-manifest.json
 
 # Build output
 build/
@@ -23,3 +25,4 @@ Interface/AddOns/SpotiWoW-Dev/artwork_*.tga
 /INSTALLER_GITHUB_GUIDE.md
 /INSTALLER_GITHUB_GUIDE_EN_US.md
 /INSTALLER_GITHUB_GUIDE_FR.md
+
