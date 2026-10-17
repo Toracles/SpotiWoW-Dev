@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ctypes
 import importlib.util
+import re
 import json
 import os
 from pathlib import Path
@@ -11,6 +12,8 @@ import threading
 import time
 import traceback
 import uuid
+import urllib.request
+import webbrowser
 from ctypes import wintypes
 
 import psutil
@@ -18,6 +21,10 @@ import pystray
 from PIL import Image
 
 APP_NAME = "SpotiWoW-Dev"
+APP_VERSION = "1.6.14"
+LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
+LATEST_RELEASE_URL = "https://github.com/Toracles/SpotiWoW-Dev/releases/latest"
+LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"
 DEFAULT_GAME_DIR = Path(r"C:\Jeux\OctoWoW")
 VANILLAFIXES_NAME = "VanillaFixes.exe"
 # VanillaFixes is a launcher/injector. The actual Turtle WoW client it starts is WoW.exe.
@@ -35,6 +42,11 @@ MB_OK = 0x0
 MB_ICONERROR = 0x10
 MB_ICONWARNING = 0x30
 MB_ICONINFORMATION = 0x40
+
+
+def version_tuple(value: str):
+    match = re.search(r"(\d+)\.(\d+)\.(\d+)", str(value or ""))
+    return tuple(int(part) for part in match.groups()) if match else None
 
 
 def app_dir() -> Path:
@@ -185,6 +197,9 @@ class SpotiWoWController:
         self._quitting = threading.Event()
         self._session_thread = None
         self._log_dir = ROOT / LOG_DIR_NAME
+        self._update_lock = threading.Lock()
+        self._update_release = None
+        self._notified_update_tag = None
 
         try:
             with Image.open(ICON_FILE) as source:
@@ -216,6 +231,20 @@ class SpotiWoWController:
                     self._make_menu_callback(tr("Arrêter le bridge", "Stop bridge"), lambda: self.stop_bridge(show_notification=True)),
                     enabled=lambda item: self.bridge_is_running(),
                 ),
+                pystray.MenuItem(
+                    lambda item: self._update_menu_label(),
+                    self._make_menu_callback(
+                        tr("Ouvrir la release SpotiWoW-Dev", "Open the SpotiWoW-Dev release"),
+                        lambda: self.open_latest_release(),
+                    ),
+                ),
+                pystray.MenuItem(
+                    tr("Vérifier les mises à jour", "Check for updates"),
+                    self._make_menu_callback(
+                        tr("Vérifier les mises à jour", "Check for updates"),
+                        lambda: self.check_updates_now(),
+                    ),
+                ),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem(
                     tr("Quitter", "Quit"),
@@ -223,6 +252,90 @@ class SpotiWoWController:
                 ),
             ),
         )
+
+    def _update_menu_label(self) -> str:
+        with self._update_lock:
+            release = self._update_release
+        if release:
+            return tr(f"Mise à jour disponible : {release['tag']}", f"Update available: {release['tag']}")
+        return tr("Ouvrir les releases GitHub", "Open GitHub releases")
+
+    def open_latest_release(self):
+        with self._update_lock:
+            release = self._update_release
+        url = release["url"] if release else LATEST_RELEASE_URL
+        webbrowser.open(url)
+
+    def _fetch_update(self):
+        request = urllib.request.Request(
+            LATEST_RELEASE_API,
+            headers={
+                "Accept": "application/vnd.github+json",
+                "User-Agent": f"SpotiWoW-Dev/{APP_VERSION}",
+            },
+        )
+        with urllib.request.urlopen(request, timeout=10) as response:
+            release = json.load(response)
+        if not isinstance(release, dict) or release.get("draft") or not release.get("published_at"):
+            return None
+        latest_version = version_tuple(release.get("tag_name"))
+        current_version = version_tuple(APP_VERSION)
+        if not latest_version or not current_version or latest_version <= current_version:
+            return None
+        setup_ready = any(
+            isinstance(asset, dict)
+            and asset.get("name") == "SpotiWoW-Dev-Setup.exe"
+            and asset.get("state") == "uploaded"
+            and int(asset.get("size") or 0) > 0
+            for asset in (release.get("assets") or [])
+        )
+        tag = str(release.get("tag_name") or "")
+        url = str(release.get("html_url") or "")
+        if not setup_ready or not url.startswith(LATEST_RELEASE_PREFIX):
+            return None
+        return {"tag": tag, "url": url}
+
+    def _check_for_updates(self, manual=False):
+        try:
+            release = self._fetch_update()
+        except Exception as exc:
+            if manual:
+                self.notify(tr(
+                    f"Vérification GitHub impossible pour le moment : {exc}",
+                    f"Could not check GitHub right now: {exc}",
+                ))
+            self._write_session_log(f"GitHub update check failed: {exc}")
+            return
+
+        should_notify = False
+        with self._update_lock:
+            self._update_release = release
+            if release and release["tag"] != self._notified_update_tag:
+                self._notified_update_tag = release["tag"]
+                should_notify = True
+
+        self._refresh_tray()
+        if release and (should_notify or manual):
+            self.notify(tr(
+                f"SpotiWoW-Dev {release['tag']} est disponible. Clique sur l’icône pour l’ouvrir.",
+                f"SpotiWoW-Dev {release['tag']} is available. Click the tray icon to open it.",
+            ))
+        elif manual:
+            self.notify(tr("SpotiWoW-Dev est à jour.", "SpotiWoW-Dev is up to date."))
+
+    def check_updates_now(self):
+        threading.Thread(
+            target=self._check_for_updates,
+            kwargs={"manual": True},
+            name="SpotiWoW-update-manual",
+            daemon=True,
+        ).start()
+
+    def _update_check_loop(self):
+        while not self._quitting.is_set():
+            self._check_for_updates()
+            if self._quitting.wait(6 * 60 * 60):
+                return
 
     def _write_session_log(self, message: str) -> None:
         """Write session-monitor events to the launcher log for troubleshooting."""
@@ -473,6 +586,7 @@ class SpotiWoWController:
     def run(self):
         def setup(icon):
             icon.visible = True
+            threading.Thread(target=self._update_check_loop, name="SpotiWoW-Update", daemon=True).start()
             self._session_thread = threading.Thread(target=self._launch_session, name="SpotiWoW-Session", daemon=True)
             self._session_thread.start()
         self.icon.run(setup=setup)
