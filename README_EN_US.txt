@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.6.6-alpha — US English
+# SpotiWoW-Dev v1.6.7-alpha — US English
 
 > **Development version** — intended for testing; bugs and behavior changes may occur.
 
