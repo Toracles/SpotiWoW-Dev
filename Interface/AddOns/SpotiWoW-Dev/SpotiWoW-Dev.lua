@@ -291,7 +291,7 @@ controls.lyrics=MakeButton("Lyrics","L+",T("lyrics_toggle"),30,0,"lyrics")
 controls.lyrics:SetScript("OnClick",function() SetLyrics(not SpotifyNowDB.lyrics,true); RefreshUI() end)
 
 local progressBg=ui:CreateTexture(nil,"BORDER"); progressBg:SetTexture(0.08,0.09,0.11,1); progressBg:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",8,3); progressBg:SetWidth(234); progressBg:SetHeight(2)
-local topAccent=ui:CreateTexture(nil,"ARTWORK"); topAccent:SetTexture("Interface\\Buttons\\WHITE8X8"); topAccent:SetPoint("TOPLEFT",ui,"TOPLEFT",18,-8); topAccent:SetHeight(1)
+local topAccent=ui:CreateTexture(nil,"ARTWORK"); topAccent:SetTexture("Interface\\Buttons\\WHITE8X8"); topAccent:SetPoint("TOPLEFT",ui,"TOPLEFT",18,-2); topAccent:SetHeight(1)
 local sideDivider=ui:CreateTexture(nil,"ARTWORK"); sideDivider:SetTexture("Interface\\Buttons\\WHITE8X8")
 local progressFill=ui:CreateTexture(nil,"ARTWORK"); progressFill:SetTexture(0.12,0.84,0.38,1); progressFill:SetPoint("BOTTOMLEFT",progressBg,"BOTTOMLEFT",0,0); progressFill:SetWidth(1); progressFill:SetHeight(2)
 local progressHit=CreateFrame("Button",nil,ui); progressHit:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",8,1); progressHit:SetWidth(234); progressHit:SetHeight(7)
@@ -331,7 +331,7 @@ ApplyStyle=function()
     if mode~="compact" and mode~="square" and mode~="expanded" then mode="compact" end
     s.layout=mode; s.expanded=(mode=="expanded")
     local compact=mode=="compact"; local square=mode=="square"; local expanded=mode=="expanded"
-    topAccent:Hide()
+    topAccent:Show()
     ui:SetBackdrop({bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",tile=true,tileSize=32,edgeSize=compact and 16 or 24,insets={left=8,right=8,top=8,bottom=8}})
     ui:SetBackdropColor(0.72,0.69,0.62,0.98)
     ui:SetWidth(compact and 310 or (square and 236 or 460)); ui:SetHeight(compact and 68 or (square and 236 or 164))
