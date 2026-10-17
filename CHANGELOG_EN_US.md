@@ -1,6 +1,11 @@
 # Changelog
 
-## v1.6.10-alpha
+## v1.6.11-alpha
+- Keeps player button borders and neon accents visible while hovering.
+- Adds a seek marker that follows the pointer and previews the target time when Click to Seek is enabled.
+- Adds explanatory tooltips to settings, HEX fields, and Apply buttons in French and US English.
+- Adds the Sunwell (#FFB020), Frostmourne (#FFFFFF), and Dreamweaver (#FF4FD8) themes.
+
 - Keeps player button borders and neon accents visible while hovering.
 - Adds a seek marker that follows the pointer and previews the target time when Click to Seek is enabled.
 - Adds explanatory tooltips to settings, HEX fields, and Apply buttons in French and US English.
