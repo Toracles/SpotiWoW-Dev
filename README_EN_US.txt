@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.6.13-alpha — US English
+# SpotiWoW-Dev v1.6.14 — US English
 
 > **Development version** — intended for testing; bugs and behavior changes may occur.
 
@@ -31,6 +31,7 @@ Setup is pinned to its specific GitHub release and verifies the tag, source comm
 - Multi-source search for timestamped lyrics and a local cache.
 - Windows notification-area launcher with no visible CMD console.
 - Automatically stops the bridge when the actual `WoW.exe` client process exits, including Alt+F4.
+- Checks published GitHub releases without an API key and announces an update only when its installer is available. The add-on shows a local chat reminder at every login; the Windows notification-area menu displays the version and opens its release page.
 
 Lyrics themselves are still sent to the selected channel when that feature is enabled. Technical identifiers `SpotifyNowDB`, `SpotifyNowState.txt`, and `SpotifyNowCommand.txt` are retained for compatibility.
 
