@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.6.13-alpha
+- Fixes an unterminated string in the English theme selector that prevented the add-on Lua, player, and `/spn` commands from loading.
+- Aligns the English TOC version with the release.
+
 ## v1.6.12-alpha
 - Renames the #FFFFFF and #FF4FD8 themes in the player and settings to Silver Dawn and Fang Set.
 

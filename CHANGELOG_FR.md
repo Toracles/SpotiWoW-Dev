@@ -1,5 +1,9 @@
 # Journal des modifications
 
+## v1.6.13-alpha
+- Corrige une erreur de syntaxe dans le sélecteur de thème du paquet anglais, qui empêchait le chargement du Lua, du lecteur et des commandes `/spn`.
+- Aligne la version du TOC anglais sur la version de la release.
+
 ## v1.6.12-alpha
 - Renomme les thèmes #FFFFFF et #FF4FD8 dans le lecteur et les réglages : Aube-Argent et Set du Croc.
 

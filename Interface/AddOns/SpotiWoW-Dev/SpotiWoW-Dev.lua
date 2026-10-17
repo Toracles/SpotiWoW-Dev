@@ -280,7 +280,7 @@ end
 settingsPanel:SetScript("OnShow",function() RefreshSettingsPanel() end)
 settingsButton:SetScript("OnClick",function() if settingsPanel:IsShown() then settingsPanel:Hide() else RefreshSettingsPanel(); settingsPanel:Show() end end)
 themeButton:SetScript("OnClick",function()
-    local order={"obsidian","azerite","fel","bloodmoon","sunwell","frostmourne","dreamweaver"}; local current=SpotifyNowDB.style.theme or "obsidian; local nextIndex=1
+    local order={"obsidian","azerite","fel","bloodmoon","sunwell","frostmourne","dreamweaver"}; local current=SpotifyNowDB.style.theme or "obsidian"; local nextIndex=1
     for i,name in ipairs(order) do if name==current then nextIndex=(i%table.getn(order))+1; break end end
     SpotifyNowDB.style.theme=order[nextIndex]; SpotifyNowDB.style.accent=nil; SpotifyNowDB.style.progressColor=nil
     ApplyStyle(); RefreshUI(); RefreshSettingsPanel()
