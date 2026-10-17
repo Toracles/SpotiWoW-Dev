@@ -82,8 +82,6 @@ volumeLabelText:SetPoint("TOPLEFT",ui,"TOPLEFT",358,-62); volumeLabelText:SetWid
 local function SkinButton(button)
     button:SetBackdrop({bgFile="Interface\\Tooltips\\UI-Tooltip-Background",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=8,edgeSize=8,insets={left=2,right=2,top=2,bottom=2}})
     button:SetBackdropColor(0.10,0.095,0.085,0.98); button:SetBackdropBorderColor(0.58,0.50,0.36,1)
-    button:SetNormalTexture("Interface\\Buttons\\UI-Panel-Button-Up")
-    button:SetPushedTexture("Interface\\Buttons\\UI-Panel-Button-Down")
     button:SetHighlightTexture("Interface\\Buttons\\UI-Panel-Button-Highlight")
     local fs=button:CreateFontString(button:GetName() and (button:GetName().."Text") or nil,"OVERLAY","GameFontNormalSmall")
     fs:SetPoint("CENTER",button,"CENTER",0,0); fs:SetTextColor(1,0.82,0.28)
@@ -163,8 +161,8 @@ progressEntry.edit:SetScript("OnEscapePressed",function() this:ClearFocus(); Ref
 local settingsHint=settingsPanel:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
 settingsHint:SetPoint("BOTTOM",settingsPanel,"BOTTOM",0,10); settingsHint:SetWidth(320); settingsHint:SetJustifyH("CENTER"); settingsHint:SetText(T("layout_help"))
 local settingsButtons={}
-local function AddSettingButton(key,field,x,y)
-    local button=NewSettingsButton(150,22,"TOP",progressEntry.apply,"BOTTOM",x,y)
+local function AddSettingButton(key,field,column,row)
+    local button=NewSettingsButton(150,22,"TOPLEFT",settingsPanel,"TOPLEFT",18+(column-1)*172,-(212+(row-1)*25))
     settingsButtons[key]={button=button,field=field}
     button:SetScript("OnClick",function()
         local style=SpotifyNowDB.style
@@ -177,16 +175,16 @@ local function AddSettingButton(key,field,x,y)
     end)
     return button
 end
-AddSettingButton("glow","glow",-78,-18)
-AddSettingButton("border","border",78,-18)
-AddSettingButton("buttons","buttons",-78,-43)
-AddSettingButton("controls","controls",78,-43)
-AddSettingButton("metadata","metadata",-78,-68)
-AddSettingButton("progress","progress",78,-68)
-AddSettingButton("seek","progressSeek",-78,-93)
-AddSettingButton("progressStyle","progressStyle",78,-93)
-local lyricsButton=NewSettingsButton(150,22,"TOP",progressEntry.apply,"BOTTOM",-78,-118)
-local channelButton=NewSettingsButton(150,22,"TOP",progressEntry.apply,"BOTTOM",78,-118)
+AddSettingButton("glow","glow",1,1)
+AddSettingButton("border","border",2,1)
+AddSettingButton("buttons","buttons",1,2)
+AddSettingButton("controls","controls",2,2)
+AddSettingButton("metadata","metadata",1,3)
+AddSettingButton("progress","progress",2,3)
+AddSettingButton("seek","progressSeek",1,4)
+AddSettingButton("progressStyle","progressStyle",2,4)
+local lyricsButton=NewSettingsButton(150,22,"TOPLEFT",settingsPanel,"TOPLEFT",18,-312)
+local channelButton=NewSettingsButton(150,22,"TOPLEFT",settingsPanel,"TOPLEFT",190,-312)
 lyricsButton:SetScript("OnClick",function() SetLyrics(not SpotifyNowDB.lyrics,true); RefreshSettingsPanel() end)
 local CHANNEL_ORDER={"say","yell","party","guild","raid","emote"}
 channelButton:SetScript("OnClick",function()
@@ -361,8 +359,10 @@ ApplyStyle=function()
         albumText:ClearAllPoints(); albumText:SetPoint("TOP",artistText,"BOTTOM",0,-3); albumText:SetWidth(206)
         modeText:ClearAllPoints(); modeText:SetPoint("TOP",albumText,"BOTTOM",0,-3); modeText:SetWidth(206); modeText:Show()
         timeText:ClearAllPoints(); timeText:SetPoint("BOTTOMRIGHT",ui,"BOTTOMRIGHT",-12,58); timeText:SetJustifyH("RIGHT")
-        local squareButtons={controls.prev,playBtn,controls.next,controls.back,controls.fwd,controls.voldown,controls.volup,controls.shuffle,controls["repeat"],controls.lyrics}
-        for i,button in ipairs(squareButtons) do button:ClearAllPoints(); button:SetWidth(20); button:SetHeight(18); button:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",13+(i-1)*21,24) end
+        local squarePlaybackButtons={controls.prev,playBtn,controls.next,controls.back,controls.fwd,controls.voldown,controls.volup}
+        for i,button in ipairs(squarePlaybackButtons) do button:ClearAllPoints(); button:SetWidth(28); button:SetHeight(18); button:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",14+(i-1)*30,32) end
+        local squareOptionButtons={controls.shuffle,controls["repeat"],controls.lyrics}
+        for i,button in ipairs(squareOptionButtons) do button:ClearAllPoints(); button:SetWidth(54); button:SetHeight(18); button:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",22+(i-1)*68,9) end
         timeText:ClearAllPoints(); timeText:SetPoint("BOTTOMRIGHT",ui,"BOTTOMRIGHT",-12,50); timeText:SetJustifyH("RIGHT")
         sourceText:Hide(); sourceStatus:Hide(); volumeLabelText:Hide()
         artistText:Show(); albumText:Show(); timeText:Show(); SetButtonText(expandButton,"+")
@@ -430,7 +430,11 @@ RefreshUI=function()
     local np=NowPlaying() or ""
     local displayTitle=np
     if (SpotifyNowDB.style.layout or (SpotifyNowDB.style.expanded and "expanded" or "compact"))~="compact" then displayTitle=SpotifyNowDB.title or "" end
-    if displayTitle~=titleSource then titleSource=displayTitle; titleChars=UTF8Characters(displayTitle); titleOffset=1; RefreshTitle() end
+    if displayTitle~=titleSource then
+        titleSource=displayTitle; titleChars=UTF8Characters(displayTitle)
+        if table.getn(titleChars)>titleVisibleChars then titleChars=UTF8Characters(displayTitle.."   ") end
+        titleOffset=1; RefreshTitle()
+    end
     artistText:SetText(SpotifyNowDB.artist or ""); albumText:SetText(SpotifyNowDB.album or "")
     sourceStatus:SetText(playing and T("status_playing") or T("status_paused"))
     SetButtonText(playBtn,playing and "II" or ">")
@@ -454,12 +458,10 @@ RefreshUI=function()
     else art:SetTexture("Interface\\Icons\\INV_Misc_Note_01") end
     local function Clock(ms) local n=math.floor((ms or 0)/1000); return string.format("%d:%02d",math.floor(n/60),n%60) end
     timeText:SetText(Clock(pos).." / "..Clock(durationMs))
-    SetButtonText(controls.shuffle,currentLayout=="square" and (SpotifyNowDB.shuffle and "S+" or "S") or (SpotifyNowDB.shuffle and "S ON" or "S"))
+    SetButtonText(controls.shuffle,SpotifyNowDB.shuffle and "S ON" or "S")
     SetButtonText(controls.lyrics,SpotifyNowDB.lyrics and "L+" or "L-")
     local repeatMode=SpotifyNowDB.repeatMode or "off"
-    if currentLayout=="square" then
-        SetButtonText(controls["repeat"],repeatMode=="context" and "RA" or (repeatMode=="track" and "R1" or "R"))
-    else SetButtonText(controls["repeat"],repeatMode=="context" and "R ALL" or (repeatMode=="track" and "R 1" or "R")) end
+    SetButtonText(controls["repeat"],repeatMode=="context" and "R ALL" or (repeatMode=="track" and "R 1" or "R"))
     local ir,ig,ib=HexColor(SpotifyNowDB.style.accent)
     if not ir then local theme=THEMES[SpotifyNowDB.style.theme] or THEMES.obsidian; ir,ig,ib=theme.accent[1],theme.accent[2],theme.accent[3] end
     local function MarkActive(button,active)
