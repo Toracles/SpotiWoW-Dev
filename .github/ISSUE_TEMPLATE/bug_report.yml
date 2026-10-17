@@ -1,0 +1,96 @@
+name: Bug report / Signalement de bug
+description: Report a reproducible SpotiWoW-Dev issue / Signaler un problème reproductible avec SpotiWoW-Dev
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting an issue. Please do not include Spotify tokens, secrets, authorization codes, or private account data.
+        Merci pour ton signalement. N’inclus pas de jeton Spotify, secret, code d’autorisation ni donnée privée de compte.
+
+  - type: input
+    id: version
+    attributes:
+      label: SpotiWoW-Dev version / Version
+      description: Include the release tag if possible / Indique le tag de release si possible
+      placeholder: v1.6.3-alpha
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected component / Élément concerné
+      options:
+        - In-game add-on / Addon en jeu
+        - Windows companion / Compagnon Windows
+        - Setup or installation / Setup ou installation
+        - Album artwork / Jaquette
+        - Metadata sync / Synchronisation des métadonnées
+        - Lyrics / Paroles
+        - Other / Autre
+    validations:
+      required: true
+
+  - type: dropdown
+    id: game_client
+    attributes:
+      label: Game client / Client de jeu
+      options:
+        - Turtle WoW
+        - OctoWoW
+        - Both / Les deux
+        - Not applicable / Sans objet
+    validations:
+      required: true
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: Add-on language / Langue de l’addon
+      options:
+        - French / Français
+        - US English / Anglais US
+        - Not applicable / Sans objet
+    validations:
+      required: true
+
+  - type: dropdown
+    id: player_mode
+    attributes:
+      label: Player mode / Mode du lecteur
+      options:
+        - Compact
+        - Expanded / Agrandi
+        - Not applicable / Sans objet
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Étapes pour reproduire
+      description: What did you do before the issue appeared? / Que faisais-tu lorsque le problème est apparu ?
+      placeholder: |
+        1. Open...
+        2. Click...
+        3. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior / Résultat attendu et résultat obtenu
+      description: Describe what you expected and what happened instead / Décris le résultat attendu et ce qui s’est réellement passé
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / Journaux utiles
+      description: Optional. See TROUBLESHOOTING_FR.md or TROUBLESHOOTING_EN_US.md. Remove tokens, secrets, authorization codes, and account data before posting. / Facultatif. Consulte TROUBLESHOOTING_FR.md ou TROUBLESHOOTING_EN_US.md. Retire les jetons, secrets, codes d’autorisation et données de compte avant publication.
+      render: text
+    validations:
+      required: false
