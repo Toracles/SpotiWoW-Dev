@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.14
+- Adds periodic checks for public GitHub releases without an API key; an update is announced only after the setup installer has been published.
+- Shows a local WoW chat reminder with the version and release link at every character login.
+- Adds direct release access, a manual update check, and a Windows notification when an update is ready.
+- Keeps the last known update information if GitHub is temporarily unavailable and retries periodically.
+
 ## v1.6.13-alpha
 - Fixes an unterminated string in the English theme selector that prevented the add-on Lua, player, and `/spn` commands from loading.
 - Aligns the English TOC version with the release.
