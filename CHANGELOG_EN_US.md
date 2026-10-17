@@ -1,6 +1,15 @@
 # Changelog
 
-## v1.6.6-alpha
+## v1.6.7-alpha
+- Fixes the Player Settings panel alignment and keeps every option inside its frame.
+- Rearranges Square Mode controls so the volume and every button remain visible without overlap.
+- Adds “SpotiWoW” to the settings panel header.
+- Replaces stretched button textures with a uniform charcoal-red fill that matches the theme.
+- Makes Button Accents visible: enabling it colors button labels and borders with the selected neon accent; disabling it restores the gold styling.
+- Fixes Accent Hex and Progress Hex, applying the accent color to the player frame and the progress color to segmented bars.
+- Adds localized tooltips explaining the color fields, Button Accents, and Click to Seek.
+
+## v1.6.7-alpha
 - Aligns Square and Expanded metadata and controls, keeps the status row clear of the divider, and shortens settings labels to prevent clipping.
 - Player Settings groups visual customization, custom colors, and lyrics options (toggle and channel), with their current states visible.
 - Brings in the metallic frames, dark stone surfaces, and gold titles of classic WoW panels; all four neon themes remain as accents on progress, active controls, and glow details.
