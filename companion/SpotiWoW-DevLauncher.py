@@ -21,7 +21,7 @@ import pystray
 from PIL import Image
 
 APP_NAME = "SpotiWoW-Dev"
-APP_VERSION = "1.6.16"
+APP_VERSION = "1.6.17"
 LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_URL = "https://github.com/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"
@@ -491,17 +491,25 @@ class SpotiWoWController:
             except OSError:
                 pass
             try:
-                proc.wait(timeout=8.0)
+                proc.wait(timeout=0.75)
             except subprocess.TimeoutExpired:
                 try:
                     proc.terminate()
-                    proc.wait(timeout=2.0)
+                except Exception:
+                    pass
+                try:
+                    proc.wait(timeout=0.75)
                 except subprocess.TimeoutExpired:
                     try:
                         proc.kill()
-                        proc.wait(timeout=2.0)
                     except Exception:
                         pass
+                    try:
+                        proc.wait(timeout=0.5)
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
             except Exception:
                 pass
             self.bridge_process = None
@@ -578,7 +586,7 @@ class SpotiWoWController:
                 ))
                 # Give Windows a moment to display the notification before removing
                 # the tray icon and exiting the launcher.
-                time.sleep(1.25)
+                time.sleep(0.5)
                 self.quit()
                 return
             time.sleep(1.0)

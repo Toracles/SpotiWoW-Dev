@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.6.16 — Français
+# SpotiWoW-Dev v1.6.17 — Français
 
 > **Version de développement** — destinée aux tests ; des bugs et changements restent possibles.
 
