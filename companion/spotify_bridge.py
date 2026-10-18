@@ -70,7 +70,7 @@ IMPORT_DIR = GAME_DIR / "imports"
 STATE_FILE = IMPORT_DIR / "SpotifyNowState.txt"
 COMMAND_FILE = IMPORT_DIR / "SpotifyNowCommand.txt"
 UPDATE_FILE = IMPORT_DIR / "SpotifyNowUpdate.txt"
-APP_VERSION = "1.6.20"
+APP_VERSION = "1.6.21"
 LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"
 UPDATE_CHECK_INTERVAL_SECONDS = 30 * 60
@@ -569,9 +569,10 @@ def check_latest_release():
         return None
 
     assets = release.get("assets") or []
+    setup_names = {"SpotiWoW-Dev-Setup.exe", f"SpotiWoW-Dev-Setup-{tag}.exe"}
     setup_ready = any(
         isinstance(asset, dict)
-        and asset.get("name") == "SpotiWoW-Dev-Setup.exe"
+        and asset.get("name") in setup_names
         and asset.get("state") == "uploaded"
         and int(asset.get("size") or 0) > 0
         for asset in assets

@@ -54,7 +54,21 @@ if errorlevel 1 (
   exit /b 1
 )
 echo.
-echo SUCCESS: "%OUT%\SpotiWoW-Dev-Setup.exe"
+for /f "usebackq delims=" %%V in (`powershell -NoProfile -Command "(Get-Content -Raw -LiteralPath '%MANIFEST%' | ConvertFrom-Json).tag"`) do set "TAG=%%V"
+echo %TAG%| findstr /r /x "v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*" >nul
+if errorlevel 1 (
+  echo ERROR: release-manifest.json must contain a vMAJOR.MINOR.PATCH tag.
+  pause
+  exit /b 2
+)
+set "VERSIONED_SETUP=%OUT%\SpotiWoW-Dev-Setup-%TAG%.exe"
+move /y "%OUT%\SpotiWoW-Dev-Setup.exe" "%VERSIONED_SETUP%" >nul
+if errorlevel 1 (
+  echo ERROR: Could not rename the setup to its versioned filename.
+  pause
+  exit /b 1
+)
+echo SUCCESS: "%VERSIONED_SETUP%"
 echo The setup downloads and verifies the portable package for its exact GitHub release tag and commit.
 pause
 

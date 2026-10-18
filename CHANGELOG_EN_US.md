@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6.21
+- The Setup filename now includes the release version so Windows Explorer does not reuse an old icon cached for the stable filename. The bridge and launcher also recognize versioned setup assets.
+
 ## v1.6.20
 - The README now keeps US English guides under Docs and French guides under Documentations.
 - Setup preloads the Spotify Client ID from the local configuration and masks it by default, with an option to reveal it. Spotify still requests authorization on first launch.

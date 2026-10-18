@@ -1,11 +1,11 @@
-# SpotiWoW-Dev v1.6.20 — Français
+# SpotiWoW-Dev v1.6.21 — Français
 
 > **Version de développement** — cette version est en cours d’évolution et peut contenir des changements expérimentaux. Elle est destinée aux tests ; des bugs ou changements de comportement restent possibles.
 
 SpotiWoW-Dev relie Spotify à Turtle WoW via le bridge de fichiers SuperWoW. Cette version utilise l’interface et les messages en français.
 
 ## Installation simple
-1. Télécharge `SpotiWoW-Dev-Setup.exe` depuis la page **Releases** du dépôt GitHub officiel.
+1. Télécharge le fichier versionné `SpotiWoW-Dev-Setup-v<version>.exe` depuis la page **Releases** du dépôt GitHub officiel.
 2. Ferme Turtle WoW avant l’installation.
 3. Choisis Français (FR) dans l’installateur et sélectionne le dossier du client. Colle ton Client ID lors de la première installation ; les mises à jour le préremplissent depuis la configuration locale. Spotify demandera quand même son autorisation au premier lancement du compagnon.
 4. Dans les paramètres de ton application Spotify Developer, ajoute le Redirect URI exact `http://127.0.0.1:8888/callback`.

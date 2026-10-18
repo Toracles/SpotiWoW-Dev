@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.6.20
+# SpotiWoW-Dev v1.6.21
 
 <p align="center">
   <img src="companion/SpotiWoW-Dev.png" alt="SpotiWoW-Dev icon" width="180">
@@ -32,7 +32,7 @@ SpotiWoW-Dev brings Spotify playback into Turtle WoW through a lightweight Windo
 
 ## Download
 
-Download `SpotiWoW-Dev-Setup.exe` from [GitHub Releases](https://github.com/Toracles/SpotiWoW-Dev/releases). The installer is pinned to its release and verifies the tag, source commit, package manifest, and SHA-256 digest before installation.
+Download the versioned `SpotiWoW-Dev-Setup-v<version>.exe` asset from [GitHub Releases](https://github.com/Toracles/SpotiWoW-Dev/releases). The installer is pinned to its release and verifies the tag, source commit, package manifest, and SHA-256 digest before installation.
 
 For requirements, Spotify setup, and installation steps, see the guides above. `/spn help` lists the in-game commands.
 

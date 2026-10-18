@@ -1,5 +1,8 @@
 # Journal des modifications
 
+## v1.6.21
+- Le Setup porte maintenant le numéro de release dans son nom de fichier pour éviter que l’Explorateur réutilise l’ancienne icône associée au nom stable. Le bridge et le launcher reconnaissent aussi les nouveaux setups versionnés.
+
 ## v1.6.20
 - Le README regroupe maintenant les guides anglais sous Docs et les guides français sous Documentations.
 - L’installeur recharge le Client ID Spotify depuis la configuration locale, le masque par défaut et permet de l’afficher. Spotify demande toujours son autorisation au premier lancement.

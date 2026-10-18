@@ -153,12 +153,20 @@ jobs:
             "$scriptPath"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+          $tag = $env:GITHUB_REF_NAME
+          if ($tag -notmatch "^v\d+\.\d+\.\d+$") {
+            throw "Release tag must use the vMAJOR.MINOR.PATCH format: $tag"
+          }
+          $setupPath = Join-Path $distPath "SpotiWoW-Dev-Setup.exe"
+          $versionedSetupPath = Join-Path $distPath ("SpotiWoW-Dev-Setup-" + $tag + ".exe")
+          Move-Item -LiteralPath $setupPath -Destination $versionedSetupPath -Force
+
       - name: Attach installer, portable packages, and add-on-only zips to the GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           make_latest: true
           files: |
-            dist/SpotiWoW-Dev-Setup.exe
+            dist/SpotiWoW-Dev-Setup-v*.exe
             dist/SpotiWoW-Dev-Portable-FR.zip
             dist/SpotiWoW-Dev-Portable-US.zip
             dist/SpotiWoW-Dev-Addon-FR.zip

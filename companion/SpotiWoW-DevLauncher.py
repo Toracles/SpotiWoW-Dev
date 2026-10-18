@@ -21,7 +21,7 @@ import pystray
 from PIL import Image
 
 APP_NAME = "SpotiWoW-Dev"
-APP_VERSION = "1.6.20"
+APP_VERSION = "1.6.21"
 LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_URL = "https://github.com/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"
@@ -285,14 +285,15 @@ class SpotiWoWController:
         current_version = version_tuple(APP_VERSION)
         if not latest_version or not current_version or latest_version <= current_version:
             return None
+        tag = str(release.get("tag_name") or "")
+        setup_names = {"SpotiWoW-Dev-Setup.exe", f"SpotiWoW-Dev-Setup-{tag}.exe"}
         setup_ready = any(
             isinstance(asset, dict)
-            and asset.get("name") == "SpotiWoW-Dev-Setup.exe"
+            and asset.get("name") in setup_names
             and asset.get("state") == "uploaded"
             and int(asset.get("size") or 0) > 0
             for asset in (release.get("assets") or [])
         )
-        tag = str(release.get("tag_name") or "")
         url = str(release.get("html_url") or "")
         if not setup_ready or not url.startswith(LATEST_RELEASE_PREFIX):
             return None
