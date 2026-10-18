@@ -1,7 +1,7 @@
 # Changelog
 
 ## v1.6.18
-- Replaces the Windows icons for the companion and setup with the new gold-and-ruby emblem.
+- Replaces the Windows icons for the companion and setup with the new gold-and-ruby emblem, also shown in the GitHub README.
 - Removes unused legacy variant files from the Dev repository and focuses the project on Turtle WoW 1.18.1.
 - Automatically detects the game folder through `VanillaFixes.exe` or `WoW.exe`, including common Classic locations; the companion starts `WoW.exe` directly when VanillaFixes is absent.
 
