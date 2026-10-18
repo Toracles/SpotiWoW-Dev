@@ -3,6 +3,7 @@
 ## v1.6.17
 - Speeds up full SpotiWoW-Dev shutdown: the bridge gets a shorter graceful-exit window, followed by faster forced termination if needed.
 - Also reduces the delay before the companion closes automatically after the WoW client exits.
+- Makes the Player Settings close button clearly visible.
 
 ## v1.6.16
 - Corrects the vertical alignment of “SpotiWoW” inside the Player Settings header plaque.
