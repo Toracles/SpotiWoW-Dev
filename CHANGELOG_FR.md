@@ -1,5 +1,8 @@
 # Journal des modifications
 
+## v1.6.19
+- À la réinstallation, supprime l’ancien raccourci du Bureau et du menu Démarrer avant de recréer le raccourci SpotiWoW-Dev avec le nouvel emblème sous un nouveau nom de fichier afin que Windows reconstruise l'aperçu en cache. Le programme et ses données restent installés. L'icône du tray utilise aussi le fichier actualisé.
+
 ## v1.6.18
 - Remplace les icônes Windows du compagnon et de l’installateur par le nouvel emblème doré et rubis, également affiché dans le README GitHub.
 - Supprime les fichiers de l’ancienne variante inutilisée du dépôt Dev et recentre le projet sur Turtle WoW 1.18.1.

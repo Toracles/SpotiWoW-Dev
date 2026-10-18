@@ -297,7 +297,7 @@ class SetupApp:
         self.root.minsize(660, 500)
         self.root.resizable(True, True)
         self.root.protocol("WM_DELETE_WINDOW", self.close)
-        icon = resource_dir() / "SpotiWoW-Dev.ico"
+        icon = resource_dir() / "SpotiWoW-Dev-Ruby.ico"
         if icon.is_file():
             try:
                 self.root.iconbitmap(str(icon))
@@ -494,7 +494,7 @@ class SetupApp:
                 companion_src = extracted / "companion"
                 launcher_src = companion_src / LAUNCHER_NAME
                 bridge_src = companion_src / "spotify_bridge.py"
-                icon_src = companion_src / "SpotiWoW-Dev.ico"
+                icon_src = companion_src / "SpotiWoW-Dev-Ruby.ico"
                 if not addon_src.is_dir() or not launcher_src.is_file() or not bridge_src.is_file() or not icon_src.is_file():
                     raise RuntimeError(t(language, "incomplete"))
 
@@ -553,9 +553,19 @@ class SetupApp:
                     self.set_status(t(language, "status_shortcuts"))
                     desktop = Path(os.environ.get("USERPROFILE", str(Path.home()))) / "Desktop" / f"{APP_NAME}.lnk"
                     start_menu = Path(os.environ.get("APPDATA", str(Path.home()))) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / f"{APP_NAME}.lnk"
+                    # Remove the obsolete desktop/Start Menu shortcut left by pre-Dev installs.
+                    # Keep the installed legacy program and its data untouched.
+                    for legacy_shortcut in (
+                        desktop.with_name("SpotiWoW-Octo.lnk"),
+                        start_menu.with_name("SpotiWoW-Octo.lnk"),
+                    ):
+                        try:
+                            legacy_shortcut.unlink(missing_ok=True)
+                        except OSError:
+                            pass
                     for shortcut in (desktop, start_menu):
                         try:
-                            create_shortcut(shortcut, app_root / LAUNCHER_NAME, app_root, app_root / "SpotiWoW-Dev.ico")
+                            create_shortcut(shortcut, app_root / LAUNCHER_NAME, app_root, app_root / "SpotiWoW-Dev-Ruby.ico")
                         except Exception:
                             # An unavailable/locked shortcut location shouldn't undo a valid install.
                             pass

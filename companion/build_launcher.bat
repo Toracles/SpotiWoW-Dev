@@ -5,7 +5,7 @@ cd /d "%~dp0"
 rem Resolve absolute paths explicitly so PyInstaller always receives its scriptname.
 set "PY=py -3.15"
 set "SCRIPT=%CD%\SpotiWoW-DevLauncher.py"
-set "ICON=%CD%\SpotiWoW-Dev.ico"
+set "ICON=%CD%\SpotiWoW-Dev-Ruby.ico"
 set "OUT=%CD%"
 set "WORK=%CD%\build_temp"
 
@@ -66,6 +66,6 @@ if not exist "%OUT%\SpotiWoW-Dev.exe" (
 echo.
 echo SUCCESS: "%OUT%\SpotiWoW-Dev.exe"
 echo The EXE is built as a Windows GUI app and does not open a CMD window when launched.
-echo Keep it beside spotify_bridge.py, config.json, config.example.json and SpotiWoW-Dev.ico.
+echo Keep it beside spotify_bridge.py, config.json, config.example.json and SpotiWoW-Dev-Ruby.ico.
 pause
 exit /b 0

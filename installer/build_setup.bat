@@ -5,7 +5,7 @@ cd /d "%~dp0"
 set "PY=py -3.15"
 set "SOURCE=%~dp0SpotiWoW-DevSetup.py"
 set "MANIFEST=%~dp0release-manifest.json"
-set "ICON=%~dp0SpotiWoW-Dev.ico"
+set "ICON=%~dp0SpotiWoW-Dev-Ruby.ico"
 set "OUT=%~dp0dist"
 set "WORK=%~dp0build_temp"
 

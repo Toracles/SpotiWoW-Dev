@@ -21,7 +21,7 @@ import pystray
 from PIL import Image
 
 APP_NAME = "SpotiWoW-Dev"
-APP_VERSION = "1.6.18"
+APP_VERSION = "1.6.19"
 LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_URL = "https://github.com/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"
@@ -60,7 +60,7 @@ def app_dir() -> Path:
 ROOT = app_dir()
 BRIDGE_SCRIPT = ROOT / BRIDGE_NAME
 CONFIG_FILE = ROOT / CONFIG_NAME
-ICON_FILE = ROOT / "SpotiWoW-Dev.ico"
+ICON_FILE = ROOT / "SpotiWoW-Dev-Ruby.ico"
 
 
 def configured_language() -> str:

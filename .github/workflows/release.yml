@@ -44,7 +44,7 @@ jobs:
           # build/launcher, relative icon paths are later resolved against that folder.
           # Use absolute paths for the icon and entry-point to avoid FileNotFoundError.
           $root = $env:GITHUB_WORKSPACE
-          $iconPath = Join-Path $root "companion/SpotiWoW-Dev.ico"
+          $iconPath = Join-Path $root "companion/SpotiWoW-Dev-Ruby.ico"
           $scriptPath = Join-Path $root "companion/SpotiWoW-DevLauncher.py"
           $distPath = Join-Path $root "dist"
           $workPath = Join-Path $root "build/launcher"
@@ -99,7 +99,7 @@ jobs:
             $configExample = Get-Content $configExamplePath -Raw | ConvertFrom-Json
             $configExample.language = if ($variant.Code -eq "US") { "us" } else { "fr" }
             $configExample | ConvertTo-Json -Depth 8 | Set-Content -Path $configExamplePath -Encoding utf8
-            Copy-Item "companion/SpotiWoW-Dev.ico" (Join-Path $stage "companion/SpotiWoW-Dev.ico")
+            Copy-Item "companion/SpotiWoW-Dev-Ruby.ico" (Join-Path $stage "companion/SpotiWoW-Dev-Ruby.ico")
             Copy-Item "companion/SpotiWoW-Dev.png" (Join-Path $stage "companion/SpotiWoW-Dev.png")
             Copy-Item "companion/THIRD_PARTY_NOTICES.txt" (Join-Path $stage "companion/THIRD_PARTY_NOTICES.txt")
             Copy-Item "release-manifest.json" (Join-Path $stage "companion/release-manifest.json")
@@ -129,7 +129,7 @@ jobs:
           $root = $env:GITHUB_WORKSPACE
           $repoPath = Join-Path $root "installer/repo.txt"
           $manifestPath = Join-Path $root "release-manifest.json"
-          $iconPath = Join-Path $root "installer/SpotiWoW-Dev.ico"
+          $iconPath = Join-Path $root "installer/SpotiWoW-Dev-Ruby.ico"
           $scriptPath = Join-Path $root "installer/SpotiWoW-DevSetup.py"
           $distPath = Join-Path $root "dist"
           $workPath = Join-Path $root "build/setup"

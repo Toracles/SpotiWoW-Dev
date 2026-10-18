@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6.19
+- On reinstall, removes the previous desktop and Start Menu shortcuts before recreating the SpotiWoW-Dev shortcut with the current emblem under a new filename so Windows rebuilds its cached preview. The previous program and its data remain installed. The tray icon also uses the refreshed file.
+
 ## v1.6.18
 - Replaces the Windows icons for the companion and setup with the new gold-and-ruby emblem, also shown in the GitHub README.
 - Removes unused legacy variant files from the Dev repository and focuses the project on Turtle WoW 1.18.1.
