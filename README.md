@@ -19,12 +19,15 @@ SpotiWoW-Dev brings Spotify playback into Turtle WoW through a lightweight Windo
 - **Update reminders:** checks published releases without a GitHub API key, shows a local chat notice at every login when the setup is available, and provides a direct release link in the notification-area menu.
 - **French and US English editions:** localized add-on messages and language-specific add-on packages are available in Releases.
 
-## Documentation
+## Docs
+
+- [US English user guide](README_EN_US.md)
+- [US English changelog](CHANGELOG_EN_US.md)
+
+## Documentations
 
 - [Guide utilisateur français](README_FR.md)
-- [US English user guide](README_EN_US.md)
-- [Changelog français](CHANGELOG_FR.md)
-- [US English changelog](CHANGELOG_EN_US.md)
+- [Journal des modifications français](CHANGELOG_FR.md)
 
 ## Download
 
