@@ -91,7 +91,7 @@ def configured_game_dir() -> Path:
 
     # Portable installs commonly keep companion/ directly under the game root.
     adjacent_game = ROOT.parent
-    if (adjacent_game / VANILLAFIXES_NAME).is_file():
+    if any((adjacent_game / name).is_file() for name in (VANILLAFIXES_NAME, "WoW.exe")):
         return adjacent_game.resolve()
     return DEFAULT_GAME_DIR
 
@@ -121,8 +121,11 @@ def validate_installation() -> tuple[Path, Path]:
     if not GAME_DIR.is_dir():
         raise RuntimeError(f"{tr('Le dossier du jeu indiqué dans config.json est introuvable :', 'The game folder configured in config.json was not found:')}\n{GAME_DIR}\n\n{tr('Relance l’installateur SpotiWoW-Dev pour choisir le dossier du client.', 'Run the SpotiWoW-Dev setup again to select your client folder.')}")
     vanilla_fixes = GAME_DIR / VANILLAFIXES_NAME
-    if not vanilla_fixes.is_file():
-        raise RuntimeError(f"{tr('VanillaFixes.exe est introuvable :', 'VanillaFixes.exe was not found:')}\n{vanilla_fixes}")
+    wow_client = GAME_DIR / "WoW.exe"
+    if not vanilla_fixes.is_file() and not wow_client.is_file():
+        raise RuntimeError(
+            f"{tr('Ni VanillaFixes.exe ni WoW.exe n’a été trouvé dans :', 'Neither VanillaFixes.exe nor WoW.exe was found in:')}\n{GAME_DIR}"
+        )
     if not BRIDGE_SCRIPT.is_file():
         raise RuntimeError(f"{BRIDGE_NAME} {tr('est introuvable :', 'was not found:')}\n{BRIDGE_SCRIPT}\n\n{tr('Place le lanceur dans le dossier companion, à côté du bridge.', 'Keep the launcher in the companion folder, next to the bridge.')}")
     if not CONFIG_FILE.is_file():
@@ -146,7 +149,7 @@ def validate_installation() -> tuple[Path, Path]:
             f"config.json: {configured_dir}\nLauncher: {expected_dir}\n\n"
             f"{tr('Aligne ces deux chemins avant de démarrer.', 'Make these paths match before starting.')}"
         )
-    return vanilla_fixes, GAME_DIR
+    return (vanilla_fixes if vanilla_fixes.is_file() else wow_client), GAME_DIR
 
 
 def process_is_inside_game(exe: str | None) -> bool:
@@ -549,13 +552,20 @@ class SpotiWoWController:
             candidates = original
         else:
             vf = GAME_DIR / VANILLAFIXES_NAME
+            wow_client = GAME_DIR / "WoW.exe"
+            executable = vf if vf.is_file() else wow_client
             try:
-                # VanillaFixes.exe is a Windows GUI-subsystem executable. We start
-                # it with the game directory as cwd so DLL loading/config remains normal.
-                subprocess.Popen([str(vf)], cwd=str(GAME_DIR), close_fds=True)
-                self.notify(tr("VanillaFixes lancé. Détection du client WoW en cours…", "VanillaFixes launched. Detecting the WoW client…"))
+                # Prefer VanillaFixes when available; otherwise launch the supported
+                # WoW.exe directly from the selected client folder.
+                subprocess.Popen([str(executable)], cwd=str(GAME_DIR), close_fds=True)
+                message = (
+                    tr("VanillaFixes lancé. Détection du client WoW en cours…", "VanillaFixes launched. Detecting the WoW client…")
+                    if executable == vf
+                    else tr("Client WoW lancé directement.", "WoW client launched directly.")
+                )
+                self.notify(message)
             except Exception as exc:
-                self.notify(f"{tr('Impossible de lancer VanillaFixes :', 'Could not launch VanillaFixes:')} {exc}")
+                self.notify(f"{tr('Impossible de lancer le client WoW :', 'Could not launch the WoW client:')} {exc}")
                 return
             candidates = []
             deadline = time.monotonic() + 180.0

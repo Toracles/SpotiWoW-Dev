@@ -18,7 +18,7 @@ L’installateur ne demande jamais de Client Secret et ne télécharge pas Turtl
 ## Prérequis
 - Client Turtle WoW basé sur WoW 1.12.1 ; l’installateur le repère avec `VanillaFixes.exe` ou `WoW.exe`.
 - SuperWoW avec les fonctions `ImportFile` et `ExportFile`.
-- `VanillaFixes.exe` ou `WoW.exe` présent dans le dossier du client.
+- `VanillaFixes.exe` ou `WoW.exe` présent dans le dossier du client ; le compagnon privilégie VanillaFixes et lance `WoW.exe` directement si besoin.
 - Une application Spotify Developer configurée avec le Redirect URI indiqué ci-dessus.
 - `customassets.dll` activée dans `dlls.txt` pour le chargement des jaquettes Spotify en direct. L’installateur active la DLL si elle est déjà présente.
 

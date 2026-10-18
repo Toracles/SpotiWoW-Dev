@@ -5,7 +5,7 @@ Ce guide concerne **SpotiWoW-Dev**, la version de développement du projet pour 
 ## Le lecteur ou le compagnon ne se connecte pas
 
 1. Vérifie que le compagnon SpotiWoW-Dev est lancé et que Spotify est ouvert avec une lecture en cours.
-2. Vérifie que le client de jeu est celui basé sur WoW 1.12.1 et que le dossier sélectionné contient `VanillaFixes.exe`.
+2. Vérifie que le client de jeu est celui basé sur WoW 1.12.1 et que le dossier sélectionné contient `VanillaFixes.exe` ou `WoW.exe`.
 3. Vérifie que SuperWoW est installé et que les fonctions `ImportFile` et `ExportFile` sont disponibles.
 4. Dans le jeu, tape `/spn help` pour vérifier que l’addon est chargé et afficher les commandes disponibles.
 

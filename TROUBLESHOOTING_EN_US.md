@@ -5,7 +5,7 @@ This guide is for **SpotiWoW-Dev**, the development version of the project for T
 ## The player or companion will not connect
 
 1. Make sure the SpotiWoW-Dev companion is running and Spotify is open with playback active.
-2. Check that you are using the WoW 1.12.1 game client and that the selected folder contains `VanillaFixes.exe`.
+2. Check that you are using the WoW 1.12.1 game client and that the selected folder contains `VanillaFixes.exe` or `WoW.exe`.
 3. Check that SuperWoW is installed and provides the `ImportFile` and `ExportFile` functions.
 4. In game, type `/spn help` to check that the add-on loaded and see the available commands.
 

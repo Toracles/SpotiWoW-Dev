@@ -3,7 +3,7 @@
 ## v1.6.18
 - Replaces the Windows icons for the companion and setup with the new gold-and-ruby emblem.
 - Removes unused legacy variant files from the Dev repository and focuses the project on Turtle WoW 1.18.1.
-- Automatically detects the game folder through `VanillaFixes.exe` or `WoW.exe`, including common Classic locations.
+- Automatically detects the game folder through `VanillaFixes.exe` or `WoW.exe`, including common Classic locations; the companion starts `WoW.exe` directly when VanillaFixes is absent.
 
 ## v1.6.17
 - Speeds up full SpotiWoW-Dev shutdown: the bridge gets a shorter graceful-exit window, followed by faster forced termination if needed.
