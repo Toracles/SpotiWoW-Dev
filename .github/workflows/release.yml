@@ -156,6 +156,7 @@ jobs:
       - name: Attach installer, portable packages, and add-on-only zips to the GitHub Release
         uses: softprops/action-gh-release@v3
         with:
+          make_latest: true
           files: |
             dist/SpotiWoW-Dev-Setup.exe
             dist/SpotiWoW-Dev-Portable-FR.zip

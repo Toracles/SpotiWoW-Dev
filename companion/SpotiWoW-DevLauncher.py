@@ -21,7 +21,7 @@ import pystray
 from PIL import Image
 
 APP_NAME = "SpotiWoW-Dev"
-APP_VERSION = "1.6.19"
+APP_VERSION = "1.6.20"
 LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_URL = "https://github.com/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"

@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.6.20
+- The README now keeps US English guides under Docs and French guides under Documentations.
+- Setup preloads the Spotify Client ID from the local configuration and masks it by default, with an option to reveal it. Spotify still requests authorization on first launch.
+
 ## v1.6.19
 - On reinstall, removes the previous desktop and Start Menu shortcuts before recreating the SpotiWoW-Dev shortcut with the current emblem under a new filename so Windows rebuilds its cached preview. The previous program and its data remain installed. The tray icon also uses the refreshed file.
 

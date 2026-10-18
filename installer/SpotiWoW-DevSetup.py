@@ -55,7 +55,9 @@ TEXT = {
         "browse": "Parcourir…",
         "detect_fail": "Détection automatique non concluante : sélectionne le dossier contenant VanillaFixes.exe ou WoW.exe.",
         "client_id_label": "Spotify Client ID",
-        "client_id_help": "Dans Spotify Developer, crée une application et copie son Client ID. Ajoute le Redirect URI exact http://127.0.0.1:8888/callback. Ne saisis pas de Client Secret.",
+        "client_id_help": "Le Client ID enregistré sur ce PC est prérempli. Le texte est masqué à l’écran, mais ce Client ID n’est pas un mot de passe. Spotify demandera toujours l’autorisation au premier lancement du compagnon. N’entre pas de Client Secret.",
+        "show_client_id": "Afficher",
+        "hide_client_id": "Masquer",
         "shortcuts": "Créer un raccourci sur le bureau et dans le menu Démarrer",
         "ready": "Prêt à installer.",
         "install": "Installer",
@@ -91,7 +93,9 @@ TEXT = {
         "browse": "Browse…",
         "detect_fail": "Automatic detection did not find the client. Select the folder containing VanillaFixes.exe or WoW.exe.",
         "client_id_label": "Spotify Client ID",
-        "client_id_help": "Create an app in Spotify Developer and copy its Client ID. Add the exact Redirect URI http://127.0.0.1:8888/callback. Do not enter a Client Secret.",
+        "client_id_help": "The Client ID saved on this PC is prefilled. It is hidden on screen, but a Client ID is not a password. Spotify will still ask you to authorize the companion on first launch. Do not enter a Client Secret.",
+        "show_client_id": "Show",
+        "hide_client_id": "Hide",
         "shortcuts": "Create a desktop and Start Menu shortcut",
         "ready": "Ready to install.",
         "install": "Install",
@@ -230,6 +234,25 @@ def game_candidates() -> list[Path]:
             seen.add(key)
     return result
 
+
+def saved_client_id(game_dir: Path | None = None) -> str:
+    """Load this user's saved Client ID so setup upgrades do not ask for it again."""
+    local_app_data = Path(os.environ.get("LOCALAPPDATA") or (Path.home() / "AppData" / "Local"))
+    candidates = [local_app_data / "Programs" / APP_NAME / "config.json"]
+    if game_dir is not None:
+        candidates.append(game_dir / "companion" / "config.json")
+    for path in candidates:
+        try:
+            config = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        client_id = config.get("client_id") if isinstance(config, dict) else None
+        if isinstance(client_id, str):
+            client_id = client_id.strip()
+            if len(client_id) >= 10 and not any(ch.isspace() for ch in client_id):
+                return client_id
+    return ""
+
 def safe_extract(bundle: Path, destination: Path) -> None:
     root = destination.resolve()
     with zipfile.ZipFile(bundle, "r") as archive:
@@ -308,7 +331,8 @@ class SetupApp:
         detected = game_candidates()
         if detected:
             self.game_dir_var.set(str(detected[0]))
-        self.client_id_var = tk.StringVar()
+        self.client_id_var = tk.StringVar(value=saved_client_id(detected[0] if detected else None))
+        self.client_id_visible = False
         self.language_var = tk.StringVar(value="Français (FR)" if self.language_code == "fr" else "English (US)")
         self.create_shortcut_var = tk.BooleanVar(value=True)
         self.status_var = tk.StringVar(value=t(self.language_code, "ready"))
@@ -344,7 +368,12 @@ class SetupApp:
 
         self.client_id_label = ttk.Label(main, font=("Segoe UI", 10, "bold"))
         self.client_id_label.pack(anchor="w")
-        ttk.Entry(main, textvariable=self.client_id_var).pack(fill="x", pady=(5, 4))
+        client_id_row = ttk.Frame(main)
+        client_id_row.pack(fill="x", pady=(5, 4))
+        self.client_id_entry = ttk.Entry(client_id_row, textvariable=self.client_id_var, show="*")
+        self.client_id_entry.pack(side="left", fill="x", expand=True)
+        self.client_id_visibility_button = ttk.Button(client_id_row, command=self.toggle_client_id_visibility)
+        self.client_id_visibility_button.pack(side="left", padx=(8, 0))
         self.client_id_help = ttk.Label(main, wraplength=650, justify="left")
         self.client_id_help.pack(anchor="w", pady=(0, 12))
 
@@ -376,6 +405,9 @@ class SetupApp:
         self.detect_label.configure(text=t(lang, "detect_fail"))
         self.client_id_label.configure(text=t(lang, "client_id_label"))
         self.client_id_help.configure(text=t(lang, "client_id_help"))
+        self.client_id_visibility_button.configure(
+            text=t(lang, "hide_client_id" if self.client_id_visible else "show_client_id")
+        )
         self.shortcut_check.configure(text=t(lang, "shortcuts"))
         self.install_button.configure(text=t(lang, "install"))
         self.cancel_button.configure(text=t(lang, "cancel"))
@@ -384,6 +416,13 @@ class SetupApp:
 
     def _t(self, key: str, **kwargs) -> str:
         return t(self.language_code, key, **kwargs)
+
+    def toggle_client_id_visibility(self) -> None:
+        self.client_id_visible = not self.client_id_visible
+        self.client_id_entry.configure(show="" if self.client_id_visible else "*")
+        self.client_id_visibility_button.configure(
+            text=self._t("hide_client_id" if self.client_id_visible else "show_client_id")
+        )
 
     def browse(self) -> None:
         start = self.game_dir_var.get().strip() or str(Path.home())
@@ -553,14 +592,12 @@ class SetupApp:
                     self.set_status(t(language, "status_shortcuts"))
                     desktop = Path(os.environ.get("USERPROFILE", str(Path.home()))) / "Desktop" / f"{APP_NAME}.lnk"
                     start_menu = Path(os.environ.get("APPDATA", str(Path.home()))) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / f"{APP_NAME}.lnk"
-                    # Remove the obsolete desktop/Start Menu shortcut left by pre-Dev installs.
-                    # Keep the installed legacy program and its data untouched.
-                    for legacy_shortcut in (
-                        desktop.with_name("SpotiWoW-Octo.lnk"),
-                        start_menu.with_name("SpotiWoW-Octo.lnk"),
-                    ):
+                    # Remove obsolete branded shortcuts so the current shortcut is the one users see.
+                    for directory in {desktop.parent, start_menu.parent}:
                         try:
-                            legacy_shortcut.unlink(missing_ok=True)
+                            for old_shortcut in directory.glob(f"{APP_NAME.split('-')[0]}-*.lnk"):
+                                if old_shortcut.name.casefold() != f"{APP_NAME}.lnk".casefold():
+                                    old_shortcut.unlink(missing_ok=True)
                         except OSError:
                             pass
                     for shortcut in (desktop, start_menu):

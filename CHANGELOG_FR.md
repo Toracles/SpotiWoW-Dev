@@ -1,5 +1,9 @@
 # Journal des modifications
 
+## v1.6.20
+- Le README regroupe maintenant les guides anglais sous Docs et les guides français sous Documentations.
+- L’installeur recharge le Client ID Spotify depuis la configuration locale, le masque par défaut et permet de l’afficher. Spotify demande toujours son autorisation au premier lancement.
+
 ## v1.6.19
 - À la réinstallation, supprime l’ancien raccourci du Bureau et du menu Démarrer avant de recréer le raccourci SpotiWoW-Dev avec le nouvel emblème sous un nouveau nom de fichier afin que Windows reconstruise l'aperçu en cache. Le programme et ses données restent installés. L'icône du tray utilise aussi le fichier actualisé.
 

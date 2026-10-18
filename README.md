@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.6.19
+# SpotiWoW-Dev v1.6.20
 
 <p align="center">
   <img src="companion/SpotiWoW-Dev.png" alt="SpotiWoW-Dev icon" width="180">
@@ -17,6 +17,7 @@ SpotiWoW-Dev brings Spotify playback into Turtle WoW through a lightweight Windo
 - **Lyrics:** synchronized multi-source lookup with a local cache, configurable chat channel, and `Ctrl+Alt+L` toggle. The Lyrics status notice is local to your chat window.
 - **Windows companion:** connects to Spotify, supplies live track metadata and artwork to the add-on, and stops the bridge when the game client exits.
 - **Update reminders:** checks published releases without a GitHub API key, shows a local chat notice at every login when the setup is available, and provides a direct release link in the notification-area menu.
+- **Installer convenience:** the Spotify Client ID is saved locally and prefilled on future setup runs; Spotify authorization is still required on first launch.
 - **French and US English editions:** localized add-on messages and language-specific add-on packages are available in Releases.
 
 ## Docs
@@ -44,13 +45,7 @@ For requirements, Spotify setup, and installation steps, see the guides above. `
 - **Paroles :** recherche synchronisée auprès de plusieurs sources, cache local et choix du canal. `Ctrl+Alt+L` active ou désactive les paroles ; son message de statut reste local à ta fenêtre de chat.
 - **Compagnon Windows :** connexion à Spotify, transmission des métadonnées et des jaquettes en direct à l’addon, puis arrêt du bridge à la fermeture du client.
 - **Rappels de mise à jour :** vérification des releases publiées sans clé API GitHub, message local dans le chat à chaque connexion si le setup est disponible, et lien direct depuis le menu de notification.
+- **Installation simplifiée :** le Spotify Client ID est mémorisé localement et prérempli lors des prochaines installations ; l’autorisation Spotify reste nécessaire au premier lancement.
 - **Éditions française et anglaise US :** messages traduits et paquets addon par langue disponibles dans les Releases.
-
-## Versions linguistiques
-
-- [Guide utilisateur français](README_FR.md)
-- [Guide utilisateur anglais US](README_EN_US.md)
-- [Changelog français](CHANGELOG_FR.md)
-- [Changelog anglais US](CHANGELOG_EN_US.md)
 
 > SpotiWoW-Dev reste une version de développement destinée aux tests.
