@@ -25,11 +25,6 @@ SpotiWoW-Dev brings Spotify playback into Turtle WoW through a lightweight Windo
 - [US English user guide](README_EN_US.md)
 - [US English changelog](CHANGELOG_EN_US.md)
 
-## Documentations
-
-- [Guide utilisateur français](README_FR.md)
-- [Journal des modifications français](CHANGELOG_FR.md)
-
 ## Download
 
 Download the versioned `SpotiWoW-Dev-Setup-v<version>.exe` asset from [GitHub Releases](https://github.com/Toracles/SpotiWoW-Dev/releases). The installer is pinned to its release and verifies the tag, source commit, package manifest, and SHA-256 digest before installation.
@@ -47,5 +42,10 @@ For requirements, Spotify setup, and installation steps, see the guides above. `
 - **Rappels de mise à jour :** vérification des releases publiées sans clé API GitHub, message local dans le chat à chaque connexion si le setup est disponible, et lien direct depuis le menu de notification.
 - **Installation simplifiée :** le Spotify Client ID est mémorisé localement et prérempli lors des prochaines installations ; l’autorisation Spotify reste nécessaire au premier lancement.
 - **Éditions française et anglaise US :** messages traduits et paquets addon par langue disponibles dans les Releases.
+
+## Documentations
+
+- [Guide utilisateur français](README_FR.md)
+- [Journal des modifications français](CHANGELOG_FR.md)
 
 > SpotiWoW-Dev reste une version de développement destinée aux tests.
