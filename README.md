@@ -1,5 +1,9 @@
 # SpotiWoW-Dev v1.6.18
 
+<p align="center">
+  <img src="companion/SpotiWoW-Dev.png" alt="SpotiWoW-Dev icon" width="180">
+</p>
+
 > **Development build for Turtle WoW.** This version is still evolving and may contain bugs or experimental changes.
 
 SpotiWoW-Dev brings Spotify playback into Turtle WoW through a lightweight Windows companion and the SuperWoW file bridge. The setup automatically looks for a client folder containing `VanillaFixes.exe` or `WoW.exe`. It supports French and US English.
