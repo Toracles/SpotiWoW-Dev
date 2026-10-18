@@ -1,6 +1,6 @@
 {
   "client_id": "YOUR_SPOTIFY_CLIENT_ID",
-  "game_dir": "C:/Jeux/OctoWoW",
+  "game_dir": "C:/Games/Turtle WoW",
   "lyrics_offset_ms": 0,
   "lyrics_providers": [
     "Musixmatch",

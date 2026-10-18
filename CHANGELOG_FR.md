@@ -1,5 +1,10 @@
 # Journal des modifications
 
+## v1.6.18
+- Remplace les icônes Windows du compagnon et de l’installateur par le nouvel emblème doré et rubis.
+- Supprime les fichiers de l’ancienne variante inutilisée du dépôt Dev et recentre le projet sur Turtle WoW 1.18.1.
+- Détecte automatiquement le dossier du client avec `VanillaFixes.exe` ou `WoW.exe`, y compris dans les emplacements Classic usuels.
+
 ## v1.6.17
 - Accélère la fermeture complète de SpotiWoW-Dev : arrêt gracieux plus court du bridge, puis arrêt forcé avec délais réduits si nécessaire.
 - Réduit aussi l’attente avant la fermeture automatique du compagnon quand le client WoW se ferme.

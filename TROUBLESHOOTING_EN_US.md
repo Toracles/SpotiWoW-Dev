@@ -1,6 +1,6 @@
 # Troubleshooting — SpotiWoW-Dev
 
-This guide is for **SpotiWoW-Dev**, the development version of the project for Turtle WoW / OctoWoW.
+This guide is for **SpotiWoW-Dev**, the development version of the project for Turtle WoW.
 
 ## The player or companion will not connect
 
@@ -41,7 +41,7 @@ Temporary artwork files are not kept in the repository.
 
 ## What to include in a bug report
 
-Include the SpotiWoW-Dev version, whether you use Turtle WoW or OctoWoW, the add-on language, compact or expanded player mode, and the steps to reproduce the problem.
+Include the SpotiWoW-Dev version, whether you use Turtle WoW or Turtle WoW, the add-on language, compact or expanded player mode, and the steps to reproduce the problem.
 
 Companion logs are in `logs/bridge.log` and `logs/launcher.log`, in the application folder. Before sharing them, remove any token, secret, authorization code, or account data. Never post a Spotify Client Secret.
 

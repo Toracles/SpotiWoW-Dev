@@ -29,6 +29,7 @@ from tkinter import filedialog, messagebox, ttk
 APP_NAME = "SpotiWoW-Dev"
 PORTABLE_ASSET_NAMES = {"fr": "SpotiWoW-Dev-Portable-FR.zip", "us": "SpotiWoW-Dev-Portable-US.zip"}
 VANILLAFIXES_NAME = "VanillaFixes.exe"
+GAME_EXECUTABLE_NAMES = (VANILLAFIXES_NAME, "WoW.exe")
 LAUNCHER_NAME = "SpotiWoW-Dev.exe"
 ADDON_NAME = "SpotiWoW-Dev"
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
@@ -50,9 +51,9 @@ TEXT = {
         "window_title": "SpotiWoW-Dev — Installation",
         "language_label": "Langue de l’addon / Add-on language",
         "intro": "Ferme Turtle WoW avant l’installation. L’assistant installe l’addon et le compagnon ; si customassets.dll est déjà présent, il l’active pour les jaquettes Spotify dynamiques.",
-        "game_dir_label": "Dossier du client WoW (VanillaFixes.exe)",
+        "game_dir_label": "Dossier du client WoW (VanillaFixes.exe ou WoW.exe)",
         "browse": "Parcourir…",
-        "detect_fail": "Détection automatique non concluante : sélectionne le dossier contenant VanillaFixes.exe.",
+        "detect_fail": "Détection automatique non concluante : sélectionne le dossier contenant VanillaFixes.exe ou WoW.exe.",
         "client_id_label": "Spotify Client ID",
         "client_id_help": "Dans Spotify Developer, crée une application et copie son Client ID. Ajoute le Redirect URI exact http://127.0.0.1:8888/callback. Ne saisis pas de Client Secret.",
         "shortcuts": "Créer un raccourci sur le bureau et dans le menu Démarrer",
@@ -60,7 +61,7 @@ TEXT = {
         "install": "Installer",
         "cancel": "Annuler",
         "choose_dir": "Choisir le dossier du client WoW",
-        "invalid_game": "Ce dossier ne semble pas contenir le client attendu.\n\nVanillaFixes.exe est introuvable dans :\n{path}",
+        "invalid_game": "Ce dossier ne semble pas contenir le client attendu.\n\nNi VanillaFixes.exe ni WoW.exe n’a été trouvé dans :\n{path}",
         "invalid_id": "Le Client ID semble vide ou invalide. Copie le Client ID depuis ton application Spotify Developer.",
         "repo_missing": "Cet installateur n’est pas encore relié au dépôt GitHub du projet.\n\nLe mainteneur doit configurer le dépôt puis publier une Release.",
         "status_release": "Vérification de la version liée à cet installateur…",
@@ -86,9 +87,9 @@ TEXT = {
         "window_title": "SpotiWoW-Dev — Setup",
         "language_label": "Add-on language / Langue de l’addon",
         "intro": "Close Turtle WoW before installing. Setup installs the add-on and companion; if customassets.dll is already present, it enables it for live Spotify cover art.",
-        "game_dir_label": "WoW client folder (VanillaFixes.exe)",
+        "game_dir_label": "WoW client folder (VanillaFixes.exe or WoW.exe)",
         "browse": "Browse…",
-        "detect_fail": "Automatic detection did not find the client. Select the folder containing VanillaFixes.exe.",
+        "detect_fail": "Automatic detection did not find the client. Select the folder containing VanillaFixes.exe or WoW.exe.",
         "client_id_label": "Spotify Client ID",
         "client_id_help": "Create an app in Spotify Developer and copy its Client ID. Add the exact Redirect URI http://127.0.0.1:8888/callback. Do not enter a Client Secret.",
         "shortcuts": "Create a desktop and Start Menu shortcut",
@@ -96,7 +97,7 @@ TEXT = {
         "install": "Install",
         "cancel": "Cancel",
         "choose_dir": "Choose the WoW client folder",
-        "invalid_game": "This folder does not appear to contain the expected client.\n\nVanillaFixes.exe was not found in:\n{path}",
+        "invalid_game": "This folder does not appear to contain the expected client.\n\nNeither VanillaFixes.exe nor WoW.exe was found in:\n{path}",
         "invalid_id": "The Client ID looks empty or invalid. Copy the Client ID from your Spotify Developer app.",
         "repo_missing": "This setup has not been connected to the project's GitHub repository yet.\n\nThe maintainer must configure the repository and publish a Release.",
         "status_release": "Checking the release linked to this setup…",
@@ -182,25 +183,43 @@ def read_repository_slug() -> str:
 
 
 def is_game_dir(path: Path) -> bool:
-    return path.is_dir() and (path / VANILLAFIXES_NAME).is_file()
+    return path.is_dir() and any((path / name).is_file() for name in GAME_EXECUTABLE_NAMES)
 
 
 def game_candidates() -> list[Path]:
+    # Standard Blizzard Classic folders are candidates, but they are only accepted
+    # when they contain a supported Turtle WoW executable.
     raw = [
-        r"C:\Jeux\OctoWoW",
-        r"C:\Jeux\TurtleWoW",
-        r"C:\Games\OctoWoW",
+        r"C:\Program Files (x86)\World of Warcraft\_classic_era_",
+        r"C:\Program Files\World of Warcraft\_classic_era_",
+        r"C:\Program Files (x86)\World of Warcraft\_classic_",
+        r"C:\Program Files\World of Warcraft\_classic_",
         r"C:\Games\Turtle WoW",
         r"C:\Games\TurtleWoW",
         r"C:\Turtle WoW",
         r"C:\TurtleWoW",
-        str(Path.home() / "Games" / "OctoWoW"),
+        r"C:\Jeux\TurtleWoW",
         str(Path.home() / "Games" / "Turtle WoW"),
+        str(Path.home() / "Games" / "TurtleWoW"),
     ]
+    scan_roots = [Path(r"C:\Games"), Path(r"C:\Jeux"), Path(r"C:\Turtle WoW"), Path(r"C:\TurtleWoW")]
     for env_name in ("PROGRAMFILES", "PROGRAMFILES(X86)"):
-        base = os.environ.get(env_name)
-        if base:
-            raw += [str(Path(base) / "Turtle WoW"), str(Path(base) / "OctoWoW")]
+        base_value = os.environ.get(env_name)
+        if base_value:
+            base = Path(base_value)
+            raw.extend((
+                str(base / "World of Warcraft" / "_classic_era_"),
+                str(base / "World of Warcraft" / "_classic_"),
+                str(base / "Turtle WoW"),
+                str(base / "TurtleWoW"),
+            ))
+            scan_roots.append(base)
+    for root in scan_roots:
+        try:
+            raw.extend(str(child) for child in root.iterdir() if child.is_dir())
+        except OSError:
+            continue
+
     result: list[Path] = []
     seen: set[str] = set()
     for item in raw:
@@ -210,7 +229,6 @@ def game_candidates() -> list[Path]:
             result.append(path.resolve())
             seen.add(key)
     return result
-
 
 def safe_extract(bundle: Path, destination: Path) -> None:
     root = destination.resolve()

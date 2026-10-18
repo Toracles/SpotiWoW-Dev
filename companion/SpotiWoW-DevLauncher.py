@@ -21,11 +21,11 @@ import pystray
 from PIL import Image
 
 APP_NAME = "SpotiWoW-Dev"
-APP_VERSION = "1.6.17"
+APP_VERSION = "1.6.18"
 LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_URL = "https://github.com/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"
-DEFAULT_GAME_DIR = Path(r"C:\Jeux\OctoWoW")
+DEFAULT_GAME_DIR = Path(r"C:\Games\Turtle WoW")
 VANILLAFIXES_NAME = "VanillaFixes.exe"
 # VanillaFixes is a launcher/injector. The actual Turtle WoW client it starts is WoW.exe.
 # Watching every executable in the game directory can accidentally track helpers that

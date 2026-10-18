@@ -1,13 +1,13 @@
-# SpotiWoW-Dev v1.6.17 — US English
+# SpotiWoW-Dev v1.6.18 — US English
 
 > **Development version** — this version is still evolving and may include experimental changes. It is intended for testing; bugs or behavior changes may occur.
 
-SpotiWoW-Dev connects Spotify to Turtle WoW / OctoWoW through the SuperWoW file bridge. This package uses the US English interface and in-game messages.
+SpotiWoW-Dev connects Spotify to Turtle WoW through the SuperWoW file bridge. This package uses the US English interface and in-game messages.
 
 ## Easy installation
 1. Download `SpotiWoW-Dev-Setup.exe` from the **Releases** page of the official GitHub repository.
 2. Close Turtle WoW before installing.
-3. Select `English (US)` in the installer, choose the folder containing `VanillaFixes.exe`, and enter your Spotify Client ID.
+3. Select `English (US)` in the installer, choose the folder containing `VanillaFixes.exe` or `WoW.exe`, and enter your Spotify Client ID.
 4. In your Spotify Developer app settings, add the exact Redirect URI `http://127.0.0.1:8888/callback`.
 5. Finish the setup and launch **SpotiWoW-Dev** from the shortcut.
 
@@ -16,9 +16,9 @@ Setup is pinned to its specific GitHub release. Before installing, it verifies t
 The installer never asks for a Client Secret and does not download Turtle WoW, VanillaFixes, SuperWoW, SuperAPI, or their DLLs.
 
 ## Requirements
-- Turtle WoW / OctoWoW client based on WoW 1.12.1.
+- Turtle WoW client based on WoW 1.12.1; setup detects it through `VanillaFixes.exe` or `WoW.exe`.
 - SuperWoW with the `ImportFile` and `ExportFile` functions.
-- `VanillaFixes.exe` in the client folder.
+- `VanillaFixes.exe` or `WoW.exe` in the client folder.
 - A Spotify Developer app configured with the Redirect URI shown above.
 - `customassets.dll` enabled in `dlls.txt` for live Spotify covers. Setup enables it if the DLL is already present.
 
@@ -41,6 +41,6 @@ Lyrics themselves are still sent to the selected channel when that feature is en
 ## Troubleshooting
 - See the [US English troubleshooting guide](TROUBLESHOOTING_EN_US.md) for connection, artwork, metadata, lyrics, and command issues.
 - Logs: `logs/bridge.log` and `logs/launcher.log` in the companion app folder.
-- If auto-detection fails, manually choose the folder that contains `VanillaFixes.exe`.
+- If auto-detection fails, manually choose the folder that contains `VanillaFixes.exe` or `WoW.exe`.
 
 For an add-on-only update, download `SpotiWoW-Dev-Addon-US.zip` from Releases. The US English version displays system messages in English.

@@ -13,7 +13,7 @@ body:
     attributes:
       label: SpotiWoW-Dev version / Version
       description: Include the release tag if possible / Indique le tag de release si possible
-      placeholder: v1.6.3-alpha
+      placeholder: v1.6.18
     validations:
       required: true
 
@@ -38,8 +38,6 @@ body:
       label: Game client / Client de jeu
       options:
         - Turtle WoW
-        - OctoWoW
-        - Both / Les deux
         - Not applicable / Sans objet
     validations:
       required: true

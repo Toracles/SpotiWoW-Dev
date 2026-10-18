@@ -1,6 +1,6 @@
 -- SpotiWoW-Dev locale: US English
 -- Loaded before SpotiWoW-Dev.lua by the .toc file.
-SPOTIWOW_OCTO_L = {
+SPOTIWOW_DEV_L = {
     no_track = "No track is known yet. Start the Python companion.",
     announce_emote_prefix = "is listening to ",
     announce_prefix = "~ Now playing: ",

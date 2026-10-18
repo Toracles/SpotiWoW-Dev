@@ -65,12 +65,12 @@ _configured_providers = CFG.get("lyrics_providers", ["Musixmatch", "Lrclib", "Ne
 LYRICS_PROVIDERS = [p for p in _configured_providers if p in _ALLOWED_LYRICS_PROVIDERS] if isinstance(_configured_providers, list) else ["Musixmatch", "Lrclib", "NetEase", "Megalobiz"]
 if not LYRICS_PROVIDERS:
     LYRICS_PROVIDERS = ["Musixmatch", "Lrclib", "NetEase", "Megalobiz"]
-GAME_DIR = Path(CFG.get("game_dir", r"C:\Jeux\OctoWoW"))
+GAME_DIR = Path(CFG.get("game_dir", r"C:\Games\Turtle WoW"))
 IMPORT_DIR = GAME_DIR / "imports"
 STATE_FILE = IMPORT_DIR / "SpotifyNowState.txt"
 COMMAND_FILE = IMPORT_DIR / "SpotifyNowCommand.txt"
 UPDATE_FILE = IMPORT_DIR / "SpotifyNowUpdate.txt"
-APP_VERSION = "1.6.17"
+APP_VERSION = "1.6.18"
 LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"
 UPDATE_CHECK_INTERVAL_SECONDS = 30 * 60

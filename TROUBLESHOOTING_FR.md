@@ -1,6 +1,6 @@
 # Dépannage — SpotiWoW-Dev
 
-Ce guide concerne **SpotiWoW-Dev**, la version de développement du projet pour Turtle WoW / OctoWoW.
+Ce guide concerne **SpotiWoW-Dev**, la version de développement du projet pour Turtle WoW.
 
 ## Le lecteur ou le compagnon ne se connecte pas
 
@@ -41,7 +41,7 @@ Les fichiers d’image temporaires ne sont pas conservés dans le dépôt.
 
 ## Informations à joindre à un signalement
 
-Indique la version de SpotiWoW-Dev, le client Turtle WoW ou OctoWoW, la langue de l’addon, le mode compact ou agrandi, ainsi que les étapes pour reproduire le problème.
+Indique la version de SpotiWoW-Dev, le client Turtle WoW ou Turtle WoW, la langue de l’addon, le mode compact ou agrandi, ainsi que les étapes pour reproduire le problème.
 
 Les journaux du compagnon se trouvent dans `logs/bridge.log` et `logs/launcher.log`, dans le dossier de l’application. Avant de les partager, retire tout jeton, secret, code d’autorisation ou donnée de compte. Ne publie jamais de Client Secret Spotify.
 

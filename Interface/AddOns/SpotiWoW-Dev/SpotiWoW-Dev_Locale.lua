@@ -1,6 +1,6 @@
 -- SpotiWoW-Dev locale: French (France)
 -- Loaded before SpotiWoW-Dev.lua by the .toc file.
-SPOTIWOW_OCTO_L = {
+SPOTIWOW_DEV_L = {
     no_track = "Aucun morceau connu pour le moment. Lance le compagnon Python.",
     announce_emote_prefix = "écoute ",
     announce_prefix = "~ À l’écoute : ",
