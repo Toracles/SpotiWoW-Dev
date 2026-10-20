@@ -1,1 +1,2 @@
+websocket-client==1.8.0
 syncedlyrics==1.0.1

@@ -35,7 +35,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install build dependencies
-        run: python -m pip install --upgrade pyinstaller pystray pillow psutil "syncedlyrics==1.0.1"
+        run: python -m pip install --upgrade pyinstaller pystray pillow psutil "syncedlyrics==1.0.1" "websocket-client==1.8.0"
 
       - name: Build hidden-console runtime launcher
         shell: pwsh
@@ -60,10 +60,16 @@ jobs:
           python -m PyInstaller --clean --noconfirm --onefile --windowed `
             --name SpotiWoW-Dev `
             --icon "$iconPath" `
-            --collect-all syncedlyrics --collect-all pystray `
+            --collect-all syncedlyrics --collect-all websocket `
+            --collect-all pystray `
             --collect-all psutil --collect-all PIL `
             --distpath "$distPath" --workpath "$workPath" --specpath "$workPath" `
             "$scriptPath"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          $uninstallPath = Join-Path $root "installer/SpotiWoW-DevUninstall.py"
+          $uninstallWork = Join-Path $root "build/uninstaller"
+          python -m PyInstaller --clean --noconfirm --onefile --windowed --name SpotiWoW-Dev-Uninstall --icon "$iconPath" --distpath "$distPath" --workpath "$uninstallWork" --specpath "$uninstallWork" "$uninstallPath"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Assemble French and US portable runtime bundles
@@ -93,7 +99,10 @@ jobs:
               Copy-Item "variants/US/SpotiWoW-Dev.toc" (Join-Path $addonDest "SpotiWoW-Dev.toc") -Force
             }
             Copy-Item "dist/SpotiWoW-Dev.exe" (Join-Path $stage "companion/SpotiWoW-Dev.exe")
+            Copy-Item "dist/SpotiWoW-Dev-Uninstall.exe" (Join-Path $stage "companion/SpotiWoW-Dev-Uninstall.exe")
             Copy-Item "companion/spotify_bridge.py" (Join-Path $stage "companion/spotify_bridge.py")
+            Copy-Item "companion/relay_client.py" (Join-Path $stage "companion/relay_client.py")
+            Copy-Item "companion/credential_store.py" (Join-Path $stage "companion/credential_store.py")
             Copy-Item "companion/config.example.json" (Join-Path $stage "companion/config.example.json")
             $configExamplePath = Join-Path $stage "companion/config.example.json"
             $configExample = Get-Content $configExamplePath -Raw | ConvertFrom-Json

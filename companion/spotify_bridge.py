@@ -18,6 +18,7 @@ import json
 import logging
 import os
 import re
+import subprocess
 import secrets
 import sys
 import threading
@@ -70,7 +71,7 @@ IMPORT_DIR = GAME_DIR / "imports"
 STATE_FILE = IMPORT_DIR / "SpotifyNowState.txt"
 COMMAND_FILE = IMPORT_DIR / "SpotifyNowCommand.txt"
 UPDATE_FILE = IMPORT_DIR / "SpotifyNowUpdate.txt"
-APP_VERSION = "1.6.21"
+APP_VERSION = "1.7.0"
 LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"
 UPDATE_CHECK_INTERVAL_SECONDS = 30 * 60
@@ -94,6 +95,16 @@ def stop_requested() -> bool:
 REDIRECT = "http://127.0.0.1:8888/callback"
 SCOPE = "user-read-currently-playing user-read-playback-state user-modify-playback-state"
 TOKEN_FILE = HERE / "tokens.json"
+RELAY_MODULE_DIR = HERE
+if str(RELAY_MODULE_DIR) not in sys.path:
+    sys.path.insert(0, str(RELAY_MODULE_DIR))
+try:
+    from relay_client import LyricsRelay
+    from credential_store import TokenStore
+except ImportError:
+    LyricsRelay = None
+    TokenStore = None
+TOKEN_STORE = TokenStore(HERE / "spotify_session.dat") if TokenStore else None
 TOKEN_URL = "https://accounts.spotify.com/api/token"
 
 # ---------------------------------------------------------------- Spotify auth
@@ -116,7 +127,9 @@ def save_tokens(tok, old_refresh=None):
     tok["expires_at"] = time.time() + tok.get("expires_in", 3600)
     tok.setdefault("refresh_token", old_refresh)
     tok.setdefault("scope", SCOPE)
-    TOKEN_FILE.write_text(json.dumps(tok), encoding="utf-8")
+    if TOKEN_STORE is None:
+        raise RuntimeError("DPAPI token storage is unavailable")
+    TOKEN_STORE.save(tok)
     return tok
 
 
@@ -165,12 +178,27 @@ _tokens = None
 def get_token():
     global _tokens
     if _tokens is None:
-        if TOKEN_FILE.exists():
-            _tokens = json.loads(TOKEN_FILE.read_text(encoding="utf-8"))
-            if "user-modify-playback-state" not in _tokens.get("scope", ""):
-                _tokens = login()  # nouveau scope necessaire pour les controles
-        else:
+        if CFG.get("reauthorize_on_next_start"):
             _tokens = login()
+            TOKEN_FILE.unlink(missing_ok=True)
+            CFG["reauthorize_on_next_start"] = False
+            CFG_PATH.write_text(json.dumps(CFG, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        else:
+            _tokens = TOKEN_STORE.load() if TOKEN_STORE else None
+            # One-time migration from older releases that saved OAuth JSON in plaintext.
+            if _tokens is None and TOKEN_FILE.exists():
+                try:
+                    legacy = json.loads(TOKEN_FILE.read_text(encoding="utf-8"))
+                    if isinstance(legacy, dict) and TOKEN_STORE:
+                        TOKEN_STORE.save(legacy)
+                        _tokens = legacy
+                    TOKEN_FILE.unlink(missing_ok=True)
+                except (OSError, ValueError):
+                    _tokens = None
+            if _tokens is not None and "user-modify-playback-state" not in _tokens.get("scope", ""):
+                _tokens = login()  # refresh the OAuth scope needed for playback controls
+            elif _tokens is None:
+                _tokens = login()
     if time.time() > _tokens["expires_at"] - 30:
         _tokens = save_tokens(
             post_form(TOKEN_URL, {
@@ -535,6 +563,15 @@ def publish_state() -> None:
             encode_field(S["current_lyric"]), encode_field(S["artwork"]),
             encode_field(S["album"]), "1" if S["shuffle"] else "0",
             "1" if S["repeat"] else "0", encode_field(S["repeat_mode"]),
+            "render" if S.get("relay_mode") else "chat",
+            str(int(S.get("relay_line_seq", 0))), encode_field(S.get("relay_line", "")),
+            encode_field(S.get("relay_sender", "")), str(int(S.get("relay_status_seq", 0))), encode_field(S.get("relay_status", "disabled")),
+            str(int(S.get("jam_invite_seq", 0))), encode_field(S.get("jam_invite_id", "")),
+            encode_field(S.get("jam_inviter", "")), encode_field(S.get("jam_recipients", "")),
+            encode_field(S.get("jam_url", "")), str(int(S.get("jam_response_seq", 0))),
+            encode_field(S.get("jam_response_id", "")), encode_field(S.get("jam_responder", "")),
+            encode_field(S.get("jam_response_target", "")), encode_field(S.get("jam_response", "")),
+            "^".join(f"{seq}!{urllib.parse.quote(sender, safe='')}!{urllib.parse.quote(text, safe='')}" for seq, sender, text in S.get("relay_events", [])),
         ]
         payload = "|".join(fields) + "\n"
         try:
@@ -654,6 +691,11 @@ S = {
     "playing": False, "volume": None, "sent_idx": -1,
     "state_seq": 0, "line_seq": 0, "current_lyric": "", "artwork": "",
     "album": "", "shuffle": False, "repeat": False, "repeat_mode": "off",
+    "relay_mode": False, "relay_line": "", "relay_line_seq": 0, "relay_sender": "", "relay_events": [],
+    "relay_status": "disabled", "relay_status_seq": 0,
+    "player_name": "", "jam_invite_seq": 0, "jam_invite_id": "", "jam_inviter": "",
+    "jam_recipients": "", "jam_url": "", "jam_response_seq": 0,
+    "jam_response_id": "", "jam_responder": "", "jam_response_target": "", "jam_response": "",
 }
 
 
@@ -796,6 +838,57 @@ def lyrics_loop():
             publish_state()
 
 
+def relay_status_changed(status):
+    S["relay_status"] = status
+    S["relay_status_seq"] += 1
+    publish_state()
+
+def relay_line_received(text, sender=""):
+    S["relay_line"] = str(text)[:350]
+    S["relay_sender"] = str(sender)[:48]
+    S["relay_line_seq"] += 1
+    events = S.setdefault("relay_events", [])
+    events.append((S["relay_line_seq"], S["relay_sender"], S["relay_line"]))
+    if len(events) > 32:
+        del events[:-32]
+    publish_state()
+
+def relay_invite_received(message):
+    S["jam_invite_seq"] += 1
+    S["jam_invite_id"] = str(message.get("invite_id", ""))
+    S["jam_inviter"] = str(message.get("sender_name", ""))
+    S["jam_recipients"] = ",".join(str(name) for name in message.get("recipients", [])[:40])
+    S["jam_url"] = str(message.get("url", ""))
+    publish_state()
+
+def relay_response_received(message):
+    S["jam_response_seq"] += 1
+    S["jam_response_id"] = str(message.get("invite_id", ""))
+    S["jam_responder"] = str(message.get("sender_name", ""))
+    S["jam_response_target"] = str(message.get("target_name", ""))
+    S["jam_response"] = str(message.get("response", ""))
+    publish_state()
+
+def relay_loop():
+    if LyricsRelay is None:
+        while not stop_requested():
+            if S.get("relay_mode"):
+                relay_status_changed("missing_dependency")
+            time.sleep(5)
+        return
+    client = LyricsRelay(
+        get_url=lambda: CFG.get("render_url", ""),
+        get_enabled=lambda: bool(S.get("relay_mode")),
+        get_line=lambda: (S.get("line_seq", 0), S.get("current_lyric", "")) if S.get("relay_mode") and S.get("lyrics_on") else None,
+        on_line=relay_line_received, on_status=relay_status_changed,
+        on_invite=relay_invite_received, on_response=relay_response_received,
+        get_player_name=lambda: S.get("player_name", ""),
+        stop_requested=stop_requested,
+    )
+    global active_relay_client
+    active_relay_client = client
+    client.run()
+
 def set_lyrics(on):
     on = bool(on)
     changed = on != S["lyrics_on"]
@@ -884,8 +977,64 @@ def handle_command(cmd, argument=""):
     wake.set()
 
 
+active_relay_client = None
+
+def _relay_event(event):
+    client = active_relay_client
+    if client is None or not CFG.get("render_url"):
+        relay_status_changed("unconfigured" if not CFG.get("render_url") else "starting")
+        return False
+    client.send_event(event)
+    return True
+
+def _valid_spotify_link(value):
+    parsed = urllib.parse.urlparse(value)
+    return parsed.scheme == "https" and (parsed.hostname or "").lower() in {"open.spotify.com", "spotify.link"}
+
+def _open_spotify_jam(url):
+    if not _valid_spotify_link(url):
+        return False
+    try:
+        os.startfile("spotify:")
+    except Exception:
+        pass
+    time.sleep(1.0)
+    return bool(webbrowser.open(url))
+
 def handle_bridge_command(cmd, argument):
-    if cmd == "lyrics":
+    if cmd == "session":
+        parts = argument.split("|", 1)
+        S["player_name"] = urllib.parse.unquote(parts[0])[:48]
+        S["relay_mode"] = len(parts) > 1 and urllib.parse.unquote(parts[1]).strip().lower() == "render"
+        relay_status_changed("starting" if S["relay_mode"] else "disabled")
+    elif cmd == "player":
+        S["player_name"] = urllib.parse.unquote(argument)[:48]
+    elif cmd == "jaminvite":
+        parts = argument.split("|", 3)
+        if len(parts) == 3:
+            sender, targets, url = [urllib.parse.unquote(part) for part in parts]
+            recipients = [name.strip() for name in targets.split(",") if name.strip()][:40]
+            if _valid_spotify_link(url) and sender and recipients:
+                _relay_event({"type":"jam_invite", "invite_id":secrets.token_hex(12), "sender_name":sender[:48], "recipients":recipients, "url":url})
+    elif cmd in {"jamaccept", "jamdecline"}:
+        parts = argument.split("|", 3)
+        if len(parts) == 3 if cmd == "jamdecline" else len(parts) == 4:
+            values = [urllib.parse.unquote(part) for part in parts]
+            invite_id, responder, target = values[:3]
+            if invite_id and responder and target:
+                _relay_event({"type":"jam_response", "invite_id":invite_id, "sender_name":responder[:48], "target_name":target[:48], "response":"accepted" if cmd == "jamaccept" else "declined"})
+            if cmd == "jamaccept" and len(values) == 4:
+                _open_spotify_jam(values[3])
+    elif cmd == "relaymode":
+        S["relay_mode"] = argument.strip().lower() == "render"
+        relay_status_changed("starting" if S["relay_mode"] else "disabled")
+    elif cmd == "relaystatus":
+        if LyricsRelay is None:
+            relay_status_changed("missing_dependency")
+        else:
+            client = LyricsRelay(lambda: CFG.get("render_url", ""), lambda: False, lambda: None, relay_line_received, relay_status_changed, stop_requested)
+            threading.Thread(target=client.ping, name="render-health-check", daemon=True).start()
+    elif cmd == "lyrics":
         set_lyrics(argument == "1")
     elif cmd == "checkupdates":
         threading.Thread(target=check_update_once, name="update-check-on-login", daemon=True).start()
@@ -946,6 +1095,7 @@ def main():
     get_token()  # opens the browser on first run
     threading.Thread(target=poll_loop, daemon=True).start()
     threading.Thread(target=lyrics_loop, daemon=True).start()
+    threading.Thread(target=relay_loop, name="lyrics-relay", daemon=True).start()
     threading.Thread(target=command_loop, args=(initial_command,), daemon=True).start()
 
     MOD_ALT, MOD_CONTROL, WM_HOTKEY = 0x1, 0x2, 0x0312

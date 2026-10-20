@@ -1,5 +1,13 @@
 # Journal des modifications
 
+## v1.7.0
+- Ajoute le transport paroles facultatif Render, avec maintien du mode Chat existant et sans bascule automatique entre les modes.
+- Le relais transmet les paroles en mémoire sans les enregistrer et tamponne brièvement les lignes rapides pour ne pas les perdre entre deux lectures de l’addon.
+- Ajoute les invitations Spotify Jam ciblées au groupe/raid avec acceptation/refus en jeu et ouverture du lien par Spotify.
+- Protège les tokens Spotify avec DPAPI Windows et propose de conserver ou remplacer la session lors d’une mise à jour.
+- Efface les caches de paroles et les jaquettes à chaque installation et ajoute un désinstalleur complet.
+- Le lanceur ouvre Spotify s’il n’est pas déjà démarré.
+
 ## v1.6.21
 - Le Setup porte maintenant le numéro de release dans son nom de fichier pour éviter que l’Explorateur réutilise l’ancienne icône associée au nom stable. Le bridge et le launcher reconnaissent aussi les nouveaux setups versionnés.
 

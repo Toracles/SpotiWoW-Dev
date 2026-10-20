@@ -4,7 +4,7 @@
 local CHANNELS = { say="SAY", yell="YELL", party="PARTY", guild="GUILD", raid="RAID", emote="EMOTE" }
 local CMD = { prev="prev", pause="pause", next="next", back="back", fwd="fwd", voldown="voldown", volup="volup", shuffle="shuffle", ["repeat"]="repeat" }
 local Locale = SPOTIWOW_DEV_L or {}
-local ADDON_VERSION = "1.6.21"
+local ADDON_VERSION = "1.7.0"
 local UI_FALLBACK = {
     settings_title="Player Settings", settings_theme="Theme", settings_layout="Layout", settings_expand="Expand player", settings_compact="Use compact player",
     layout_compact="Compact", layout_square="Square", layout_expanded="Expanded", layout_help="Click options to cycle or toggle them. /spn help for commands.",
@@ -19,17 +19,17 @@ local UI_FALLBACK = {
     settings_metadata_hint="Show or hide the track title, artist, album, and cover artwork.",
     settings_progress_hint="Show or hide the playback progress bar.",
     settings_progress_style_hint="Cycle the progress bar through Line, Thick, and Segmented styles.",
-    settings_lyrics_hint="Toggle synced lyrics in the selected chat channel.",
+    settings_lyrics_hint="Toggle synced lyrics using the selected transport.", settings_transport="Lyrics transport", settings_transport_hint="Chat keeps using the selected WoW chat channel. Render sends lyrics to the optional SpotiWoW relay and displays them only as local system messages. It never falls back to chat.", settings_render_status="Render relay", settings_render_unconfigured="Render URL is not configured in setup.", settings_render_starting="Render relay is starting…", settings_render_connected="Render relay connected.", settings_render_unavailable="Render relay is unavailable.", settings_render_invalid="Render URL is invalid.", settings_render_dependency="Relay support is missing. Reinstall the companion.", settings_render_disabled="Render relay disabled.", lyrics_local_prefix="[Lyrics] ",
     settings_channel_hint="Choose where synced lyrics are sent. Use a private channel if you do not want others to see them.",
     settings_hex_apply_hint="Apply the HEX color entered to the left. Use six hexadecimal digits, with an optional #.", setting_on="ON", setting_off="OFF", color_default="Theme default",
     theme_obsidian="Obsidian", theme_azerite="Azerite", theme_fel="Fel", theme_bloodmoon="Bloodmoon", theme_sunwell="Sunwell", theme_frostmourne="Silver Dawn", theme_dreamweaver="Fang Set",
     mode_shuffle="SHUFFLE", mode_repeat_all="REPEAT ALL", mode_repeat_track="REPEAT 1",
     help_1="/spn : show the current track locally", help_2="/spn say|yell|party|guild|raid|emote : announce the current track",
-    help_3="/spn lyrics [on|off] : lyrics mode; /spn channel <channel> : lyrics channel",
+    help_3="/spn lyrics [on|off] : lyrics mode; /spn channel <channel> : lyrics channel; /spn transport chat|render; /spn render",
     help_4="/spn ui : show/hide the mini-player; /spn settings : open settings",
     help_5="/spn prev|pause|next|back|fwd|voldown|volup : playback controls",
     settings_help="/spn mode compact|square|expanded; /spn expand toggles compact/expanded; /spn theme obsidian|azerite|fel|bloodmoon|sunwell|frostmourne|dreamweaver; /spn accent RRGGBB",
-    settings_help2="/spn glow|border|buttons|controls|metadata|progress on|off; /spn progressstyle line|thick|segmented; /spn progresscolor RRGGBB; /spn seek on|off",
+    settings_help2="/spn glow|border|buttons|controls|metadata|progress on|off; /spn progressstyle line|thick|segmented; /spn progresscolor RRGGBB; /spn seek on|off; /spn transport chat|render; /spn render",
     theme_help="Themes: obsidian, azerite, fel, bloodmoon, sunwell, frostmourne, dreamweaver", color_help="Use RRGGBB (example: 1ED760), or reset.",
     progressstyle_help="Progress styles: line, thick, segmented", spotify_label="SPOTIFY", status_playing="PLAYING", status_paused="PAUSED", lyrics_toggle="Toggle lyrics", update_available="Update available: ", update_download="Download: ",
 }
@@ -47,8 +47,10 @@ local function Announce(channelKey)
     local chan = CHANNELS[channelKey]
     if chan == "EMOTE" then SendChatMessage(T("announce_emote_prefix") .. np, "EMOTE") else SendChatMessage(T("announce_prefix") .. np .. " ~", chan) end
 end
+local currentPlayerName=""
+local function EncodeValue(value) return string.gsub(value or "","([^%w%-_%.~])",function(c) return string.format("%%%02X",string.byte(c)) end) end
 local function SingLine(text)
-    if not SpotifyNowDB.lyrics or text == "" then return end
+    if not SpotifyNowDB.lyrics or text == "" or SpotifyNowDB.transport=="render" then return end
     local chan = CHANNELS[SpotifyNowDB.channel] or "SAY"
     if chan == "EMOTE" then SendChatMessage(T("sing_emote_prefix") .. text .. "\"", "EMOTE") else SendChatMessage("~ " .. text .. " ~", chan) end
 end
@@ -237,8 +239,16 @@ settingsButtons.seek.button:SetScript("OnEnter",function() GameTooltip:SetOwner(
 settingsButtons.seek.button:SetScript("OnLeave",function() GameTooltip:Hide() end)
 local lyricsButton=NewSettingsButton(150,22,"TOPLEFT",settingsPanel,"TOPLEFT",18,-312)
 local channelButton=NewSettingsButton(150,22,"TOPLEFT",settingsPanel,"TOPLEFT",190,-312)
+local transportButton=NewSettingsButton(328,22,"TOP",settingsPanel,"TOP",0,-338)
 SetSettingsTooltip(lyricsButton,"settings_lyrics_hint")
 SetSettingsTooltip(channelButton,"settings_channel_hint")
+SetSettingsTooltip(transportButton,"settings_transport_hint")
+transportButton:SetScript("OnClick",function()
+    if SpotifyNowDB.transport=="render" then SpotifyNowDB.transport="chat" else SpotifyNowDB.transport="render" end
+    SendCommand("relaymode",SpotifyNowDB.transport)
+    if SpotifyNowDB.transport=="render" then Print(T("settings_render_starting")) else Print(T("settings_render_disabled")) end
+    RefreshSettingsPanel()
+end)
 lyricsButton:SetScript("OnClick",function() SetLyrics(not SpotifyNowDB.lyrics,true); RefreshSettingsPanel() end)
 local CHANNEL_ORDER={"say","yell","party","guild","raid","emote"}
 channelButton:SetScript("OnClick",function()
@@ -264,6 +274,7 @@ RefreshSettingsPanel=function()
     local labels={glow="settings_glow",border="settings_border",buttons="settings_buttons",controls="settings_controls",metadata="settings_metadata",progress="settings_progress",seek="settings_seek",progressStyle="settings_progress_style"}
     SetButtonText(lyricsButton,T("settings_lyrics")..": "..(SpotifyNowDB.lyrics and T("setting_on") or T("setting_off")))
     SetButtonText(channelButton,T("settings_lyrics_channel")..": "..strupper(SpotifyNowDB.channel or "say"))
+    SetButtonText(transportButton,T("settings_transport")..": "..(SpotifyNowDB.transport=="render" and "Render" or "Chat"))
     for key,item in pairs(settingsButtons) do
         local value=style[item.field]
         if item.field=="progressStyle" then
@@ -275,6 +286,54 @@ RefreshSettingsPanel=function()
         else shown=value and T("setting_on") or T("setting_off") end
         SetButtonText(item.button,T(labels[key])..": "..shown)
     end
+end
+local jamPopup=CreateFrame("Frame",nil,UIParent)
+jamPopup:SetWidth(320); jamPopup:SetHeight(132); jamPopup:SetPoint("CENTER",UIParent,"CENTER",0,100)
+jamPopup:SetFrameStrata("DIALOG"); jamPopup:EnableMouse(true)
+jamPopup:SetBackdrop({bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",tile=true,tileSize=32,edgeSize=32,insets={left=11,right=12,top=12,bottom=11}})
+jamPopup:SetBackdropColor(0.05,0.04,0.03,0.98)
+local jamPopupTitle=jamPopup:CreateFontString(nil,"OVERLAY","GameFontNormal")
+jamPopupTitle:SetPoint("TOP",jamPopup,"TOP",0,-18); jamPopupTitle:SetText(T("jam_invite_title")); jamPopupTitle:SetTextColor(1,0.82,0.28)
+local jamPopupText=jamPopup:CreateFontString(nil,"OVERLAY","GameFontHighlight")
+jamPopupText:SetPoint("TOP",jamPopupTitle,"BOTTOM",0,-8); jamPopupText:SetWidth(270); jamPopupText:SetJustifyH("CENTER")
+local jamAcceptButton=CreateFrame("Button",nil,jamPopup); jamAcceptButton:SetWidth(112); jamAcceptButton:SetHeight(22); jamAcceptButton:SetPoint("BOTTOMLEFT",jamPopup,"BOTTOMLEFT",35,18)
+buttonLabels[jamAcceptButton]=SkinButton(jamAcceptButton); SetButtonText(jamAcceptButton,T("jam_accept"))
+local jamDeclineButton=CreateFrame("Button",nil,jamPopup); jamDeclineButton:SetWidth(112); jamDeclineButton:SetHeight(22); jamDeclineButton:SetPoint("BOTTOMRIGHT",jamPopup,"BOTTOMRIGHT",-35,18)
+buttonLabels[jamDeclineButton]=SkinButton(jamDeclineButton); SetButtonText(jamDeclineButton,T("jam_decline"))
+local pendingJamInvite=nil
+jamPopup:Hide()
+local function JamResponseCommand(accepted)
+    if not pendingJamInvite then return end
+    local value=EncodeValue(pendingJamInvite.id).."|"..EncodeValue(currentPlayerName).."|"..EncodeValue(pendingJamInvite.sender)
+    if accepted then value=value.."|"..EncodeValue(pendingJamInvite.url); SendCommand("jamaccept",value)
+    else SendCommand("jamdecline",value) end
+    pendingJamInvite=nil; jamPopup:Hide()
+end
+jamAcceptButton:SetScript("OnClick",function() JamResponseCommand(true) end)
+jamDeclineButton:SetScript("OnClick",function() JamResponseCommand(false) end)
+local function ShowJamInvite(inviteId,sender,recipients,url)
+    if not currentPlayerName or currentPlayerName=="" then return end
+    if not strfind(","..strlower(recipients or "")..",",","..strlower(currentPlayerName)..",",1,true) then return end
+    if not strfind(url or "","^https://open%.spotify%.com/") and not strfind(url or "","^https://spotify%.link/") then return end
+    pendingJamInvite={id=inviteId,sender=sender,url=url}
+    jamPopupText:SetText(string.format(T("jam_invite_prompt"),sender))
+    jamPopup:Show()
+end
+local function SendJamInvite(url)
+    if SpotifyNowDB.transport~="render" then Print(T("settings_transport_hint")); return end
+    if not strfind(url or "","^https://open%.spotify%.com/") and not strfind(url or "","^https://spotify%.link/") then Print(T("jam_help")); return end
+    local recipients={}
+    local raidCount=GetNumRaidMembers and GetNumRaidMembers() or 0
+    if raidCount>0 and GetRaidRosterInfo then
+        for i=1,raidCount do local name=GetRaidRosterInfo(i); if name and strlower(name)~=strlower(currentPlayerName) then recipients[table.getn(recipients)+1]=name end end
+    else
+        local partyCount=GetNumPartyMembers and GetNumPartyMembers() or 0
+        for i=1,partyCount do local name=UnitName("party"..i); if name and strlower(name)~=strlower(currentPlayerName) then recipients[table.getn(recipients)+1]=name end end
+    end
+    if table.getn(recipients)==0 then Print(T("jam_no_group")); return end
+    local targetList=table.concat(recipients,",")
+    SendCommand("jaminvite",EncodeValue(currentPlayerName).."|"..EncodeValue(targetList).."|"..EncodeValue(url))
+    Print(T("jam_sent"))
 end
 settingsPanel:SetScript("OnShow",function() RefreshSettingsPanel() end)
 settingsButton:SetScript("OnClick",function() if settingsPanel:IsShown() then settingsPanel:Hide() else RefreshSettingsPanel(); settingsPanel:Show() end end)
@@ -594,7 +653,7 @@ end
 
 local function Help()
     Print(T("help_1")); Print(T("help_2")); Print(T("help_3")); Print(T("help_4")); Print(T("help_5"))
-    Print(T("settings_help")); Print(T("settings_help2"))
+    Print(T("settings_help")); Print(T("settings_help2")); Print(T("jam_help"))
 end
 local function ToggleValue(field,arg,default)
     if arg=="on" then SpotifyNowDB.style[field]=true elseif arg=="off" then SpotifyNowDB.style[field]=false else SpotifyNowDB.style[field]=not SpotifyNowDB.style[field] end
@@ -628,13 +687,16 @@ SlashCmdList["SPOTIFYNOW"]=function(msg)
     elseif CMD[cmd] then SendCommand(CMD[cmd])
     elseif cmd=="ui" then SpotifyNowDB.ui=not SpotifyNowDB.ui; if SpotifyNowDB.ui then ui:Show() else ui:Hide(); settingsPanel:Hide() end
     elseif cmd=="settings" then if settingsPanel:IsShown() then settingsPanel:Hide() else RefreshSettingsPanel(); settingsPanel:Show() end
+    elseif cmd=="jam" then SendJamInvite(rest)
+    elseif cmd=="render" then SendCommand("relaystatus"); Print(T("settings_render_starting"))
+    elseif cmd=="transport" then local a=strlower(rest); if a=="render" or a=="chat" then SpotifyNowDB.transport=a; SendCommand("relaymode",a); RefreshSettingsPanel() else Print(T("settings_transport_hint")) end
     elseif cmd=="lyrics" then local a=strlower(rest); if a=="on" then SetLyrics(true,true) elseif a=="off" then SetLyrics(false,true) else SetLyrics(not SpotifyNowDB.lyrics,true) end
     elseif cmd=="channel" then local a=strlower(rest); if CHANNELS[a] then SpotifyNowDB.channel=a; Print(T("lyrics_channel_prefix")..a) else Print(T("channels_available")) end
     elseif cmd=="help" then Help()
     elseif not SettingsCommand(cmd,rest) then Help() end
 end
 
-local lastLyricsSequence=nil; local statePollElapsed=0; local importWarningShown=false
+local lastLyricsSequence=nil; local lastRelayLineSequence=nil; local lastRelayStatusSequence=nil; local lastJamInviteSequence=nil; local lastJamResponseSequence=nil; local statePollElapsed=0; local importWarningShown=false
 local lastStateSequence=nil
 local loginUpdateNoticePending=false; local loginUpdateNoticeShown=false
 local availableUpdateVersion=nil; local availableUpdateUrl=nil
@@ -695,6 +757,31 @@ local function PollBridgeState()
     local lyricSequence=tonumber(f[11]); if lyricSequence then if lastLyricsSequence==nil then lastLyricsSequence=lyricSequence elseif lyricSequence~=lastLyricsSequence then lastLyricsSequence=lyricSequence; local lyric=DecodeField(f[12]); if lyric~="" then SingLine(lyric) end end end
     SpotifyNowDB.artwork=DecodeField(f[13]); SpotifyNowDB.album=DecodeField(f[14]); SpotifyNowDB.shuffle=f[15]=="1"
     SpotifyNowDB.repeatMode=DecodeField(f[17] or "")
+    if f[18]=="render" or f[18]=="chat" then SpotifyNowDB.transport=f[18] end
+    local relaySender=DecodeField(f[21]); local relayEvents=DecodeField(f[34] or "")
+    if relayEvents~="" then
+        local initializingRelayEvents=lastRelayLineSequence==nil
+        local firstEventSep=strfind(relayEvents,"!",1,true); local firstEventSeq=firstEventSep and tonumber(strsub(relayEvents,1,firstEventSep-1))
+        if lastRelayLineSequence and firstEventSeq and firstEventSeq<lastRelayLineSequence then lastRelayLineSequence=nil; initializingRelayEvents=true end
+        local eventStart=1
+        while eventStart<=string.len(relayEvents) do
+            local eventEnd=strfind(relayEvents,"^",eventStart,true); local record=eventEnd and strsub(relayEvents,eventStart,eventEnd-1) or strsub(relayEvents,eventStart)
+            local firstSep=strfind(record,"!",1,true); local secondSep=firstSep and strfind(record,"!",firstSep+1,true)
+            if firstSep and secondSep then
+                local eventSeq=tonumber(strsub(record,1,firstSep-1)); local sender=DecodeField(strsub(record,firstSep+1,secondSep-1)); local relayLine=DecodeField(strsub(record,secondSep+1))
+                if eventSeq and (lastRelayLineSequence==nil or eventSeq>lastRelayLineSequence) then
+                    if not initializingRelayEvents and relayLine~="" and SpotifyNowDB.transport=="render" and SpotifyNowDB.lyrics then if sender~="" then Print("["..sender.."] "..relayLine) else Print(T("lyrics_local_prefix")..relayLine) end end
+                    lastRelayLineSequence=eventSeq
+                end
+            end
+            if not eventEnd then break end; eventStart=eventEnd+1
+        end
+    else
+        local relayLineSeq=tonumber(f[19]); if relayLineSeq and relayLineSeq~=lastRelayLineSequence then lastRelayLineSequence=relayLineSeq; local relayLine=DecodeField(f[20]); if relayLine~="" and SpotifyNowDB.transport=="render" and SpotifyNowDB.lyrics then if relaySender~="" then Print("["..relaySender.."] "..relayLine) else Print(T("lyrics_local_prefix")..relayLine) end end end
+    end
+    local relayStatusSeq=tonumber(f[22]); if relayStatusSeq and relayStatusSeq~=lastRelayStatusSequence then lastRelayStatusSequence=relayStatusSeq; local relayStatus=DecodeField(f[23]); if relayStatus=="connected" then Print(T("settings_render_connected")) elseif relayStatus=="unavailable" then Print(T("settings_render_unavailable")) elseif relayStatus=="invalid_url" then Print(T("settings_render_invalid")) elseif relayStatus=="unconfigured" then Print(T("settings_render_unconfigured")) elseif relayStatus=="missing_dependency" then Print(T("settings_render_dependency")) end end
+    local jamInviteSeq=tonumber(f[24]); if jamInviteSeq and jamInviteSeq~=lastJamInviteSequence then lastJamInviteSequence=jamInviteSeq; ShowJamInvite(DecodeField(f[25]),DecodeField(f[26]),DecodeField(f[27]),DecodeField(f[28])) end
+    local jamResponseSeq=tonumber(f[29]); if jamResponseSeq and jamResponseSeq~=lastJamResponseSequence then lastJamResponseSequence=jamResponseSeq; local target=DecodeField(f[32]); if strlower(target)==strlower(currentPlayerName) then local response=DecodeField(f[33]); local responder=DecodeField(f[31]); if response=="accepted" then Print(string.format(T("jam_accepted"),responder)) elseif response=="declined" then Print(string.format(T("jam_declined"),responder)) end end end
     if SpotifyNowDB.repeatMode=="" then SpotifyNowDB.repeatMode=(f[16]=="1") and "context" or "off" end
     RefreshUI()
 end
@@ -721,11 +808,11 @@ end)
 local function ValidTheme(v) return THEMES[v] and v or "obsidian" end
 local frame=CreateFrame("Frame"); frame:RegisterEvent("ADDON_LOADED"); frame:RegisterEvent("PLAYER_LOGIN")
 frame:SetScript("OnEvent",function()
-    if event=="PLAYER_LOGIN" then loginUpdateNoticePending=true; loginUpdateNoticeShown=false; ShowLoginUpdateNotice(); if SendCommand then SendCommand("checkupdates") end; return end
+    if event=="PLAYER_LOGIN" then currentPlayerName=UnitName("player") or ""; if SendCommand then SendCommand("session",EncodeValue(currentPlayerName).."|"..(SpotifyNowDB and SpotifyNowDB.transport or "chat")) end; loginUpdateNoticePending=true; loginUpdateNoticeShown=false; ShowLoginUpdateNotice(); if SendCommand then SendCommand("checkupdates") end; return end
     if event~="ADDON_LOADED" or arg1~="SpotiWoW-Dev" then return end
     if not SpotifyNowDB then SpotifyNowDB={} end
     if SpotifyNowDB.artist==nil then SpotifyNowDB.artist="" end; if SpotifyNowDB.title==nil then SpotifyNowDB.title="" end
-    if SpotifyNowDB.channel==nil then SpotifyNowDB.channel="say" end; if SpotifyNowDB.ui==nil then SpotifyNowDB.ui=true end
+    if SpotifyNowDB.channel==nil then SpotifyNowDB.channel="say" end; if SpotifyNowDB.transport==nil then SpotifyNowDB.transport="chat" end; if SpotifyNowDB.ui==nil then SpotifyNowDB.ui=true end
     if not SpotifyNowDB.style then SpotifyNowDB.style={} end
     if SpotifyNowDB.style.theme==nil then SpotifyNowDB.style.theme="obsidian" end
     if SpotifyNowDB.style.glow==nil then SpotifyNowDB.style.glow=true end

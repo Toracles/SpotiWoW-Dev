@@ -21,7 +21,7 @@ import pystray
 from PIL import Image
 
 APP_NAME = "SpotiWoW-Dev"
-APP_VERSION = "1.6.21"
+APP_VERSION = "1.7.0"
 LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_URL = "https://github.com/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"
@@ -538,8 +538,22 @@ class SpotiWoWController:
         except Exception:
             pass
 
+    def _ensure_spotify_running(self):
+        try:
+            for proc in psutil.process_iter(["name"]):
+                if (proc.info.get("name") or "").casefold() == "spotify.exe":
+                    return
+        except Exception:
+            pass
+        try:
+            os.startfile("spotify:")
+            self.notify(tr("Spotify est en cours de démarrage.", "Starting Spotify."))
+        except Exception as exc:
+            self.notify(f"{tr('Impossible d’ouvrir Spotify automatiquement :', 'Could not open Spotify automatically:')} {exc}")
+
     def _launch_session(self):
         self._log_dir.mkdir(parents=True, exist_ok=True)
+        self._ensure_spotify_running()
         original = game_process_snapshot()
         initial_pids = {row["pid"] for row in original}
         self._write_session_log(

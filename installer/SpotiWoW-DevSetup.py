@@ -31,12 +31,15 @@ PORTABLE_ASSET_NAMES = {"fr": "SpotiWoW-Dev-Portable-FR.zip", "us": "SpotiWoW-De
 VANILLAFIXES_NAME = "VanillaFixes.exe"
 GAME_EXECUTABLE_NAMES = (VANILLAFIXES_NAME, "WoW.exe")
 LAUNCHER_NAME = "SpotiWoW-Dev.exe"
+UNINSTALLER_NAME = "SpotiWoW-Dev-Uninstall.exe"
 ADDON_NAME = "SpotiWoW-Dev"
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
 
 DEFAULT_CONFIG = {
     "client_id": "",
     "game_dir": "",
+    "render_url": "",
+    "reauthorize_on_next_start": False,
     "language": "fr",
     "lyrics_offset_ms": 0,
     "lyrics_providers": ["Musixmatch", "Lrclib", "NetEase", "Megalobiz"],
@@ -54,6 +57,10 @@ TEXT = {
         "game_dir_label": "Dossier du client WoW (VanillaFixes.exe ou WoW.exe)",
         "browse": "Parcourir…",
         "detect_fail": "Détection automatique non concluante : sélectionne le dossier contenant VanillaFixes.exe ou WoW.exe.",
+        "render_url_label": "URL du relais Render (facultatif)",
+        "render_url_help": "À renseigner après avoir créé le service Render. Laisse vide pour garder le mode Chat actuel.",
+        "replace_token_prompt": "Une autorisation Spotify est déjà enregistrée sur ce PC. Veux-tu changer de compte Spotify ? Oui ouvrira Spotify pour une nouvelle autorisation au prochain démarrage. Non conserve la session actuelle.",
+        "invalid_render_url": "L’URL Render doit commencer par https://, ou rester vide.",
         "client_id_label": "Spotify Client ID",
         "client_id_help": "Le Client ID enregistré sur ce PC est prérempli. Le texte est masqué à l’écran, mais ce Client ID n’est pas un mot de passe. Spotify demandera toujours l’autorisation au premier lancement du compagnon. N’entre pas de Client Secret.",
         "show_client_id": "Afficher",
@@ -92,6 +99,10 @@ TEXT = {
         "game_dir_label": "WoW client folder (VanillaFixes.exe or WoW.exe)",
         "browse": "Browse…",
         "detect_fail": "Automatic detection did not find the client. Select the folder containing VanillaFixes.exe or WoW.exe.",
+        "render_url_label": "Render relay URL (optional)",
+        "render_url_help": "Enter this after creating your Render service. Leave blank to keep using Chat mode.",
+        "replace_token_prompt": "A Spotify authorization is already saved on this PC. Change Spotify accounts? Yes will open Spotify authorization next time the companion starts. No keeps the current session.",
+        "invalid_render_url": "The Render URL must start with https://, or be left blank.",
         "client_id_label": "Spotify Client ID",
         "client_id_help": "The Client ID saved on this PC is prefilled. It is hidden on screen, but a Client ID is not a password. Spotify will still ask you to authorize the companion on first launch. Do not enter a Client Secret.",
         "show_client_id": "Show",
@@ -253,6 +264,21 @@ def saved_client_id(game_dir: Path | None = None) -> str:
                 return client_id
     return ""
 
+def saved_config_value(key: str, game_dir: Path | None = None) -> str:
+    local_app_data = Path(os.environ.get("LOCALAPPDATA") or (Path.home() / "AppData" / "Local"))
+    candidates = [local_app_data / "Programs" / APP_NAME / "config.json"]
+    if game_dir is not None:
+        candidates.append(game_dir / "companion" / "config.json")
+    for path in candidates:
+        try:
+            value = json.loads(path.read_text(encoding="utf-8")).get(key, "")
+        except (OSError, ValueError, AttributeError):
+            continue
+        if isinstance(value, str):
+            return value.strip()
+    return ""
+
+
 def safe_extract(bundle: Path, destination: Path) -> None:
     root = destination.resolve()
     with zipfile.ZipFile(bundle, "r") as archive:
@@ -316,8 +342,8 @@ class SetupApp:
             os_locale = ""
         self.language_code = "fr" if os_locale.casefold().startswith("fr") else "us"
         self.root.title(t(self.language_code, "window_title"))
-        self.root.geometry("700x535")
-        self.root.minsize(660, 500)
+        self.root.geometry("700x615")
+        self.root.minsize(660, 580)
         self.root.resizable(True, True)
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         icon = resource_dir() / "SpotiWoW-Dev-Ruby.ico"
@@ -332,6 +358,7 @@ class SetupApp:
         if detected:
             self.game_dir_var.set(str(detected[0]))
         self.client_id_var = tk.StringVar(value=saved_client_id(detected[0] if detected else None))
+        self.render_url_var = tk.StringVar(value=saved_config_value("render_url", detected[0] if detected else None))
         self.client_id_visible = False
         self.language_var = tk.StringVar(value="Français (FR)" if self.language_code == "fr" else "English (US)")
         self.create_shortcut_var = tk.BooleanVar(value=True)
@@ -375,7 +402,13 @@ class SetupApp:
         self.client_id_visibility_button = ttk.Button(client_id_row, command=self.toggle_client_id_visibility)
         self.client_id_visibility_button.pack(side="left", padx=(8, 0))
         self.client_id_help = ttk.Label(main, wraplength=650, justify="left")
-        self.client_id_help.pack(anchor="w", pady=(0, 12))
+        self.client_id_help.pack(anchor="w", pady=(0, 10))
+        self.render_url_label = ttk.Label(main, font=("Segoe UI", 10, "bold"))
+        self.render_url_label.pack(anchor="w")
+        self.render_url_entry = ttk.Entry(main, textvariable=self.render_url_var)
+        self.render_url_entry.pack(fill="x", pady=(5, 3))
+        self.render_url_help = ttk.Label(main, wraplength=650, justify="left")
+        self.render_url_help.pack(anchor="w", pady=(0, 10))
 
         self.shortcut_check = ttk.Checkbutton(main, variable=self.create_shortcut_var)
         self.shortcut_check.pack(anchor="w", pady=(0, 10))
@@ -405,6 +438,8 @@ class SetupApp:
         self.detect_label.configure(text=t(lang, "detect_fail"))
         self.client_id_label.configure(text=t(lang, "client_id_label"))
         self.client_id_help.configure(text=t(lang, "client_id_help"))
+        self.render_url_label.configure(text=t(lang, "render_url_label"))
+        self.render_url_help.configure(text=t(lang, "render_url_help"))
         self.client_id_visibility_button.configure(
             text=t(lang, "hide_client_id" if self.client_id_visible else "show_client_id")
         )
@@ -438,6 +473,10 @@ class SetupApp:
             return
         game_dir = Path(self.game_dir_var.get().strip().strip('"')).expanduser()
         client_id = self.client_id_var.get().strip()
+        render_url = self.render_url_var.get().strip().rstrip("/")
+        if render_url and not re.fullmatch(r"https://[A-Za-z0-9.-]+(?::\d+)?", render_url):
+            messagebox.showerror(APP_NAME, self._t("invalid_render_url"), parent=self.root)
+            return
         if not is_game_dir(game_dir):
             messagebox.showerror(APP_NAME, self._t("invalid_game", path=game_dir), parent=self.root)
             return
@@ -453,6 +492,9 @@ class SetupApp:
             )
             return
 
+        app_root = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))) / "Programs" / APP_NAME
+        has_saved_session = (app_root / "spotify_session.dat").is_file() or (app_root / "tokens.json").is_file() or (game_dir / "companion" / "tokens.json").is_file()
+        replace_token = bool(has_saved_session and messagebox.askyesno(APP_NAME, self._t("replace_token_prompt"), parent=self.root))
         create_shortcuts = bool(self.create_shortcut_var.get())
         self.busy = True
         self.install_button.configure(state="disabled")
@@ -462,11 +504,11 @@ class SetupApp:
         language = self.language_code
         threading.Thread(
             target=self._install_worker,
-            args=(repo, game_dir.resolve(), client_id, create_shortcuts, language),
+            args=(repo, game_dir.resolve(), client_id, render_url, replace_token, create_shortcuts, language),
             daemon=True,
         ).start()
 
-    def _install_worker(self, repo: str, game_dir: Path, client_id: str, create_shortcuts: bool, language: str) -> None:
+    def _install_worker(self, repo: str, game_dir: Path, client_id: str, render_url: str, replace_token: bool, create_shortcuts: bool, language: str) -> None:
         asset_name = PORTABLE_ASSET_NAMES[language]
         language_label = "Français (FR)" if language == "fr" else "English (US)"
         try:
@@ -534,7 +576,8 @@ class SetupApp:
                 launcher_src = companion_src / LAUNCHER_NAME
                 bridge_src = companion_src / "spotify_bridge.py"
                 icon_src = companion_src / "SpotiWoW-Dev-Ruby.ico"
-                if not addon_src.is_dir() or not launcher_src.is_file() or not bridge_src.is_file() or not icon_src.is_file():
+                uninstall_src = companion_src / UNINSTALLER_NAME
+                if not addon_src.is_dir() or not launcher_src.is_file() or not bridge_src.is_file() or not icon_src.is_file() or not uninstall_src.is_file():
                     raise RuntimeError(t(language, "incomplete"))
 
                 self.set_status(t(language, "status_addon"))
@@ -544,8 +587,15 @@ class SetupApp:
                     shutil.rmtree(addon_dest)
                 shutil.copytree(addon_src, addon_dest)
                 data_src = extracted / "Data" / "Interface" / "AddOns" / ADDON_NAME
+                data_dest = game_dir / "Data" / "Interface" / "AddOns" / ADDON_NAME
+                for artwork_dir in (addon_dest, data_dest):
+                    if artwork_dir.is_dir():
+                        for old_art in artwork_dir.glob("artwork_slot_*.tga*"):
+                            try:
+                                old_art.unlink()
+                            except OSError:
+                                pass
                 if data_src.is_dir():
-                    data_dest = game_dir / "Data" / "Interface" / "AddOns" / ADDON_NAME
                     data_dest.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copytree(data_src, data_dest, dirs_exist_ok=True)
                 enable_custom_assets(game_dir)
@@ -578,14 +628,20 @@ class SetupApp:
                         pass
                 # Preserve an older install's OAuth session/cache if the user is migrating
                 # from <game_dir>\companion to the per-user application directory.
-                for preserved in ("tokens.json", "lyrics_cache.json"):
-                    target = app_root / preserved
-                    source = legacy_companion / preserved
-                    if not target.exists() and source.is_file():
-                        shutil.copy2(source, target)
+                legacy_token = legacy_companion / "tokens.json"
+                target_token = app_root / "tokens.json"
+                if not target_token.exists() and legacy_token.is_file():
+                    shutil.copy2(legacy_token, target_token)
+                for cache_file in (app_root / "lyrics_cache.json", legacy_companion / "lyrics_cache.json"):
+                    try:
+                        cache_file.unlink()
+                    except FileNotFoundError:
+                        pass
                 config["client_id"] = client_id
                 config["language"] = language
                 config["game_dir"] = str(game_dir).replace("\\", "/")
+                config["render_url"] = render_url
+                config["reauthorize_on_next_start"] = replace_token
                 config_path.write_text(json.dumps(config, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
                 if create_shortcuts:
@@ -606,6 +662,11 @@ class SetupApp:
                         except Exception:
                             # An unavailable/locked shortcut location shouldn't undo a valid install.
                             pass
+                    uninstall_shortcut = start_menu.parent / f"{APP_NAME} Uninstall.lnk"
+                    try:
+                        create_shortcut(uninstall_shortcut, app_root / UNINSTALLER_NAME, app_root, app_root / "SpotiWoW-Dev-Ruby.ico")
+                    except Exception:
+                        pass
 
                 done_message = t(language, "done_message", addon=addon_dest, companion=app_root, language=language_label)
                 self.root.after(0, lambda: self._finished(True, done_message, language))

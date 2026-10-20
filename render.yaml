@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: spotiwow-lyrics-relay
+    runtime: python
+    plan: free
+    buildCommand: pip install -r relay/requirements.txt
+    startCommand: python relay/server.py
+    healthCheckPath: /health
+    autoDeploy: true

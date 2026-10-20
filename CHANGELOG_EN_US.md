@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.7.0
+- Adds optional Render lyrics transport while preserving the existing Chat mode; the modes never fall back to each other.
+- The relay forwards lyrics in memory without saving them and briefly buffers fast lines so the add-on does not miss them between polls.
+- Adds targeted Spotify Jam invites to the current party/raid with in-game accept/decline and Spotify link opening.
+- Protects Spotify tokens with Windows DPAPI and lets setup preserve or replace the session during an update.
+- Clears lyric caches and cover art on every install and adds a full uninstaller.
+- The launcher opens Spotify when it is not already running.
+
 ## v1.6.21
 - The Setup filename now includes the release version so Windows Explorer does not reuse an old icon cached for the stable filename. The bridge and launcher also recognize versioned setup assets.
 
