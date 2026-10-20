@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.7.0 — Français
+# SpotiWoW-Dev v1.7.1 — Français
 
 > **Version de développement** — cette version est en cours d’évolution et peut contenir des changements expérimentaux. Elle est destinée aux tests ; des bugs ou changements de comportement restent possibles.
 
@@ -36,7 +36,7 @@ L’installateur ne demande jamais de Client Secret et ne télécharge pas Turtl
 - Réglages sauvegardés dans WoW. `/spn help` affiche les thèmes et options ; `/spn expand` bascule le mode agrandi.
 - Transport de paroles Chat inchangé ou relais Render facultatif, avec statut local et sans repli automatique.
 - Lanceur de zone de notification Windows sans console CMD visible. Le lanceur démarre aussi Spotify s’il est fermé.
-- Arrêt automatique du bridge lorsque le processus du client `WoW.exe` se ferme, y compris avec Alt+F4.
+- Le bridge reste actif jusqu’à la fermeture de tous les clients WoW. Relance le raccourci pour ouvrir un autre client sans démarrer un deuxième bridge.
 - Vérification des releases GitHub publiées sans clé API : le bridge ne signale une version que lorsque son installateur est disponible. L’addon affiche le rappel dans le chat local à chaque connexion ; le menu de notification Windows indique la version et ouvre directement sa page de release.
 
 Le transport Chat conserve le fonctionnement actuel et n’utilise pas Render. Le transport Render, activé dans les réglages, relaie les paroles en temps réel et les affiche localement ; il ne bascule jamais automatiquement vers un canal WoW. Tous les joueurs Render doivent utiliser la même URL de service renseignée dans l’installateur. Sur Render gratuit, le service s’endort après 15 minutes sans trafic. Son prochain démarrage à froid prend environ une minute ; les paroles ajoutent ensuite le temps de réseau. Le relais transmet les paroles en mémoire sans les enregistrer sur disque.

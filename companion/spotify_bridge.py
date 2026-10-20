@@ -71,7 +71,7 @@ IMPORT_DIR = GAME_DIR / "imports"
 STATE_FILE = IMPORT_DIR / "SpotifyNowState.txt"
 COMMAND_FILE = IMPORT_DIR / "SpotifyNowCommand.txt"
 UPDATE_FILE = IMPORT_DIR / "SpotifyNowUpdate.txt"
-APP_VERSION = "1.7.0"
+APP_VERSION = "1.7.1"
 LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"
 UPDATE_CHECK_INTERVAL_SECONDS = 30 * 60
@@ -572,6 +572,7 @@ def publish_state() -> None:
             encode_field(S.get("jam_response_id", "")), encode_field(S.get("jam_responder", "")),
             encode_field(S.get("jam_response_target", "")), encode_field(S.get("jam_response", "")),
             "^".join(f"{seq}!{urllib.parse.quote(sender, safe='')}!{urllib.parse.quote(text, safe='')}" for seq, sender, text in S.get("relay_events", [])),
+            str(int(S.get("relay_probe_seq", 0))), encode_field(S.get("relay_probe_status", "")),
         ]
         payload = "|".join(fields) + "\n"
         try:
@@ -693,6 +694,7 @@ S = {
     "album": "", "shuffle": False, "repeat": False, "repeat_mode": "off",
     "relay_mode": False, "relay_line": "", "relay_line_seq": 0, "relay_sender": "", "relay_events": [],
     "relay_status": "disabled", "relay_status_seq": 0,
+    "relay_probe_status": "", "relay_probe_seq": 0,
     "player_name": "", "jam_invite_seq": 0, "jam_invite_id": "", "jam_inviter": "",
     "jam_recipients": "", "jam_url": "", "jam_response_seq": 0,
     "jam_response_id": "", "jam_responder": "", "jam_response_target": "", "jam_response": "",
@@ -843,6 +845,11 @@ def relay_status_changed(status):
     S["relay_status_seq"] += 1
     publish_state()
 
+def relay_probe_status_changed(status):
+    S["relay_probe_status"] = status
+    S["relay_probe_seq"] += 1
+    publish_state()
+
 def relay_line_received(text, sender=""):
     S["relay_line"] = str(text)[:350]
     S["relay_sender"] = str(sender)[:48]
@@ -978,6 +985,22 @@ def handle_command(cmd, argument=""):
 
 
 active_relay_client = None
+relay_probe_lock = threading.Lock()
+
+def run_relay_probe():
+    try:
+        if LyricsRelay is None:
+            relay_probe_status_changed("missing_dependency")
+            return
+        client = LyricsRelay(
+            lambda: CFG.get("render_url", ""), lambda: False, lambda: None,
+            relay_line_received, lambda status: None, stop_requested,
+        )
+        relay_probe_status_changed(client.ping(timeout=90))
+    except Exception:
+        relay_probe_status_changed("unavailable")
+    finally:
+        relay_probe_lock.release()
 
 def _relay_event(event):
     client = active_relay_client
@@ -1029,11 +1052,8 @@ def handle_bridge_command(cmd, argument):
         S["relay_mode"] = argument.strip().lower() == "render"
         relay_status_changed("starting" if S["relay_mode"] else "disabled")
     elif cmd == "relaystatus":
-        if LyricsRelay is None:
-            relay_status_changed("missing_dependency")
-        else:
-            client = LyricsRelay(lambda: CFG.get("render_url", ""), lambda: False, lambda: None, relay_line_received, relay_status_changed, stop_requested)
-            threading.Thread(target=client.ping, name="render-health-check", daemon=True).start()
+        if relay_probe_lock.acquire(False):
+            threading.Thread(target=run_relay_probe, name="render-health-check", daemon=True).start()
     elif cmd == "lyrics":
         set_lyrics(argument == "1")
     elif cmd == "checkupdates":

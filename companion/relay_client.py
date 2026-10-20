@@ -35,38 +35,21 @@ class LyricsRelay:
             self.on_status(value)
 
     def ping(self, timeout=90):
+        """Wake/check the HTTP service without touching the live relay status or opening a client socket."""
         url = (self.get_url() or "").strip().rstrip("/")
         if not url:
-            self._status("unconfigured")
-            return False
+            return "unconfigured"
         parsed = urllib.parse.urlparse(url)
         scheme = {"https":"https", "http":"http"}.get(parsed.scheme)
         if not scheme or not parsed.netloc:
-            self._status("invalid_url")
-            return False
+            return "invalid_url"
         health = urllib.parse.urlunparse((scheme, parsed.netloc, "/health", "", "", ""))
         try:
             with urllib.request.urlopen(health, timeout=timeout) as response:
                 data = json.loads(response.read(4096).decode("utf-8"))
-            ok = response.status == 200 and data.get("status") == "ok"
+            return "reachable" if response.status == 200 and data.get("status") == "ok" else "unavailable"
         except Exception:
-            ok = False
-        if ok and websocket is not None:
-            ws_scheme = "wss" if parsed.scheme == "https" else "ws"
-            ws_url = urllib.parse.urlunparse((ws_scheme, parsed.netloc, "/", "", "", ""))
-            probe = None
-            try:
-                probe = websocket.create_connection(ws_url, timeout=8, enable_multithread=True, http_proxy_host=None)
-            except Exception:
-                ok = False
-            finally:
-                if probe is not None:
-                    try:
-                        probe.close()
-                    except Exception:
-                        pass
-        self._status("connected" if ok else "unavailable")
-        return ok
+            return "unavailable"
 
     def send_event(self, message):
         self.outgoing.put(message)
@@ -97,7 +80,7 @@ class LyricsRelay:
             try:
                 self._status("starting")
                 # HTTP health request wakes a free Render instance before websocket connect.
-                if not self.ping(timeout=90):
+                if self.ping(timeout=90) != "reachable":
                     raise OSError("relay health endpoint is not ready")
                 sock = websocket.create_connection(ws_url, timeout=0.05, enable_multithread=True, http_proxy_host=None)
                 last_name = ""

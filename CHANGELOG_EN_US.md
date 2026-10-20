@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.7.1
+- Uses the requested English theme names, Silver Dawn and Fang Set, in the in-game theme selector.
+- Fixes Render status races: `/spn render` now wakes/checks the HTTP service without opening a temporary WebSocket or overwriting the persistent connection status.
+- Relaunching the companion shortcut opens another WoW client while reusing the existing Spotify bridge; the bridge exits after the last client closes.
+
 ## v1.7.0
 - Adds optional Render lyrics transport while preserving the existing Chat mode; the modes never fall back to each other.
 - The relay forwards lyrics in memory without saving them and briefly buffers fast lines so the add-on does not miss them between polls.

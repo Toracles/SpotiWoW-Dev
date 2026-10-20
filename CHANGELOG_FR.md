@@ -1,5 +1,10 @@
 # Journal des modifications
 
+## v1.7.1
+- Corrige les noms de thèmes dans le paquet anglais : Silver Dawn et Fang Set.
+- Corrige les faux statuts Render : `/spn render` réveille/vérifie le service HTTP sans ouvrir de WebSocket temporaire ni écraser l’état de la connexion persistante.
+- Relancer le raccourci ouvre un autre client WoW tout en réutilisant le bridge Spotify existant ; le bridge se ferme après le dernier client.
+
 ## v1.7.0
 - Ajoute le transport paroles facultatif Render, avec maintien du mode Chat existant et sans bascule automatique entre les modes.
 - Le relais transmet les paroles en mémoire sans les enregistrer et tamponne brièvement les lignes rapides pour ne pas les perdre entre deux lectures de l’addon.

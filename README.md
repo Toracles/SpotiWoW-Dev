@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.7.0
+# SpotiWoW-Dev v1.7.1
 
 <p align="center">
   <img src="companion/SpotiWoW-Dev.png" alt="SpotiWoW-Dev icon" width="180">
@@ -17,7 +17,7 @@ SpotiWoW-Dev brings Spotify playback into Turtle WoW through a lightweight Windo
 - **A customizable settings panel:** choose the layout and theme, show or hide controls and track details, and adjust the progress bar and click-to-seek behavior. Settings persist in-game.
 - **Spotify controls:** play/pause, previous/next, seeking, volume, shuffle, and repeat. Shuffle and repeat states remain visibly indicated on the player.
 - **Lyrics:** synchronized multi-source lookup and local cache, with the existing WoW Chat transport or optional Render relay. Render messages stay local and never fall back to WoW channels; /spn render checks the relay.
-- **Windows companion:** connects to Spotify, supplies live track metadata and artwork to the add-on, and stops the bridge when the game client exits. It also starts Spotify if it is not already running.
+- **Windows companion:** connects to Spotify, supplies live track metadata and artwork to the add-on, starts Spotify when needed, and keeps the bridge running until every WoW client is closed. Relaunch the shortcut to open another WoW client without duplicating Spotify or the bridge.
 - **Update reminders:** checks published releases without a GitHub API key, shows a local chat notice at every login when the setup is available, and provides a direct release link in the notification-area menu.
 - **Setup and privacy:** setup can preserve or replace Spotify authorization, protects the token with Windows DPAPI, clears lyric/art caches, and installs a full uninstaller.
 - **French and US English editions:** localized add-on messages and language-specific add-on packages are available in Releases.
@@ -42,7 +42,7 @@ For requirements, Spotify setup, and installation steps, see the guides above. `
 - **Panneau de réglages complet :** choix du thème et du format, affichage des commandes et des infos du morceau, apparence de la barre et recherche dans le morceau au clic. Les réglages sont conservés en jeu.
 - **Commandes Spotify :** lecture/pause, morceau précédent/suivant, recherche, volume, aléatoire et répétition. Les états aléatoire et répétition restent visibles sur le lecteur.
 - **Paroles :** recherche synchronisée et cache local, avec le transport Chat actuel ou le relais Render facultatif. Les messages Render restent locaux et ne basculent jamais vers un canal WoW ; /spn render vérifie le relais.
-- **Compagnon Windows :** connexion à Spotify, transmission des métadonnées et des jaquettes en direct à l’addon, puis arrêt du bridge à la fermeture du client. Il démarre également Spotify s’il n’est pas déjà ouvert.
+- **Compagnon Windows :** connexion à Spotify, transmission en direct des métadonnées et jaquettes, et démarrage de Spotify si nécessaire. Le bridge reste actif tant qu’un client WoW est ouvert. Relance le raccourci pour ouvrir un autre client sans dupliquer Spotify ni le bridge.
 - **Rappels de mise à jour :** vérification des releases publiées sans clé API GitHub, message local dans le chat à chaque connexion si le setup est disponible, et lien direct depuis le menu de notification.
 - **Installation et confidentialité :** l’installeur conserve ou remplace l’autorisation Spotify, protège le token avec DPAPI Windows, efface les caches paroles/jaquettes et installe un désinstalleur complet.
 - **Éditions française et anglaise US :** messages traduits et paquets addon par langue disponibles dans les Releases.

@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.7.0 — US English
+# SpotiWoW-Dev v1.7.1 — US English
 
 > **Development version** — this version is still evolving and may include experimental changes. It is intended for testing; bugs or behavior changes may occur.
 
@@ -36,7 +36,7 @@ The installer never asks for a Client Secret and does not download Turtle WoW, V
 - Settings persist in WoW. `/spn help` lists themes and options; `/spn expand` toggles the expanded player.
 - Existing Chat lyrics transport or optional Render relay, with local status and no automatic fallback.
 - Windows notification-area launcher with no visible CMD console. The launcher also starts Spotify if it is closed.
-- Automatically stops the bridge when the actual `WoW.exe` client process exits, including Alt+F4.
+- Keeps the bridge running until all WoW clients are closed; relaunch the shortcut to open another client without starting another Spotify bridge.
 - Checks published GitHub releases without an API key and announces an update only when its installer is available. The add-on shows a local chat reminder at every login; the Windows notification-area menu displays the version and opens its release page.
 
 Chat transport keeps the current behavior and never uses Render. Render transport, enabled in settings, relays lyrics in real time and displays them in each player’s local chat; it never falls back to a WoW channel. All Render users must use the same service URL in setup. On Render Free, the service spins down after 15 minutes without traffic. Its next cold start takes about one minute; lyric delivery then adds network latency. The relay forwards lyrics in memory and does not save them to disk.

@@ -4,7 +4,7 @@
 local CHANNELS = { say="SAY", yell="YELL", party="PARTY", guild="GUILD", raid="RAID", emote="EMOTE" }
 local CMD = { prev="prev", pause="pause", next="next", back="back", fwd="fwd", voldown="voldown", volup="volup", shuffle="shuffle", ["repeat"]="repeat" }
 local Locale = SPOTIWOW_DEV_L or {}
-local ADDON_VERSION = "1.7.0"
+local ADDON_VERSION = "1.7.1"
 local UI_FALLBACK = {
     settings_title="Player Settings", settings_theme="Theme", settings_layout="Layout", settings_expand="Expand player", settings_compact="Use compact player",
     layout_compact="Compact", layout_square="Square", layout_expanded="Expanded", layout_help="Click options to cycle or toggle them. /spn help for commands.",
@@ -19,7 +19,7 @@ local UI_FALLBACK = {
     settings_metadata_hint="Show or hide the track title, artist, album, and cover artwork.",
     settings_progress_hint="Show or hide the playback progress bar.",
     settings_progress_style_hint="Cycle the progress bar through Line, Thick, and Segmented styles.",
-    settings_lyrics_hint="Toggle synced lyrics using the selected transport.", settings_transport="Lyrics transport", settings_transport_hint="Chat keeps using the selected WoW chat channel. Render sends lyrics to the optional SpotiWoW relay and displays them only as local system messages. It never falls back to chat.", settings_render_status="Render relay", settings_render_unconfigured="Render URL is not configured in setup.", settings_render_starting="Render relay is starting…", settings_render_connected="Render relay connected.", settings_render_unavailable="Render relay is unavailable.", settings_render_invalid="Render URL is invalid.", settings_render_dependency="Relay support is missing. Reinstall the companion.", settings_render_disabled="Render relay disabled.", lyrics_local_prefix="[Lyrics] ",
+    settings_lyrics_hint="Toggle synced lyrics using the selected transport.", settings_transport="Lyrics transport", settings_transport_hint="Chat keeps using the selected WoW chat channel. Render sends lyrics to the optional SpotiWoW relay and displays them only as local system messages. It never falls back to chat.", settings_render_status="Render relay", settings_render_unconfigured="Render URL is not configured in setup.", settings_render_starting="Render relay is starting…", settings_render_connected="Render relay connected.", settings_render_unavailable="Render relay is unavailable.", settings_render_probe_ok="Render service responded to the ping.", settings_render_probe_unavailable="Render service did not respond to the ping.", settings_render_invalid="Render URL is invalid.", settings_render_dependency="Relay support is missing. Reinstall the companion.", settings_render_disabled="Render relay disabled.", lyrics_local_prefix="[Lyrics] ",
     settings_channel_hint="Choose where synced lyrics are sent. Use a private channel if you do not want others to see them.",
     settings_hex_apply_hint="Apply the HEX color entered to the left. Use six hexadecimal digits, with an optional #.", setting_on="ON", setting_off="OFF", color_default="Theme default",
     theme_obsidian="Obsidian", theme_azerite="Azerite", theme_fel="Fel", theme_bloodmoon="Bloodmoon", theme_sunwell="Sunwell", theme_frostmourne="Silver Dawn", theme_dreamweaver="Fang Set",
@@ -696,7 +696,7 @@ SlashCmdList["SPOTIFYNOW"]=function(msg)
     elseif not SettingsCommand(cmd,rest) then Help() end
 end
 
-local lastLyricsSequence=nil; local lastRelayLineSequence=nil; local lastRelayStatusSequence=nil; local lastJamInviteSequence=nil; local lastJamResponseSequence=nil; local statePollElapsed=0; local importWarningShown=false
+local lastLyricsSequence=nil; local lastRelayLineSequence=nil; local lastRelayStatusSequence=nil; local lastRelayProbeSequence=nil; local lastJamInviteSequence=nil; local lastJamResponseSequence=nil; local statePollElapsed=0; local importWarningShown=false
 local lastStateSequence=nil
 local loginUpdateNoticePending=false; local loginUpdateNoticeShown=false
 local availableUpdateVersion=nil; local availableUpdateUrl=nil
@@ -780,6 +780,7 @@ local function PollBridgeState()
         local relayLineSeq=tonumber(f[19]); if relayLineSeq and relayLineSeq~=lastRelayLineSequence then lastRelayLineSequence=relayLineSeq; local relayLine=DecodeField(f[20]); if relayLine~="" and SpotifyNowDB.transport=="render" and SpotifyNowDB.lyrics then if relaySender~="" then Print("["..relaySender.."] "..relayLine) else Print(T("lyrics_local_prefix")..relayLine) end end end
     end
     local relayStatusSeq=tonumber(f[22]); if relayStatusSeq and relayStatusSeq~=lastRelayStatusSequence then lastRelayStatusSequence=relayStatusSeq; local relayStatus=DecodeField(f[23]); if relayStatus=="connected" then Print(T("settings_render_connected")) elseif relayStatus=="unavailable" then Print(T("settings_render_unavailable")) elseif relayStatus=="invalid_url" then Print(T("settings_render_invalid")) elseif relayStatus=="unconfigured" then Print(T("settings_render_unconfigured")) elseif relayStatus=="missing_dependency" then Print(T("settings_render_dependency")) end end
+    local relayProbeSeq=tonumber(f[35]); if relayProbeSeq and relayProbeSeq~=lastRelayProbeSequence then lastRelayProbeSequence=relayProbeSeq; local probeStatus=DecodeField(f[36]); if probeStatus=="reachable" then Print(T("settings_render_probe_ok")) elseif probeStatus=="unavailable" then Print(T("settings_render_probe_unavailable")) elseif probeStatus=="invalid_url" then Print(T("settings_render_invalid")) elseif probeStatus=="unconfigured" then Print(T("settings_render_unconfigured")) elseif probeStatus=="missing_dependency" then Print(T("settings_render_dependency")) end end
     local jamInviteSeq=tonumber(f[24]); if jamInviteSeq and jamInviteSeq~=lastJamInviteSequence then lastJamInviteSequence=jamInviteSeq; ShowJamInvite(DecodeField(f[25]),DecodeField(f[26]),DecodeField(f[27]),DecodeField(f[28])) end
     local jamResponseSeq=tonumber(f[29]); if jamResponseSeq and jamResponseSeq~=lastJamResponseSequence then lastJamResponseSequence=jamResponseSeq; local target=DecodeField(f[32]); if strlower(target)==strlower(currentPlayerName) then local response=DecodeField(f[33]); local responder=DecodeField(f[31]); if response=="accepted" then Print(string.format(T("jam_accepted"),responder)) elseif response=="declined" then Print(string.format(T("jam_declined"),responder)) end end end
     if SpotifyNowDB.repeatMode=="" then SpotifyNowDB.repeatMode=(f[16]=="1") and "context" or "off" end

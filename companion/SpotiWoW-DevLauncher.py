@@ -21,7 +21,7 @@ import pystray
 from PIL import Image
 
 APP_NAME = "SpotiWoW-Dev"
-APP_VERSION = "1.7.0"
+APP_VERSION = "1.7.1"
 LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_URL = "https://github.com/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"
@@ -150,6 +150,17 @@ def validate_installation() -> tuple[Path, Path]:
             f"{tr('Aligne ces deux chemins avant de démarrer.', 'Make these paths match before starting.')}"
         )
     return (vanilla_fixes if vanilla_fixes.is_file() else wow_client), GAME_DIR
+
+
+def launch_game_only() -> int:
+    """A second launcher invocation starts another game client, without a second bridge or tray app."""
+    executable, game_dir = validate_installation()
+    try:
+        subprocess.Popen([str(executable)], cwd=str(game_dir), close_fds=True)
+    except Exception as exc:
+        message_box(f"{tr('Impossible de lancer un autre client WoW :', 'Could not launch another WoW client:')} {exc}")
+        return 1
+    return 0
 
 
 def process_is_inside_game(exe: str | None) -> bool:
@@ -561,7 +572,6 @@ class SpotiWoWController:
         )
         self.start_bridge()
 
-        tracked_pids = set(initial_pids)
         if original:
             self.notify(tr("Client WoW déjà ouvert : cette session sera surveillée sans lancer une deuxième instance.", "WoW client is already open. Monitoring the current session without launching another instance."))
             candidates = original
@@ -594,16 +604,15 @@ class SpotiWoWController:
                     self.notify(tr("Aucun client détecté après 3 minutes. Le bridge reste contrôlable depuis le menu de notification.", "No game client detected after 3 minutes. The bridge can still be controlled from the notification-area menu."))
                 return
 
-        tracked_pids.update(row["pid"] for row in candidates)
         first = candidates[0]
-        self.notify(tr(f"Client détecté : {first['name']}. Ferme le jeu ou utilise Alt+F4 pour arrêter automatiquement le bridge.", f"Game client detected: {first['name']}. Close the game or press Alt+F4 to stop the bridge automatically."))
+        self.notify(tr(f"Client détecté : {first['name']}. Ferme tous les clients WoW ou utilise Alt+F4 pour arrêter automatiquement le bridge.", f"Game client detected: {first['name']}. Close all WoW clients or press Alt+F4 to stop the bridge automatically."))
 
         while not self._quitting.is_set():
             current = {row["pid"] for row in game_process_snapshot()}
-            if not (tracked_pids & current):
-                # The user asked for the tray app itself to exit after WoW closes,
+            if not current:
+                # The user asked for the tray app itself to exit after all WoW clients close,
                 # not merely for the bridge child process to stop.
-                self._write_session_log("Tracked WoW client closed; stopping bridge and quitting tray app.")
+                self._write_session_log("All WoW clients closed; stopping bridge and quitting tray app.")
                 self.stop_bridge(show_notification=False)
                 self.notify(tr(
                     "Client fermé : bridge arrêté. Fermeture de SpotiWoW-Dev.",
@@ -654,8 +663,13 @@ def main() -> int:
 
     mutex, first_instance = acquire_single_instance_mutex()
     if not first_instance:
-        message_box(f"{APP_NAME} {tr('est déjà en cours d’exécution. Cherche son icône dans la zone de notification.', 'is already running. Look for its icon in the notification area.')}", flags=MB_OK | MB_ICONINFORMATION)
-        return 0
+        # Re-launching the installed launcher is the user's shortcut for opening
+        # another WoW client. Keep Spotify and the tray bridge single-instance.
+        try:
+            return launch_game_only()
+        except Exception as exc:
+            message_box(str(exc))
+            return 1
 
     try:
         validate_installation()
