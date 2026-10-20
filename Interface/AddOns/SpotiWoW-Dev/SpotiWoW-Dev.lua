@@ -36,7 +36,6 @@ local UI_FALLBACK = {
 local function T(key) return Locale[key] or UI_FALLBACK[key] or key end
 local playing, volume, SendCommand = false, -1, nil
 local ApplyStyle, RefreshUI, HexColor
-local lastLyricsModeSeen = nil
 local function Print(msg) DEFAULT_CHAT_FRAME:AddMessage("|cff1ed760[Spotify]|r " .. msg) end
 local function NowPlaying()
     if SpotifyNowDB and SpotifyNowDB.title and SpotifyNowDB.title ~= "" then return (SpotifyNowDB.artist or "") .. " - " .. SpotifyNowDB.title end
@@ -49,6 +48,56 @@ local function Announce(channelKey)
 end
 local currentPlayerName=""
 local function EncodeValue(value) return string.gsub(value or "","([^%w%-_%.~])",function(c) return string.format("%%%02X",string.byte(c)) end) end
+local function ClientRoomId()
+    local members={}
+    local realm=(GetRealmName and GetRealmName()) or ""
+    local function addUnit(unit)
+        local name=UnitName(unit)
+        if name and name~="" then members[table.getn(members)+1]=string.lower(name.."-"..realm) end
+    end
+    addUnit("player")
+    local raidCount=GetNumRaidMembers and GetNumRaidMembers() or 0
+    if raidCount>0 and GetRaidRosterInfo then
+        members={}
+        for i=1,raidCount do local name=GetRaidRosterInfo(i); if name and name~="" then members[table.getn(members)+1]=string.lower(name.."-"..realm) end end
+    else
+        local partyCount=GetNumPartyMembers and GetNumPartyMembers() or 0
+        for i=1,partyCount do addUnit("party"..i) end
+    end
+    table.sort(members)
+    local value=table.concat(members,"|")
+    local hash1,hash2=5381,2166136261
+    for i=1,string.len(value) do local byte=string.byte(value,i); hash1=(hash1*33+byte)%4294967291; hash2=(hash2*33+byte+97)%4294967279 end
+    return string.format("%08x%08x",hash1,hash2)
+end
+local clientProfileSequence=0
+local function ClientIdentity()
+    local name=currentPlayerName~="" and currentPlayerName or (UnitName("player") or "")
+    local realm=(GetRealmName and GetRealmName()) or ""
+    local key=name.."-"..realm
+    if SpotifyNowDB and name~="" then
+        if not SpotifyNowDB.clientIds then SpotifyNowDB.clientIds={} end
+        local id=SpotifyNowDB.clientIds[key]
+        if not id then
+            local value=key.."-"..tostring(GetTime()).."-"..tostring(math.random(1,2147483646))
+            local hash=5381
+            for i=1,string.len(value) do hash=(hash*33+string.byte(value,i))%4294967291 end
+            local digits="0123456789abcdef"; id=""
+            for i=1,8 do local n=math.mod(hash,16); id=string.sub(digits,n+1,n+1)..id; hash=math.floor(hash/16) end
+            SpotifyNowDB.clientIds[key]=id
+        end
+        return id,name,realm
+    end
+    return "00000000",name,realm
+end
+local function PublishClientProfile()
+    if type(ExportFile)~="function" or not SpotifyNowDB then return end
+    local id,name,realm=ClientIdentity()
+    if name=="" then return end
+    clientProfileSequence=clientProfileSequence+1
+    local payload="SPNCLIENT1|"..id.."|"..clientProfileSequence.."|"..EncodeValue(name).."|"..EncodeValue(realm).."|"..(SpotifyNowDB.transport or "chat").."|"..(SpotifyNowDB.lyrics and "1" or "0").."|"..(SpotifyNowDB.channel or "say").."|"..ClientRoomId()
+    pcall(ExportFile,"SpotiWoWClient-"..id,payload)
+end
 local function SingLine(text)
     if not SpotifyNowDB.lyrics or text == "" or SpotifyNowDB.transport=="render" then return end
     local chan = CHANNELS[SpotifyNowDB.channel] or "SAY"
@@ -57,10 +106,10 @@ end
 local function PrintLyricsMode(on)
     if on then Print(T("lyrics_mode") .. "|cff00ff00ON|r") else Print(T("lyrics_mode") .. "|cffff0000OFF|r") end
 end
-local function SetLyrics(on, syncToCompanion)
-    on = not not on; local changed = SpotifyNowDB.lyrics ~= on; SpotifyNowDB.lyrics = on; lastLyricsModeSeen = on
+local function SetLyrics(on)
+    on = not not on; local changed = SpotifyNowDB.lyrics ~= on; SpotifyNowDB.lyrics = on
     if changed then PrintLyricsMode(on) end
-    if syncToCompanion then SendCommand("lyrics", on and "1" or "0") end
+    PublishClientProfile()
 end
 
 local ui = CreateFrame("Frame", "SpotifyNowFrame", UIParent)
@@ -245,16 +294,16 @@ SetSettingsTooltip(channelButton,"settings_channel_hint")
 SetSettingsTooltip(transportButton,"settings_transport_hint")
 transportButton:SetScript("OnClick",function()
     if SpotifyNowDB.transport=="render" then SpotifyNowDB.transport="chat" else SpotifyNowDB.transport="render" end
-    SendCommand("relaymode",SpotifyNowDB.transport)
+    PublishClientProfile()
     if SpotifyNowDB.transport=="render" then Print(T("settings_render_starting")) else Print(T("settings_render_disabled")) end
     RefreshSettingsPanel()
 end)
-lyricsButton:SetScript("OnClick",function() SetLyrics(not SpotifyNowDB.lyrics,true); RefreshSettingsPanel() end)
+lyricsButton:SetScript("OnClick",function() SetLyrics(not SpotifyNowDB.lyrics); RefreshSettingsPanel() end)
 local CHANNEL_ORDER={"say","yell","party","guild","raid","emote"}
 channelButton:SetScript("OnClick",function()
     local index=1
     for i,name in ipairs(CHANNEL_ORDER) do if name==SpotifyNowDB.channel then index=(i%table.getn(CHANNEL_ORDER))+1; break end end
-    SpotifyNowDB.channel=CHANNEL_ORDER[index]; RefreshSettingsPanel()
+    SpotifyNowDB.channel=CHANNEL_ORDER[index]; PublishClientProfile(); RefreshSettingsPanel()
 end)
 local function ColorLabel(value)
     if value and value~="" then return "#"..value end
@@ -388,7 +437,7 @@ controls.volup=MakeButton("VolUp","V+",T("volume_up"),27,203,CMD.volup)
 controls.shuffle=MakeButton("Shuffle","S",T("shuffle"),44,238,"shuffle")
 controls["repeat"]=MakeButton("Repeat","R",T("repeat"),44,286,"repeat")
 controls.lyrics=MakeButton("Lyrics","L+",T("lyrics_toggle"),30,0,"lyrics")
-controls.lyrics:SetScript("OnClick",function() SetLyrics(not SpotifyNowDB.lyrics,true); RefreshUI() end)
+controls.lyrics:SetScript("OnClick",function() SetLyrics(not SpotifyNowDB.lyrics); RefreshUI() end)
 
 local progressBg=ui:CreateTexture(nil,"BORDER"); progressBg:SetTexture(0.08,0.09,0.11,1); progressBg:SetPoint("BOTTOMLEFT",ui,"BOTTOMLEFT",8,3); progressBg:SetWidth(234); progressBg:SetHeight(2)
 local topAccent=ui:CreateTexture(nil,"ARTWORK"); topAccent:SetTexture("Interface\\Buttons\\WHITE8X8"); topAccent:SetPoint("TOPLEFT",ui,"TOPLEFT",18,-2); topAccent:SetHeight(1)
@@ -689,14 +738,14 @@ SlashCmdList["SPOTIFYNOW"]=function(msg)
     elseif cmd=="settings" then if settingsPanel:IsShown() then settingsPanel:Hide() else RefreshSettingsPanel(); settingsPanel:Show() end
     elseif cmd=="jam" then SendJamInvite(rest)
     elseif cmd=="render" then SendCommand("relaystatus"); Print(T("settings_render_starting"))
-    elseif cmd=="transport" then local a=strlower(rest); if a=="render" or a=="chat" then SpotifyNowDB.transport=a; SendCommand("relaymode",a); RefreshSettingsPanel() else Print(T("settings_transport_hint")) end
-    elseif cmd=="lyrics" then local a=strlower(rest); if a=="on" then SetLyrics(true,true) elseif a=="off" then SetLyrics(false,true) else SetLyrics(not SpotifyNowDB.lyrics,true) end
-    elseif cmd=="channel" then local a=strlower(rest); if CHANNELS[a] then SpotifyNowDB.channel=a; Print(T("lyrics_channel_prefix")..a) else Print(T("channels_available")) end
+    elseif cmd=="transport" then local a=strlower(rest); if a=="render" or a=="chat" then SpotifyNowDB.transport=a; PublishClientProfile(); RefreshSettingsPanel() else Print(T("settings_transport_hint")) end
+    elseif cmd=="lyrics" then local a=strlower(rest); if a=="on" then SetLyrics(true) elseif a=="off" then SetLyrics(false) else SetLyrics(not SpotifyNowDB.lyrics) end
+    elseif cmd=="channel" then local a=strlower(rest); if CHANNELS[a] then SpotifyNowDB.channel=a; PublishClientProfile(); Print(T("lyrics_channel_prefix")..a) else Print(T("channels_available")) end
     elseif cmd=="help" then Help()
     elseif not SettingsCommand(cmd,rest) then Help() end
 end
 
-local lastLyricsSequence=nil; local lastRelayLineSequence=nil; local lastRelayStatusSequence=nil; local lastRelayProbeSequence=nil; local lastJamInviteSequence=nil; local lastJamResponseSequence=nil; local statePollElapsed=0; local importWarningShown=false
+local lastLyricsSequence=nil; local lastLyricsToggleSequence=nil; local lastRelayLineSequence=nil; local lastRelayStatusSequence=nil; local lastRelayProbeSequence=nil; local lastJamInviteSequence=nil; local lastJamResponseSequence=nil; local statePollElapsed=0; local importWarningShown=false
 local lastStateSequence=nil
 local loginUpdateNoticePending=false; local loginUpdateNoticeShown=false
 local availableUpdateVersion=nil; local availableUpdateUrl=nil
@@ -744,22 +793,98 @@ local function PollBridgeUpdate()
     availableUpdateVersion=version; availableUpdateUrl=url
     ShowLoginUpdateNotice()
 end
+local renderBubbles={}
+local function FindSpeakerUnit(speakerName)
+    if not speakerName or speakerName=="" then return nil end
+    local wanted=string.lower(speakerName)
+    local function matches(unit)
+        local name=UnitName(unit)
+        return name and string.lower(name)==wanted
+    end
+    if matches("player") then return "player" end
+    local raidCount=GetNumRaidMembers and GetNumRaidMembers() or 0
+    if raidCount>0 then
+        for i=1,raidCount do local unit="raid"..i; if matches(unit) then return unit end end
+    else
+        local partyCount=GetNumPartyMembers and GetNumPartyMembers() or 0
+        for i=1,partyCount do local unit="party"..i; if matches(unit) then return unit end end
+    end
+    return nil
+end
+local function ShowRenderLyricBubble(speakerName, speakerRealm, text)
+    local unit=FindSpeakerUnit(speakerName)
+    local plate=unit and type(UnitNameplate)=="function" and UnitNameplate(unit) or nil
+    if not plate or not plate.IsShown or not plate:IsShown() then
+        Print("["..(speakerName~="" and speakerName or T("lyrics_local_prefix")).."] "..text)
+        return false
+    end
+    local key=string.lower(speakerName or "player")
+    local bubble=renderBubbles[key]
+    if not bubble then
+        bubble=CreateFrame("Frame",nil,plate)
+        bubble:SetFrameStrata("TOOLTIP"); bubble:EnableMouse(false)
+        bubble:SetBackdrop({bgFile="Interface\\Tooltips\\UI-Tooltip-Background",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=16,edgeSize=12,insets={left=3,right=3,top=3,bottom=3}})
+        bubble:SetBackdropColor(0.06,0.05,0.04,0.92)
+        bubble.label=bubble:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
+        bubble.label:SetPoint("TOPLEFT",bubble,"TOPLEFT",8,-6); bubble.label:SetPoint("TOPRIGHT",bubble,"TOPRIGHT",-8,-6)
+        bubble.label:SetJustifyH("CENTER"); bubble.label:SetTextColor(1,0.9,0.65)
+        bubble:SetScript("OnUpdate",function()
+            this.remaining=(this.remaining or 0)-(arg1 or 0)
+            if this.remaining<=0 then this:Hide() end
+        end)
+        renderBubbles[key]=bubble
+    end
+    bubble:SetParent(plate); bubble:ClearAllPoints(); bubble:SetPoint("BOTTOM",plate,"TOP",0,8)
+    bubble:SetWidth(250); bubble.label:SetText(text)
+    local height=math.max(24,(bubble.label:GetStringHeight() or 14)+12)
+    bubble:SetHeight(height); bubble.remaining=4.0; bubble:Show()
+    return true
+end
 local function PollBridgeState()
     if not SpotifyNowDB then return end
     if type(ImportFile)~="function" then if not importWarningShown then Print(T("import_missing")); importWarningShown=true end; return end
     local ok,payload=pcall(ImportFile,"SpotifyNowState"); if not ok or type(payload)~="string" or payload=="" then return end
     payload=gsub(payload,"[\r\n]+$",""); local f=SplitState(payload); if not f or f[1]~="SPN1" then return end
     local seq=tonumber(f[2]); if not seq or seq==lastStateSequence then return end; lastStateSequence=seq
+    local toggleEvents=f[38] or ""
+    if toggleEvents~="" then
+        local ownClientId=ClientIdentity()
+        local initializing=lastLyricsToggleSequence==nil
+        local eventStart=1
+        while eventStart<=string.len(toggleEvents) do
+            local eventEnd=strfind(toggleEvents,"^",eventStart,true); local record=eventEnd and strsub(toggleEvents,eventStart,eventEnd-1) or strsub(toggleEvents,eventStart)
+            local firstSep=strfind(record,"!",1,true); local secondSep=firstSep and strfind(record,"!",firstSep+1,true)
+            if firstSep and secondSep then
+                local toggleSeq=tonumber(strsub(record,1,firstSep-1)); local targetId=strsub(record,firstSep+1,secondSep-1); local targetOn=strsub(record,secondSep+1)=="1"
+                if toggleSeq then
+                    if not initializing and (lastLyricsToggleSequence==nil or toggleSeq>lastLyricsToggleSequence) and targetId==ownClientId then SetLyrics(targetOn,false) end
+                    if lastLyricsToggleSequence==nil or toggleSeq>lastLyricsToggleSequence then lastLyricsToggleSequence=toggleSeq end
+                end
+            end
+            if not eventEnd then break end; eventStart=eventEnd+1
+        end
+    elseif lastLyricsToggleSequence==nil then
+        lastLyricsToggleSequence=0
+    end
     SpotifyNowDB.artist=DecodeField(f[4]); SpotifyNowDB.title=DecodeField(f[5]); currentPosMs=tonumber(f[6]) or 0; durationMs=tonumber(f[7]) or 0; stateTick=GetTime()
     playing=f[8]=="1"; volume=tonumber(f[9]) or -1
-    local lyrics=f[10]=="1"; if lastLyricsModeSeen==nil then lastLyricsModeSeen=lyrics elseif lyrics~=lastLyricsModeSeen then lastLyricsModeSeen=lyrics; PrintLyricsMode(lyrics) end
-    SpotifyNowDB.lyrics=lyrics
     local lyricSequence=tonumber(f[11]); if lyricSequence then if lastLyricsSequence==nil then lastLyricsSequence=lyricSequence elseif lyricSequence~=lastLyricsSequence then lastLyricsSequence=lyricSequence; local lyric=DecodeField(f[12]); if lyric~="" then SingLine(lyric) end end end
     SpotifyNowDB.artwork=DecodeField(f[13]); SpotifyNowDB.album=DecodeField(f[14]); SpotifyNowDB.shuffle=f[15]=="1"
     SpotifyNowDB.repeatMode=DecodeField(f[17] or "")
-    if f[18]=="render" or f[18]=="chat" then SpotifyNowDB.transport=f[18] end
-    local relaySender=DecodeField(f[21]); local relayEvents=DecodeField(f[34] or "")
-    if relayEvents~="" then
+    local relaySender=DecodeField(f[21]); local relayEvents=f[34] or ""
+    local identifiedRelayEvents=f[37] or ""
+    if identifiedRelayEvents~="" then
+        local identityBySequence={}
+        local identityStart=1
+        while identityStart<=string.len(identifiedRelayEvents) do
+            local identityEnd=strfind(identifiedRelayEvents,"^",identityStart,true); local record=identityEnd and strsub(identifiedRelayEvents,identityStart,identityEnd-1) or strsub(identifiedRelayEvents,identityStart)
+            local firstSep=strfind(record,"!",1,true); local secondSep=firstSep and strfind(record,"!",firstSep+1,true)
+            if firstSep and secondSep then
+                local identitySeq=tonumber(strsub(record,1,firstSep-1))
+                if identitySeq then identityBySequence[identitySeq]={id=strsub(record,firstSep+1,secondSep-1),realm=DecodeField(strsub(record,secondSep+1))} end
+            end
+            if not identityEnd then break end; identityStart=identityEnd+1
+        end
         local initializingRelayEvents=lastRelayLineSequence==nil
         local firstEventSep=strfind(relayEvents,"!",1,true); local firstEventSeq=firstEventSep and tonumber(strsub(relayEvents,1,firstEventSep-1))
         if lastRelayLineSequence and firstEventSeq and firstEventSeq<lastRelayLineSequence then lastRelayLineSequence=nil; initializingRelayEvents=true end
@@ -769,15 +894,39 @@ local function PollBridgeState()
             local firstSep=strfind(record,"!",1,true); local secondSep=firstSep and strfind(record,"!",firstSep+1,true)
             if firstSep and secondSep then
                 local eventSeq=tonumber(strsub(record,1,firstSep-1)); local sender=DecodeField(strsub(record,firstSep+1,secondSep-1)); local relayLine=DecodeField(strsub(record,secondSep+1))
+                local identity=eventSeq and identityBySequence[eventSeq]
                 if eventSeq and (lastRelayLineSequence==nil or eventSeq>lastRelayLineSequence) then
-                    if not initializingRelayEvents and relayLine~="" and SpotifyNowDB.transport=="render" and SpotifyNowDB.lyrics then if sender~="" then Print("["..sender.."] "..relayLine) else Print(T("lyrics_local_prefix")..relayLine) end end
+                    if not initializingRelayEvents and relayLine~="" and SpotifyNowDB.transport=="render" and SpotifyNowDB.lyrics then
+                        if sender~="" then
+                            local displayName=identity and identity.realm~="" and sender.."@"..identity.realm or sender
+                            ShowRenderLyricBubble(sender,identity and identity.realm or "",relayLine)
+                        else ShowRenderLyricBubble("", "", relayLine) end
+                    end
+                    lastRelayLineSequence=eventSeq
+                end
+            end
+            if not eventEnd then break end; eventStart=eventEnd+1
+        end
+    elseif relayEvents~="" then
+        local legacyRelayEvents=DecodeField(relayEvents)
+        local initializingRelayEvents=lastRelayLineSequence==nil
+        local firstEventSep=strfind(legacyRelayEvents,"!",1,true); local firstEventSeq=firstEventSep and tonumber(strsub(legacyRelayEvents,1,firstEventSep-1))
+        if lastRelayLineSequence and firstEventSeq and firstEventSeq<lastRelayLineSequence then lastRelayLineSequence=nil; initializingRelayEvents=true end
+        local eventStart=1
+        while eventStart<=string.len(legacyRelayEvents) do
+            local eventEnd=strfind(legacyRelayEvents,"^",eventStart,true); local record=eventEnd and strsub(legacyRelayEvents,eventStart,eventEnd-1) or strsub(legacyRelayEvents,eventStart)
+            local firstSep=strfind(record,"!",1,true); local secondSep=firstSep and strfind(record,"!",firstSep+1,true)
+            if firstSep and secondSep then
+                local eventSeq=tonumber(strsub(record,1,firstSep-1)); local sender=DecodeField(strsub(record,firstSep+1,secondSep-1)); local relayLine=DecodeField(strsub(record,secondSep+1))
+                if eventSeq and (lastRelayLineSequence==nil or eventSeq>lastRelayLineSequence) then
+                    if not initializingRelayEvents and relayLine~="" and SpotifyNowDB.transport=="render" and SpotifyNowDB.lyrics then ShowRenderLyricBubble(sender,"",relayLine) end
                     lastRelayLineSequence=eventSeq
                 end
             end
             if not eventEnd then break end; eventStart=eventEnd+1
         end
     else
-        local relayLineSeq=tonumber(f[19]); if relayLineSeq and relayLineSeq~=lastRelayLineSequence then lastRelayLineSequence=relayLineSeq; local relayLine=DecodeField(f[20]); if relayLine~="" and SpotifyNowDB.transport=="render" and SpotifyNowDB.lyrics then if relaySender~="" then Print("["..relaySender.."] "..relayLine) else Print(T("lyrics_local_prefix")..relayLine) end end end
+        local relayLineSeq=tonumber(f[19]); if relayLineSeq and relayLineSeq~=lastRelayLineSequence then lastRelayLineSequence=relayLineSeq; local relayLine=DecodeField(f[20]); if relayLine~="" and SpotifyNowDB.transport=="render" and SpotifyNowDB.lyrics then ShowRenderLyricBubble(relaySender,"",relayLine) end end
     end
     local relayStatusSeq=tonumber(f[22]); if relayStatusSeq and relayStatusSeq~=lastRelayStatusSequence then lastRelayStatusSequence=relayStatusSeq; local relayStatus=DecodeField(f[23]); if relayStatus=="connected" then Print(T("settings_render_connected")) elseif relayStatus=="unavailable" then Print(T("settings_render_unavailable")) elseif relayStatus=="invalid_url" then Print(T("settings_render_invalid")) elseif relayStatus=="unconfigured" then Print(T("settings_render_unconfigured")) elseif relayStatus=="missing_dependency" then Print(T("settings_render_dependency")) end end
     local relayProbeSeq=tonumber(f[35]); if relayProbeSeq and relayProbeSeq~=lastRelayProbeSequence then lastRelayProbeSequence=relayProbeSeq; local probeStatus=DecodeField(f[36]); if probeStatus=="reachable" then Print(T("settings_render_probe_ok")) elseif probeStatus=="unavailable" then Print(T("settings_render_probe_unavailable")) elseif probeStatus=="invalid_url" then Print(T("settings_render_invalid")) elseif probeStatus=="unconfigured" then Print(T("settings_render_unconfigured")) elseif probeStatus=="missing_dependency" then Print(T("settings_render_dependency")) end end
@@ -787,8 +936,10 @@ local function PollBridgeState()
     RefreshUI()
 end
 local progressUiElapsed=0
+local clientProfileElapsed=0
 local poller=CreateFrame("Frame","SpotifyNowStatePoller")
 poller:SetScript("OnUpdate",function() local elapsed=arg1 or 0; statePollElapsed=statePollElapsed+elapsed; if statePollElapsed>=0.25 then statePollElapsed=0; PollBridgeUpdate(); PollBridgeState() end
+    clientProfileElapsed=clientProfileElapsed+elapsed; if clientProfileElapsed>=1.5 then clientProfileElapsed=0; PublishClientProfile() end
     if table.getn(titleChars)>titleVisibleChars then titleElapsed=titleElapsed+elapsed; if titleElapsed>=0.28 then titleElapsed=titleElapsed-0.28; RefreshTitle() end end
     progressUiElapsed=progressUiElapsed+elapsed
     if progressUiElapsed>=0.25 then
@@ -809,11 +960,12 @@ end)
 local function ValidTheme(v) return THEMES[v] and v or "obsidian" end
 local frame=CreateFrame("Frame"); frame:RegisterEvent("ADDON_LOADED"); frame:RegisterEvent("PLAYER_LOGIN")
 frame:SetScript("OnEvent",function()
-    if event=="PLAYER_LOGIN" then currentPlayerName=UnitName("player") or ""; if SendCommand then SendCommand("session",EncodeValue(currentPlayerName).."|"..(SpotifyNowDB and SpotifyNowDB.transport or "chat")) end; loginUpdateNoticePending=true; loginUpdateNoticeShown=false; ShowLoginUpdateNotice(); if SendCommand then SendCommand("checkupdates") end; return end
+    if event=="PLAYER_LOGIN" then currentPlayerName=UnitName("player") or ""; PublishClientProfile(); loginUpdateNoticePending=true; loginUpdateNoticeShown=false; ShowLoginUpdateNotice(); if SendCommand then SendCommand("checkupdates") end; return end
     if event~="ADDON_LOADED" or arg1~="SpotiWoW-Dev" then return end
     if not SpotifyNowDB then SpotifyNowDB={} end
     if SpotifyNowDB.artist==nil then SpotifyNowDB.artist="" end; if SpotifyNowDB.title==nil then SpotifyNowDB.title="" end
     if SpotifyNowDB.channel==nil then SpotifyNowDB.channel="say" end; if SpotifyNowDB.transport==nil then SpotifyNowDB.transport="chat" end; if SpotifyNowDB.ui==nil then SpotifyNowDB.ui=true end
+    if not SpotifyNowDB.clientIds then SpotifyNowDB.clientIds={} end
     if not SpotifyNowDB.style then SpotifyNowDB.style={} end
     if SpotifyNowDB.style.theme==nil then SpotifyNowDB.style.theme="obsidian" end
     if SpotifyNowDB.style.glow==nil then SpotifyNowDB.style.glow=true end

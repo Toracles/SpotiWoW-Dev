@@ -14,7 +14,7 @@ except ImportError:
 
 class LyricsRelay:
     """Ephemeral WebSocket relay client. It stores no lyrics on disk."""
-    def __init__(self, get_url, get_enabled, get_line, on_line, on_status, stop_requested, on_invite=None, on_response=None, get_player_name=None):
+    def __init__(self, get_url, get_enabled, get_line, on_line, on_status, stop_requested, on_invite=None, on_response=None, get_player_name=None, get_player_realm=None, get_player_id=None, get_room_id=None):
         self.get_url = get_url
         self.get_enabled = get_enabled
         self.get_line = get_line
@@ -24,6 +24,9 @@ class LyricsRelay:
         self.on_invite = on_invite or (lambda message: None)
         self.on_response = on_response or (lambda message: None)
         self.get_player_name = get_player_name or (lambda: "")
+        self.get_player_realm = get_player_realm or (lambda: "")
+        self.get_player_id = get_player_id or (lambda: "")
+        self.get_room_id = get_room_id or (lambda: "")
         self.outgoing = queue.Queue()
         self.sender = uuid.uuid4().hex
         self.last_sent = None
@@ -84,16 +87,18 @@ class LyricsRelay:
                 if self.ping(timeout=90) != "reachable":
                     raise OSError("relay health endpoint is not ready")
                 sock = websocket.create_connection(ws_url, timeout=10, enable_multithread=True, http_proxy_host=None)
-                last_name = ""
-                current_name = str(self.get_player_name())[:48]
-                sock.send(json.dumps({"type":"hello", "name":current_name}, ensure_ascii=False))
-                last_name = current_name
+                last_identity = None
+                current_identity = self._identity()
+                current_room = str(self.get_room_id())[:16]
+                sock.send(json.dumps({"type":"hello", "name":current_identity[0], "realm":current_identity[1], "speaker_id":current_identity[2], "room_id":current_room}, ensure_ascii=False))
+                last_identity = current_identity
                 self._status("connected")
                 while not self.stop_requested() and self.get_enabled():
-                    current_name = str(self.get_player_name())[:48]
-                    if current_name != last_name:
-                        sock.send(json.dumps({"type":"hello", "name":current_name}, ensure_ascii=False))
-                        last_name = current_name
+                    current_identity = self._identity()
+                    if current_identity != last_identity:
+                        current_room = str(self.get_room_id())[:16]
+                        sock.send(json.dumps({"type":"hello", "name":current_identity[0], "realm":current_identity[1], "speaker_id":current_identity[2], "room_id":current_room}, ensure_ascii=False))
+                        last_identity = current_identity
                     while True:
                         try:
                             event = self.outgoing.get_nowait()
@@ -105,9 +110,10 @@ class LyricsRelay:
                         seq, text = current
                         if seq != self.last_sent and text:
                             clean_text = str(text)[:350]
-                            sock.send(json.dumps({"type":"lyric", "sender":self.sender, "seq":int(seq), "text":clean_text, "sender_name":str(self.get_player_name())[:48]}, ensure_ascii=False))
+                            identity = self._identity()
+                            sock.send(json.dumps({"type":"lyric", "sender":self.sender, "seq":int(seq), "text":clean_text, "sender_name":identity[0], "sender_realm":identity[1], "speaker_id":identity[2]}, ensure_ascii=False))
                             self.last_sent = seq
-                            self.on_line(clean_text, str(self.get_player_name())[:48])
+                            self.on_line(clean_text, identity[0], identity[1], identity[2])
                     try:
                         raw = sock.recv()
                         message = json.loads(raw)
@@ -115,7 +121,7 @@ class LyricsRelay:
                         if kind == "lyric" and message.get("sender") != self.sender:
                             text = str(message.get("text", ""))[:350]
                             if text:
-                                self.on_line(text, str(message.get("sender_name", ""))[:48])
+                                self.on_line(text, str(message.get("sender_name", ""))[:48], str(message.get("sender_realm", ""))[:48], str(message.get("speaker_id", ""))[:8])
                         elif kind == "jam_invite":
                             self.on_invite(message)
                         elif kind == "jam_response":
@@ -132,3 +138,11 @@ class LyricsRelay:
                     except Exception:
                         pass
         self._status("stopped")
+
+    def _identity(self):
+        return (
+            str(self.get_player_name())[:48],
+            str(self.get_player_realm())[:48],
+            str(self.get_player_id())[:8],
+            str(self.get_room_id())[:16],
+        )

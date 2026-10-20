@@ -70,6 +70,8 @@ GAME_DIR = Path(CFG.get("game_dir", r"C:\Games\Turtle WoW"))
 IMPORT_DIR = GAME_DIR / "imports"
 STATE_FILE = IMPORT_DIR / "SpotifyNowState.txt"
 COMMAND_FILE = IMPORT_DIR / "SpotifyNowCommand.txt"
+CLIENT_PROFILE_PREFIX = "SpotiWoWClient-"
+CLIENT_PROFILE_TTL_SECONDS = 5.0
 UPDATE_FILE = IMPORT_DIR / "SpotifyNowUpdate.txt"
 APP_VERSION = "1.7.2"
 LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
@@ -571,8 +573,16 @@ def publish_state() -> None:
             encode_field(S.get("jam_url", "")), str(int(S.get("jam_response_seq", 0))),
             encode_field(S.get("jam_response_id", "")), encode_field(S.get("jam_responder", "")),
             encode_field(S.get("jam_response_target", "")), encode_field(S.get("jam_response", "")),
-            "^".join(f"{seq}!{urllib.parse.quote(sender, safe='')}!{urllib.parse.quote(text, safe='')}" for seq, sender, text in S.get("relay_events", [])),
+            "^".join(
+                f"{seq}!{urllib.parse.quote(sender, safe='')}!{urllib.parse.quote(text, safe='')}"
+                for seq, _speaker_id, sender, _realm, text in S.get("relay_events", [])
+            ),
             str(int(S.get("relay_probe_seq", 0))), encode_field(S.get("relay_probe_status", "")),
+            "^".join(
+                f"{seq}!{speaker_id}!{urllib.parse.quote(realm, safe='')}"
+                for seq, speaker_id, _sender, realm, _text in S.get("relay_events", [])
+            ),
+            "^".join(f"{seq}!{client_id}!{1 if enabled else 0}" for seq, client_id, enabled in S.get("lyrics_toggle_events", [])),
         ]
         payload = "|".join(fields) + "\n"
         try:
@@ -684,6 +694,40 @@ def parse_command_payload(payload):
     return fields[1], fields[2], fields[3].strip().lower(), fields[4].strip()
 
 
+def parse_client_profile(payload):
+    """Parse an add-on heartbeat carrying settings and identity for one WoW client."""
+    fields = payload.strip().split("|", 8)
+    if len(fields) != 9 or fields[0] != "SPNCLIENT1":
+        return None
+    client_id = fields[1].strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{8}", client_id):
+        return None
+    try:
+        sequence = int(fields[2])
+    except ValueError:
+        return None
+    name = urllib.parse.unquote(fields[3])[:48].strip()
+    realm = urllib.parse.unquote(fields[4])[:48].strip()
+    if not name:
+        return None
+    transport = fields[5].strip().lower()
+    if transport not in {"chat", "render"}:
+        return None
+    room_id = fields[8].strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{16}", room_id):
+        return None
+    return {
+        "id": client_id,
+        "sequence": sequence,
+        "name": name,
+        "realm": realm,
+        "lyrics": fields[6].strip() == "1",
+        "transport": transport,
+        "channel": fields[7].strip().lower(),
+        "room_id": room_id,
+    }
+
+
 # ------------------------------------------------------------------ Etat / threads
 
 S = {
@@ -692,13 +736,93 @@ S = {
     "playing": False, "volume": None, "sent_idx": -1,
     "state_seq": 0, "line_seq": 0, "current_lyric": "", "artwork": "",
     "album": "", "shuffle": False, "repeat": False, "repeat_mode": "off",
-    "relay_mode": False, "relay_line": "", "relay_line_seq": 0, "relay_sender": "", "relay_events": [],
+    "relay_mode": False, "relay_line": "", "relay_line_seq": 0, "relay_sender": "", "relay_realm": "", "relay_speaker_id": "", "relay_events": [],
     "relay_status": "disabled", "relay_status_seq": 0,
     "relay_probe_status": "", "relay_probe_seq": 0,
-    "player_name": "", "jam_invite_seq": 0, "jam_invite_id": "", "jam_inviter": "",
+    "player_name": "", "player_realm": "", "player_id": "", "client_profiles": {}, "client_profile_sequences": {},
+    "legacy_settings": True, "room_id": "", "jam_invite_seq": 0, "jam_invite_id": "", "jam_inviter": "",
     "jam_recipients": "", "jam_url": "", "jam_response_seq": 0,
     "jam_response_id": "", "jam_responder": "", "jam_response_target": "", "jam_response": "",
+    "lyrics_toggle_seq": 0, "lyrics_toggle_events": [],
 }
+
+
+def _active_client_profiles(now=None):
+    now = time.monotonic() if now is None else now
+    return [
+        profile for profile in S["client_profiles"].values()
+        if now - profile.get("last_seen", 0.0) <= CLIENT_PROFILE_TTL_SECONDS
+    ]
+
+
+def _render_lyrics_active():
+    if S.get("legacy_settings", True):
+        return bool(S.get("relay_mode") and S.get("lyrics_on"))
+    return any(
+        profile.get("transport") == "render" and profile.get("lyrics")
+        for profile in _active_client_profiles()
+    )
+
+
+def update_client_profiles(now=None):
+    """Refresh per-client settings; aggregate only the bridge-wide work they need."""
+    now = time.monotonic() if now is None else now
+    profiles = S["client_profiles"]
+    seen_sequences = S["client_profile_sequences"]
+    previous_relay_mode = S["relay_mode"]
+    aggregate_changed = False
+    if IMPORT_DIR.is_dir():
+        for path in IMPORT_DIR.glob(CLIENT_PROFILE_PREFIX + "*.txt"):
+            try:
+                parsed = parse_client_profile(path.read_text(encoding="utf-8"))
+                if parsed is None:
+                    continue
+                previous = profiles.get(parsed["id"])
+                if parsed["sequence"] == seen_sequences.get(parsed["id"]):
+                    continue
+                parsed["last_seen"] = now
+                parsed["first_seen"] = previous.get("first_seen", now) if previous else now
+                profiles[parsed["id"]] = parsed
+                seen_sequences[parsed["id"]] = parsed["sequence"]
+            except (OSError, UnicodeError):
+                continue
+
+    expired = [key for key, profile in profiles.items() if now - profile.get("last_seen", 0.0) > CLIENT_PROFILE_TTL_SECONDS]
+    for key in expired:
+        del profiles[key]
+
+    active = _active_client_profiles(now)
+    if active:
+        active.sort(key=lambda profile: (profile.get("first_seen", now), profile["id"]))
+        S["legacy_settings"] = False
+        lyrics_on = any(profile["lyrics"] for profile in active)
+        relay_on = any(profile["transport"] == "render" for profile in active)
+        speaker = next((p for p in active if p["lyrics"] and p["transport"] == "render"), None)
+        if speaker is None:
+            speaker = next((p for p in active if p["lyrics"]), active[0])
+        new_values = (lyrics_on, relay_on, speaker["name"], speaker["realm"], speaker["id"], speaker["room_id"])
+        old_values = (S["lyrics_on"], S["relay_mode"], S["player_name"], S["player_realm"], S["player_id"], S["room_id"])
+        if new_values != old_values:
+            S["lyrics_on"], S["relay_mode"], S["player_name"], S["player_realm"], S["player_id"], S["room_id"] = new_values
+            aggregate_changed = True
+    elif not S["legacy_settings"]:
+        S["legacy_settings"] = True
+        S["lyrics_on"] = False
+        S["relay_mode"] = False
+        S["player_name"] = ""
+        S["player_realm"] = ""
+        S["player_id"] = ""
+        S["room_id"] = ""
+        S["sent_idx"] = -1
+        aggregate_changed = True
+
+    if aggregate_changed:
+        if S["lyrics_on"]:
+            S["sent_idx"] = -1
+        if S["relay_mode"] != previous_relay_mode:
+            relay_status_changed("starting" if S["relay_mode"] else "disabled")
+        else:
+            publish_state()
 
 
 def download_album_art(track_id, image_url):
@@ -850,12 +974,14 @@ def relay_probe_status_changed(status):
     S["relay_probe_seq"] += 1
     publish_state()
 
-def relay_line_received(text, sender=""):
+def relay_line_received(text, sender="", realm="", speaker_id=""):
     S["relay_line"] = str(text)[:350]
     S["relay_sender"] = str(sender)[:48]
+    S["relay_realm"] = str(realm)[:48]
+    S["relay_speaker_id"] = str(speaker_id)[:8]
     S["relay_line_seq"] += 1
     events = S.setdefault("relay_events", [])
-    events.append((S["relay_line_seq"], S["relay_sender"], S["relay_line"]))
+    events.append((S["relay_line_seq"], S["relay_speaker_id"], S["relay_sender"], S["relay_realm"], S["relay_line"]))
     if len(events) > 32:
         del events[:-32]
     publish_state()
@@ -886,10 +1012,13 @@ def relay_loop():
     client = LyricsRelay(
         get_url=lambda: CFG.get("render_url", ""),
         get_enabled=lambda: bool(S.get("relay_mode")),
-        get_line=lambda: (S.get("line_seq", 0), S.get("current_lyric", "")) if S.get("relay_mode") and S.get("lyrics_on") else None,
+        get_line=lambda: (S.get("line_seq", 0), S.get("current_lyric", "")) if S.get("relay_mode") and _render_lyrics_active() else None,
         on_line=relay_line_received, on_status=relay_status_changed,
         on_invite=relay_invite_received, on_response=relay_response_received,
         get_player_name=lambda: S.get("player_name", ""),
+        get_player_realm=lambda: S.get("player_realm", ""),
+        get_player_id=lambda: S.get("player_id", ""),
+        get_room_id=lambda: S.get("room_id", ""),
         stop_requested=stop_requested,
     )
     global active_relay_client
@@ -908,6 +1037,17 @@ def set_lyrics(on):
 
 
 def toggle_lyrics():
+    active = _active_client_profiles()
+    if not S.get("legacy_settings", True) and active:
+        events = S.setdefault("lyrics_toggle_events", [])
+        for profile in active:
+            profile["lyrics"] = not bool(profile["lyrics"])
+            S["lyrics_toggle_seq"] += 1
+            events.append((S["lyrics_toggle_seq"], profile["id"], profile["lyrics"]))
+        if len(events) > 32:
+            del events[:-32]
+        publish_state()
+        return
     set_lyrics(not S["lyrics_on"])
 
 
@@ -1069,6 +1209,7 @@ def command_loop(initial_payload=""):
     initial = parse_command_payload(initial_payload)
     last_id = (initial[0], initial[1]) if initial else None
     while not stop_requested():
+        update_client_profiles()
         payload = read_command_payload()
         parsed = parse_command_payload(payload) if payload else None
         if parsed:
