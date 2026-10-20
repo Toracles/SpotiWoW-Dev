@@ -4,7 +4,7 @@
 local CHANNELS = { say="SAY", yell="YELL", party="PARTY", guild="GUILD", raid="RAID", emote="EMOTE" }
 local CMD = { prev="prev", pause="pause", next="next", back="back", fwd="fwd", voldown="voldown", volup="volup", shuffle="shuffle", ["repeat"]="repeat" }
 local Locale = SPOTIWOW_DEV_L or {}
-local ADDON_VERSION = "1.7.2"
+local ADDON_VERSION = "1.7.3"
 local UI_FALLBACK = {
     settings_title="Player Settings", settings_theme="Theme", settings_layout="Layout", settings_expand="Expand player", settings_compact="Use compact player",
     layout_compact="Compact", layout_square="Square", layout_expanded="Expanded", layout_help="Click options to cycle or toggle them. /spn help for commands.",
@@ -19,7 +19,7 @@ local UI_FALLBACK = {
     settings_metadata_hint="Show or hide the track title, artist, album, and cover artwork.",
     settings_progress_hint="Show or hide the playback progress bar.",
     settings_progress_style_hint="Cycle the progress bar through Line, Thick, and Segmented styles.",
-    settings_lyrics_hint="Toggle synced lyrics using the selected transport.", settings_transport="Lyrics transport", settings_transport_hint="Chat keeps using the selected WoW chat channel. Render sends lyrics to the optional SpotiWoW relay and displays them only as local system messages. It never falls back to chat.", settings_render_status="Render relay", settings_render_unconfigured="Render URL is not configured in setup.", settings_render_starting="Render relay is starting…", settings_render_connected="Render relay connected.", settings_render_unavailable="Render relay is unavailable.", settings_render_probe_ok="Render service responded to the ping.", settings_render_probe_unavailable="Render service did not respond to the ping.", settings_render_invalid="Render URL is invalid.", settings_render_dependency="Relay support is missing. Reinstall the companion.", settings_render_disabled="Render relay disabled.", lyrics_local_prefix="[Lyrics] ",
+    settings_lyrics_hint="Toggle synced lyrics using the selected transport.", settings_transport="Lyrics transport", settings_transport_hint="Chat keeps using the selected WoW channel. Render shows local bubbles over visible character nameplates; otherwise the line appears in your local chat. Nothing is sent to WoW channels, and it never falls back automatically.", settings_render_status="Render relay", settings_render_unconfigured="Render URL is not configured in setup.", settings_render_starting="Render relay is starting…", settings_render_connected="Render relay connected.", settings_render_unavailable="Render relay is unavailable.", settings_render_probe_ok="Render service responded to the ping.", settings_render_probe_unavailable="Render service did not respond to the ping.", settings_render_invalid="Render URL is invalid.", settings_render_dependency="Relay support is missing. Reinstall the companion.", settings_render_disabled="Render relay disabled.", lyrics_local_prefix="[Lyrics] ",
     settings_channel_hint="Choose where synced lyrics are sent. Use a private channel if you do not want others to see them.",
     settings_hex_apply_hint="Apply the HEX color entered to the left. Use six hexadecimal digits, with an optional #.", setting_on="ON", setting_off="OFF", color_default="Theme default",
     theme_obsidian="Obsidian", theme_azerite="Azerite", theme_fel="Fel", theme_bloodmoon="Bloodmoon", theme_sunwell="Sunwell", theme_frostmourne="Silver Dawn", theme_dreamweaver="Fang Set",
@@ -34,6 +34,17 @@ local UI_FALLBACK = {
     progressstyle_help="Progress styles: line, thick, segmented", spotify_label="SPOTIFY", status_playing="PLAYING", status_paused="PAUSED", lyrics_toggle="Toggle lyrics", update_available="Update available: ", update_download="Download: ",
 }
 local function T(key) return Locale[key] or UI_FALLBACK[key] or key end
+local legacySpotifyNowDB=SpotifyNowDB
+if type(SpotifyNowCharacterDB)~="table" then SpotifyNowCharacterDB={} end
+if not SpotifyNowMigrationDone and type(legacySpotifyNowDB)=="table" then
+    local function CopySavedValue(value)
+        if type(value)~="table" then return value end
+        local copy={}; for key,item in pairs(value) do copy[key]=CopySavedValue(item) end; return copy
+    end
+    for key,value in pairs(legacySpotifyNowDB) do if SpotifyNowCharacterDB[key]==nil then SpotifyNowCharacterDB[key]=CopySavedValue(value) end end
+    SpotifyNowMigrationDone=true
+end
+SpotifyNowDB=SpotifyNowCharacterDB
 local playing, volume, SendCommand = false, -1, nil
 local ApplyStyle, RefreshUI, HexColor
 local function Print(msg) DEFAULT_CHAT_FRAME:AddMessage("|cff1ed760[Spotify]|r " .. msg) end
@@ -48,28 +59,6 @@ local function Announce(channelKey)
 end
 local currentPlayerName=""
 local function EncodeValue(value) return string.gsub(value or "","([^%w%-_%.~])",function(c) return string.format("%%%02X",string.byte(c)) end) end
-local function ClientRoomId()
-    local members={}
-    local realm=(GetRealmName and GetRealmName()) or ""
-    local function addUnit(unit)
-        local name=UnitName(unit)
-        if name and name~="" then members[table.getn(members)+1]=string.lower(name.."-"..realm) end
-    end
-    addUnit("player")
-    local raidCount=GetNumRaidMembers and GetNumRaidMembers() or 0
-    if raidCount>0 and GetRaidRosterInfo then
-        members={}
-        for i=1,raidCount do local name=GetRaidRosterInfo(i); if name and name~="" then members[table.getn(members)+1]=string.lower(name.."-"..realm) end end
-    else
-        local partyCount=GetNumPartyMembers and GetNumPartyMembers() or 0
-        for i=1,partyCount do addUnit("party"..i) end
-    end
-    table.sort(members)
-    local value=table.concat(members,"|")
-    local hash1,hash2=5381,2166136261
-    for i=1,string.len(value) do local byte=string.byte(value,i); hash1=(hash1*33+byte)%4294967291; hash2=(hash2*33+byte+97)%4294967279 end
-    return string.format("%08x%08x",hash1,hash2)
-end
 local clientProfileSequence=0
 local function ClientIdentity()
     local name=currentPlayerName~="" and currentPlayerName or (UnitName("player") or "")
@@ -95,7 +84,7 @@ local function PublishClientProfile()
     local id,name,realm=ClientIdentity()
     if name=="" then return end
     clientProfileSequence=clientProfileSequence+1
-    local payload="SPNCLIENT1|"..id.."|"..clientProfileSequence.."|"..EncodeValue(name).."|"..EncodeValue(realm).."|"..(SpotifyNowDB.transport or "chat").."|"..(SpotifyNowDB.lyrics and "1" or "0").."|"..(SpotifyNowDB.channel or "say").."|"..ClientRoomId()
+    local payload="SPNCLIENT1|"..id.."|"..clientProfileSequence.."|"..EncodeValue(name).."|"..EncodeValue(realm).."|"..(SpotifyNowDB.transport or "chat").."|"..(SpotifyNowDB.lyrics and "1" or "0").."|"..(SpotifyNowDB.channel or "say")
     pcall(ExportFile,"SpotiWoWClient-"..id,payload)
 end
 local function SingLine(text)
@@ -811,11 +800,30 @@ local function FindSpeakerUnit(speakerName)
     end
     return nil
 end
-local function ShowRenderLyricBubble(speakerName, speakerRealm, text)
+local function FindSpeakerPlate(speakerName)
     local unit=FindSpeakerUnit(speakerName)
     local plate=unit and type(UnitNameplate)=="function" and UnitNameplate(unit) or nil
+    if plate then return plate end
+    if not WorldFrame or not WorldFrame.GetChildren then return nil end
+    local ok,children=pcall(function() return {WorldFrame:GetChildren()} end)
+    if not ok or not children then return nil end
+    local wanted=string.lower(speakerName or "")
+    for i=1,table.getn(children) do
+        local frame=children[i]
+        if frame and frame.GetName then
+            local success,guid=pcall(frame.GetName,frame,1)
+            if success and guid and guid~="" then
+                local nameOK,name=pcall(UnitName,guid)
+                if nameOK and name and string.lower(name)==wanted then return frame end
+            end
+        end
+    end
+    return nil
+end
+local function ShowRenderLyricBubble(speakerName, speakerRealm, text)
+    local plate=FindSpeakerPlate(speakerName)
     if not plate or not plate.IsShown or not plate:IsShown() then
-        Print("["..(speakerName~="" and speakerName or T("lyrics_local_prefix")).."] "..text)
+        if speakerName and speakerName~="" then Print("["..speakerName.."] "..text) else Print(T("lyrics_local_prefix")..text) end
         return false
     end
     local key=string.lower(speakerName or "player")
@@ -828,6 +836,7 @@ local function ShowRenderLyricBubble(speakerName, speakerRealm, text)
         bubble.label=bubble:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
         bubble.label:SetPoint("TOPLEFT",bubble,"TOPLEFT",8,-6); bubble.label:SetPoint("TOPRIGHT",bubble,"TOPRIGHT",-8,-6)
         bubble.label:SetJustifyH("CENTER"); bubble.label:SetTextColor(1,0.9,0.65)
+        if bubble.label.SetWordWrap then bubble.label:SetWordWrap(true) end
         bubble:SetScript("OnUpdate",function()
             this.remaining=(this.remaining or 0)-(arg1 or 0)
             if this.remaining<=0 then this:Hide() end
@@ -873,6 +882,12 @@ local function PollBridgeState()
     SpotifyNowDB.repeatMode=DecodeField(f[17] or "")
     local relaySender=DecodeField(f[21]); local relayEvents=f[34] or ""
     local identifiedRelayEvents=f[37] or ""
+    local snapshotBySequence={}; local snapshots=f[39] or ""; local snapshotStart=1
+    while snapshotStart<=string.len(snapshots) do
+        local snapshotEnd=strfind(snapshots,"^",snapshotStart,true); local snapshotSeq=tonumber(snapshotEnd and strsub(snapshots,snapshotStart,snapshotEnd-1) or strsub(snapshots,snapshotStart))
+        if snapshotSeq then snapshotBySequence[snapshotSeq]=true end
+        if not snapshotEnd then break end; snapshotStart=snapshotEnd+1
+    end
     if identifiedRelayEvents~="" then
         local identityBySequence={}
         local identityStart=1
@@ -896,9 +911,8 @@ local function PollBridgeState()
                 local eventSeq=tonumber(strsub(record,1,firstSep-1)); local sender=DecodeField(strsub(record,firstSep+1,secondSep-1)); local relayLine=DecodeField(strsub(record,secondSep+1))
                 local identity=eventSeq and identityBySequence[eventSeq]
                 if eventSeq and (lastRelayLineSequence==nil or eventSeq>lastRelayLineSequence) then
-                    if not initializingRelayEvents and relayLine~="" and SpotifyNowDB.transport=="render" and SpotifyNowDB.lyrics then
+                    if (not initializingRelayEvents or snapshotBySequence[eventSeq]) and relayLine~="" and SpotifyNowDB.transport=="render" and SpotifyNowDB.lyrics then
                         if sender~="" then
-                            local displayName=identity and identity.realm~="" and sender.."@"..identity.realm or sender
                             ShowRenderLyricBubble(sender,identity and identity.realm or "",relayLine)
                         else ShowRenderLyricBubble("", "", relayLine) end
                     end

@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.7.2 — Français
+# SpotiWoW-Dev v1.7.3 — Français
 
 > **Version de développement** — cette version est en cours d’évolution et peut contenir des changements expérimentaux. Elle est destinée aux tests ; des bugs ou changements de comportement restent possibles.
 
@@ -34,12 +34,13 @@ L’installateur ne demande jamais de Client Secret et ne télécharge pas Turtl
 - Le panneau droit agrandi affiche Spotify, l’état de lecture, le volume et les raccourcis Volume/Paroles.
 - Les modes aléatoire, répétition album et répétition morceau restent indiqués dans le lecteur. Obsidian, Azerite, Fel et Bloodmoon gardent chacun leur accent néon.
 - Réglages sauvegardés dans WoW. `/spn help` affiche les thèmes et options ; `/spn expand` bascule le mode agrandi.
-- Transport de paroles Chat inchangé ou relais Render facultatif, avec statut local et sans repli automatique.
+- Transport de paroles Chat inchangé ou relais Render facultatif. Render affiche les lignes dans une bulle locale au-dessus du personnage visible quand sa plaque est disponible ; sinon, la ligne reste visible dans le chat local. Aucun texte n’est envoyé dans les canaux WoW et aucun repli automatique vers Chat n’a lieu.
+- Les réglages de l’addon, dont Lyrics ON/OFF et le transport, sont sauvegardés par personnage afin que plusieurs clients WoW puissent les utiliser séparément avec un seul compagnon.
 - Lanceur de zone de notification Windows sans console CMD visible. Le lanceur démarre aussi Spotify s’il est fermé.
 - Le bridge reste actif jusqu’à la fermeture de tous les clients WoW. Relance le raccourci pour ouvrir un autre client sans démarrer un deuxième bridge.
 - Vérification des releases GitHub publiées sans clé API : le bridge ne signale une version que lorsque son installateur est disponible. L’addon affiche le rappel dans le chat local à chaque connexion ; le menu de notification Windows indique la version et ouvre directement sa page de release.
 
-Le transport Chat conserve le fonctionnement actuel et n’utilise pas Render. Le transport Render, activé dans les réglages, relaie les paroles en temps réel et les affiche localement ; il ne bascule jamais automatiquement vers un canal WoW. Tous les joueurs Render doivent utiliser la même URL de service renseignée dans l’installateur. Sur Render gratuit, le service s’endort après 15 minutes sans trafic. Son prochain démarrage à froid prend environ une minute ; les paroles ajoutent ensuite le temps de réseau. Le relais transmet les paroles en mémoire sans les enregistrer sur disque.
+Le transport Chat conserve le fonctionnement actuel et n’utilise pas Render. Le transport Render, activé dans les réglages, relaie les paroles en temps réel et les affiche dans une bulle au-dessus du personnage visible lorsque le client expose sa plaque ; à défaut, elles restent un message système local. Il ne bascule jamais automatiquement vers un canal WoW. Tous les joueurs Render doivent utiliser la même URL de service renseignée dans l’installateur. Sur Render gratuit, le service s’endort après 15 minutes sans trafic. Son prochain démarrage à froid prend environ une minute ; les paroles ajoutent ensuite le temps de réseau. Le relais transmet les paroles en mémoire sans les enregistrer sur disque.
 
 Pour inviter le groupe à un Spotify Jam, démarre le Jam dans Spotify puis saisis /spn jam suivi du lien Spotify en groupe ou en raid. Les autres joueurs doivent avoir configuré le même relais et choisi le transport Render ; ils peuvent accepter ou refuser dans une fenêtre en jeu. L’acceptation ouvre le lien Spotify. Spotify ne fournit pas d’API publique pour créer le Jam.
 

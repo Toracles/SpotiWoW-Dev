@@ -21,7 +21,7 @@ import pystray
 from PIL import Image
 
 APP_NAME = "SpotiWoW-Dev"
-APP_VERSION = "1.7.2"
+APP_VERSION = "1.7.3"
 LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_URL = "https://github.com/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"
@@ -58,6 +58,12 @@ def app_dir() -> Path:
 
 
 ROOT = app_dir()
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+try:
+    from spotify_app import ensure_spotify_running as ensure_spotify_app
+except ImportError:
+    ensure_spotify_app = None
 BRIDGE_SCRIPT = ROOT / BRIDGE_NAME
 CONFIG_FILE = ROOT / CONFIG_NAME
 ICON_FILE = ROOT / "SpotiWoW-Dev-Ruby.ico"
@@ -557,8 +563,11 @@ class SpotiWoWController:
         except Exception:
             pass
         try:
-            os.startfile("spotify:")
-            self.notify(tr("Spotify est en cours de démarrage.", "Starting Spotify."))
+            started = ensure_spotify_app() if ensure_spotify_app else False
+            if started:
+                self.notify(tr("Spotify est en cours de démarrage.", "Starting Spotify."))
+            else:
+                self.notify(tr("Spotify n’a pas été trouvé dans les applications installées. Installe Spotify puis relance SpotiWoW-Dev.", "Spotify was not found among installed apps. Install Spotify and start SpotiWoW-Dev again."))
         except Exception as exc:
             self.notify(f"{tr('Impossible d’ouvrir Spotify automatiquement :', 'Could not open Spotify automatically:')} {exc}")
 

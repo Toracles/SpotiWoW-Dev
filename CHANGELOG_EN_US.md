@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.7.3
+- Adds local Render bubbles above visible character nameplates; when no plate is available, the line stays in local chat and is never sent to a WoW channel.
+- Saves add-on settings per character, migrates existing settings to the first character, and prevents the global Lyrics hotkey from changing multiple clients at once.
+- Briefly catches up a newly connected Render client with the latest line and reduces polling delays for fast lyrics.
+- Reports a more accurate number of connected Render clients and tightens lyric and Jam invite routing.
+- Fixes Spotify startup so Windows no longer opens the “choose an app for spotify:” prompt.
+
 ## v1.7.2
 - Fixes the Render connection: the bridge now allows up to 10 seconds for the WebSocket connection after the HTTP health check.
 - Prevents repeated “relay unavailable” messages on each reconnect attempt.

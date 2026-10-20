@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.7.2 — US English
+# SpotiWoW-Dev v1.7.3 — US English
 
 > **Development version** — this version is still evolving and may include experimental changes. It is intended for testing; bugs or behavior changes may occur.
 
@@ -34,12 +34,13 @@ The installer never asks for a Client Secret and does not download Turtle WoW, V
 - The expanded player's right panel shows Spotify, playback status, volume, and Volume/Lyrics shortcuts.
 - Shuffle, repeat album, and repeat track stay visibly indicated on the player. Obsidian, Azerite, Fel, and Bloodmoon each keep their own neon accent color.
 - Settings persist in WoW. `/spn help` lists themes and options; `/spn expand` toggles the expanded player.
-- Existing Chat lyrics transport or optional Render relay, with local status and no automatic fallback.
+- Existing Chat lyrics transport or optional Render relay. Render shows lyrics in a local bubble above the visible speaker when the client exposes that character’s nameplate; otherwise the line remains in local chat. Lyrics are never sent through WoW chat channels, and Render never silently falls back to Chat.
+- Add-on settings, including Lyrics on/off and transport, are saved per character so multiple WoW clients can use them independently with one companion.
 - Windows notification-area launcher with no visible CMD console. The launcher also starts Spotify if it is closed.
 - Keeps the bridge running until all WoW clients are closed; relaunch the shortcut to open another client without starting another Spotify bridge.
 - Checks published GitHub releases without an API key and announces an update only when its installer is available. The add-on shows a local chat reminder at every login; the Windows notification-area menu displays the version and opens its release page.
 
-Chat transport keeps the current behavior and never uses Render. Render transport, enabled in settings, relays lyrics in real time and displays them in each player’s local chat; it never falls back to a WoW channel. All Render users must use the same service URL in setup. On Render Free, the service spins down after 15 minutes without traffic. Its next cold start takes about one minute; lyric delivery then adds network latency. The relay forwards lyrics in memory and does not save them to disk.
+Chat transport keeps the current behavior and never uses Render. Render transport, enabled in settings, relays lyrics in real time and displays a bubble above the visible speaker when the client exposes that character’s nameplate; otherwise it displays a local system line. It never falls back to a WoW chat channel. All Render users must use the same service URL in setup. On Render Free, the service spins down after 15 minutes without traffic. Its next cold start takes about one minute; lyric delivery then adds network latency. The relay forwards lyrics in memory and does not save them to disk.
 
 To invite your group to a Spotify Jam, start the Jam in Spotify and enter /spn jam followed by its Spotify link while in a party or raid. Other players must configure the same relay and select Render transport; they can accept or decline in an in-game popup. Accepting opens the Spotify link. Spotify does not provide a public API to create a Jam.
 

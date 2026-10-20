@@ -3,10 +3,10 @@ SpotifyNow companion for Turtle WoW / WoW 1.12.1 (Windows, Python 3.15).
 
 Communication with the addon uses SuperWoW ImportFile/ExportFile and text files
 in <game_dir>\\imports. No slash-command injection, pixel strip, or screen capture
-is used. Lyrics are sent to the addon as events; the addon posts them to the
-configured in-game channel only while Lyrics mode is enabled.
+is used. Chat mode posts lyrics to the selected channel; Render mode relays them
+for local nameplate bubbles without sending them through WoW chat channels.
 
-Global hotkeys: Ctrl+Alt+L toggles Lyrics; Ctrl+Alt+S refreshes Spotify/add-on state.
+Global hotkeys: Ctrl+Alt+L toggles Lyrics when one game character is active; Ctrl+Alt+S refreshes Spotify/add-on state.
 """
 import base64
 import bisect
@@ -73,7 +73,7 @@ COMMAND_FILE = IMPORT_DIR / "SpotifyNowCommand.txt"
 CLIENT_PROFILE_PREFIX = "SpotiWoWClient-"
 CLIENT_PROFILE_TTL_SECONDS = 5.0
 UPDATE_FILE = IMPORT_DIR / "SpotifyNowUpdate.txt"
-APP_VERSION = "1.7.2"
+APP_VERSION = "1.7.3"
 LATEST_RELEASE_API = "https://api.github.com/repos/Toracles/SpotiWoW-Dev/releases/latest"
 LATEST_RELEASE_PREFIX = "https://github.com/Toracles/SpotiWoW-Dev/releases/tag/"
 UPDATE_CHECK_INTERVAL_SECONDS = 30 * 60
@@ -103,9 +103,11 @@ if str(RELAY_MODULE_DIR) not in sys.path:
 try:
     from relay_client import LyricsRelay
     from credential_store import TokenStore
+    from spotify_app import open_spotify_link
 except ImportError:
     LyricsRelay = None
     TokenStore = None
+    open_spotify_link = None
 TOKEN_STORE = TokenStore(HERE / "spotify_session.dat") if TokenStore else None
 TOKEN_URL = "https://accounts.spotify.com/api/token"
 
@@ -575,14 +577,15 @@ def publish_state() -> None:
             encode_field(S.get("jam_response_target", "")), encode_field(S.get("jam_response", "")),
             "^".join(
                 f"{seq}!{urllib.parse.quote(sender, safe='')}!{urllib.parse.quote(text, safe='')}"
-                for seq, _speaker_id, sender, _realm, text in S.get("relay_events", [])
+                for seq, _speaker_id, sender, _realm, text, _snapshot, _source_seq in S.get("relay_events", [])
             ),
             str(int(S.get("relay_probe_seq", 0))), encode_field(S.get("relay_probe_status", "")),
             "^".join(
                 f"{seq}!{speaker_id}!{urllib.parse.quote(realm, safe='')}"
-                for seq, speaker_id, _sender, realm, _text in S.get("relay_events", [])
+                for seq, speaker_id, _sender, realm, _text, _snapshot, _source_seq in S.get("relay_events", [])
             ),
             "^".join(f"{seq}!{client_id}!{1 if enabled else 0}" for seq, client_id, enabled in S.get("lyrics_toggle_events", [])),
+            "^".join(str(seq) for seq, _speaker_id, _sender, _realm, _text, snapshot, _source_seq in S.get("relay_events", []) if snapshot),
         ]
         payload = "|".join(fields) + "\n"
         try:
@@ -696,8 +699,8 @@ def parse_command_payload(payload):
 
 def parse_client_profile(payload):
     """Parse an add-on heartbeat carrying settings and identity for one WoW client."""
-    fields = payload.strip().split("|", 8)
-    if len(fields) != 9 or fields[0] != "SPNCLIENT1":
+    fields = payload.strip().split("|", 7)
+    if len(fields) != 8 or fields[0] != "SPNCLIENT1":
         return None
     client_id = fields[1].strip().lower()
     if not re.fullmatch(r"[0-9a-f]{8}", client_id):
@@ -713,9 +716,6 @@ def parse_client_profile(payload):
     transport = fields[5].strip().lower()
     if transport not in {"chat", "render"}:
         return None
-    room_id = fields[8].strip().lower()
-    if not re.fullmatch(r"[0-9a-f]{16}", room_id):
-        return None
     return {
         "id": client_id,
         "sequence": sequence,
@@ -724,7 +724,6 @@ def parse_client_profile(payload):
         "lyrics": fields[6].strip() == "1",
         "transport": transport,
         "channel": fields[7].strip().lower(),
-        "room_id": room_id,
     }
 
 
@@ -740,7 +739,7 @@ S = {
     "relay_status": "disabled", "relay_status_seq": 0,
     "relay_probe_status": "", "relay_probe_seq": 0,
     "player_name": "", "player_realm": "", "player_id": "", "client_profiles": {}, "client_profile_sequences": {},
-    "legacy_settings": True, "room_id": "", "jam_invite_seq": 0, "jam_invite_id": "", "jam_inviter": "",
+    "legacy_settings": True, "jam_invite_seq": 0, "jam_invite_id": "", "jam_inviter": "",
     "jam_recipients": "", "jam_url": "", "jam_response_seq": 0,
     "jam_response_id": "", "jam_responder": "", "jam_response_target": "", "jam_response": "",
     "lyrics_toggle_seq": 0, "lyrics_toggle_events": [],
@@ -800,10 +799,10 @@ def update_client_profiles(now=None):
         speaker = next((p for p in active if p["lyrics"] and p["transport"] == "render"), None)
         if speaker is None:
             speaker = next((p for p in active if p["lyrics"]), active[0])
-        new_values = (lyrics_on, relay_on, speaker["name"], speaker["realm"], speaker["id"], speaker["room_id"])
-        old_values = (S["lyrics_on"], S["relay_mode"], S["player_name"], S["player_realm"], S["player_id"], S["room_id"])
+        new_values = (lyrics_on, relay_on, speaker["name"], speaker["realm"], speaker["id"])
+        old_values = (S["lyrics_on"], S["relay_mode"], S["player_name"], S["player_realm"], S["player_id"])
         if new_values != old_values:
-            S["lyrics_on"], S["relay_mode"], S["player_name"], S["player_realm"], S["player_id"], S["room_id"] = new_values
+            S["lyrics_on"], S["relay_mode"], S["player_name"], S["player_realm"], S["player_id"] = new_values
             aggregate_changed = True
     elif not S["legacy_settings"]:
         S["legacy_settings"] = True
@@ -812,7 +811,6 @@ def update_client_profiles(now=None):
         S["player_name"] = ""
         S["player_realm"] = ""
         S["player_id"] = ""
-        S["room_id"] = ""
         S["sent_idx"] = -1
         aggregate_changed = True
 
@@ -974,14 +972,14 @@ def relay_probe_status_changed(status):
     S["relay_probe_seq"] += 1
     publish_state()
 
-def relay_line_received(text, sender="", realm="", speaker_id=""):
+def relay_line_received(text, sender="", realm="", speaker_id="", snapshot=False, source_seq=0):
     S["relay_line"] = str(text)[:350]
     S["relay_sender"] = str(sender)[:48]
     S["relay_realm"] = str(realm)[:48]
     S["relay_speaker_id"] = str(speaker_id)[:8]
     S["relay_line_seq"] += 1
     events = S.setdefault("relay_events", [])
-    events.append((S["relay_line_seq"], S["relay_speaker_id"], S["relay_sender"], S["relay_realm"], S["relay_line"]))
+    events.append((S["relay_line_seq"], S["relay_speaker_id"], S["relay_sender"], S["relay_realm"], S["relay_line"], bool(snapshot), int(source_seq or 0)))
     if len(events) > 32:
         del events[:-32]
     publish_state()
@@ -1018,7 +1016,6 @@ def relay_loop():
         get_player_name=lambda: S.get("player_name", ""),
         get_player_realm=lambda: S.get("player_realm", ""),
         get_player_id=lambda: S.get("player_id", ""),
-        get_room_id=lambda: S.get("room_id", ""),
         stop_requested=stop_requested,
     )
     global active_relay_client
@@ -1039,11 +1036,18 @@ def set_lyrics(on):
 def toggle_lyrics():
     active = _active_client_profiles()
     if not S.get("legacy_settings", True) and active:
+        if len(active) > 1:
+            print("[Lyrics] En multiclient, activez/désactivez Lyrics depuis le client WoW concerné.")
+            return
         events = S.setdefault("lyrics_toggle_events", [])
-        for profile in active:
-            profile["lyrics"] = not bool(profile["lyrics"])
-            S["lyrics_toggle_seq"] += 1
-            events.append((S["lyrics_toggle_seq"], profile["id"], profile["lyrics"]))
+        profile = active[0]
+        profile["lyrics"] = not bool(profile["lyrics"])
+        previous_lyrics_on = S["lyrics_on"]
+        S["lyrics_on"] = any(item["lyrics"] for item in active)
+        if S["lyrics_on"] and not previous_lyrics_on:
+            S["sent_idx"] = -1
+        S["lyrics_toggle_seq"] += 1
+        events.append((S["lyrics_toggle_seq"], profile["id"], profile["lyrics"]))
         if len(events) > 32:
             del events[:-32]
         publish_state()
@@ -1157,12 +1161,9 @@ def _valid_spotify_link(value):
 def _open_spotify_jam(url):
     if not _valid_spotify_link(url):
         return False
-    try:
-        os.startfile("spotify:")
-    except Exception:
-        pass
-    time.sleep(1.0)
-    return bool(webbrowser.open(url))
+    if open_spotify_link is None:
+        return bool(webbrowser.open(url))
+    return bool(open_spotify_link(url))
 
 def handle_bridge_command(cmd, argument):
     if cmd == "session":

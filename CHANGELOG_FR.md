@@ -1,5 +1,12 @@
 # Journal des modifications
 
+## v1.7.3
+- Ajoute les bulles Render locales au-dessus des plaques de personnage visibles ; si aucune plaque n’est disponible, la ligne reste dans le chat local sans partir dans un canal WoW.
+- Sépare les réglages de l’addon par personnage, migre les réglages existants vers le premier personnage et empêche le raccourci global Lyrics de modifier plusieurs clients à la fois.
+- Rattrape brièvement la dernière ligne Render à la connexion et réduit l’attente entre les lignes rapides.
+- Affiche un nombre de clients Render connectés plus fidèle et sécurise le routage des paroles et invitations Jam.
+- Corrige le lancement de Spotify pour éviter le sélecteur Windows de l’application liée à `spotify:`.
+
 ## v1.7.2
 - Corrige la connexion Render : le bridge laisse désormais jusqu’à 10 secondes à la connexion WebSocket après le ping HTTP.
 - Évite de répéter « relais indisponible » à chaque tentative de reconnexion.

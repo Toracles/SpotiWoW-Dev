@@ -103,6 +103,7 @@ jobs:
             Copy-Item "companion/spotify_bridge.py" (Join-Path $stage "companion/spotify_bridge.py")
             Copy-Item "companion/relay_client.py" (Join-Path $stage "companion/relay_client.py")
             Copy-Item "companion/credential_store.py" (Join-Path $stage "companion/credential_store.py")
+            Copy-Item "companion/spotify_app.py" (Join-Path $stage "companion/spotify_app.py")
             Copy-Item "companion/config.example.json" (Join-Path $stage "companion/config.example.json")
             $configExamplePath = Join-Path $stage "companion/config.example.json"
             $configExample = Get-Content $configExamplePath -Raw | ConvertFrom-Json

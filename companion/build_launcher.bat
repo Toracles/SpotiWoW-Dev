@@ -32,7 +32,7 @@ if errorlevel 1 (
 )
 
 echo Installing the Windows launcher build dependencies...
-%PY% -m pip install --upgrade "pyinstaller>=6.21" pystray pillow psutil "syncedlyrics==1.0.1"
+%PY% -m pip install --upgrade "pyinstaller>=6.21" pystray pillow psutil "syncedlyrics==1.0.1" "websocket-client==1.8.0"
 if errorlevel 1 (
   echo Dependency installation failed. Check internet access and Python 3.15.
   pause
@@ -49,7 +49,7 @@ echo Output: "%OUT%"
 echo.
 
 rem Keep the source path as the final positional PyInstaller argument.
-%PY% -m PyInstaller --clean --noconfirm --onefile --windowed --name "SpotiWoW-Dev" --icon "%ICON%" --collect-all syncedlyrics --collect-all pystray --collect-all psutil --distpath "%OUT%" --workpath "%WORK%" --specpath "%WORK%" "%SCRIPT%"
+%PY% -m PyInstaller --clean --noconfirm --onefile --windowed --name "SpotiWoW-Dev" --icon "%ICON%" --collect-all syncedlyrics --collect-all websocket --collect-all pystray --collect-all psutil --distpath "%OUT%" --workpath "%WORK%" --specpath "%WORK%" "%SCRIPT%"
 if errorlevel 1 (
   echo.
   echo Build failed. The full PyInstaller command above includes the source script path.

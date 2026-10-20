@@ -1,8 +1,6 @@
 import asyncio
 import json
 import os
-import re
-import secrets
 import time
 from urllib.parse import urlparse
 
@@ -12,8 +10,9 @@ from websockets.legacy.server import serve
 MAX_MESSAGE_BYTES = 4096
 MAX_CONNECTIONS = 500
 MAX_RATE_PER_SECOND = 12
+RECENT_LINE_TTL_SECONDS = 3.5
 CLIENTS = set()
-RATE = {}
+RECENT_LINES = {}
 
 async def handler(ws, path=None):
     if len(CLIENTS) >= MAX_CONNECTIONS:
@@ -37,10 +36,17 @@ async def handler(ws, path=None):
                 ws.character_name = ws.display_name.casefold()
                 ws.display_realm = str(message.get("realm", ""))[:48]
                 ws.speaker_id = str(message.get("speaker_id", ""))[:8]
-                room_id = str(message.get("room_id", "")).strip().lower()
-                # Fail closed: old or malformed clients get an isolated room rather than
-                # broadcasting their lyrics to every relay user.
-                ws.room_id = room_id if re.fullmatch(r"[0-9a-f]{16}", room_id) else "isolated-" + secrets.token_hex(8)
+                if not hasattr(ws, "relay_sender"):
+                    ws.relay_sender = str(message.get("sender", ""))[:64]
+                now = time.monotonic()
+                for old_sender, (stamp, _) in tuple(RECENT_LINES.items()):
+                    if now - stamp > RECENT_LINE_TTL_SECONDS:
+                        RECENT_LINES.pop(old_sender, None)
+                for stamp, cached_payload in tuple(RECENT_LINES.values()):
+                    if now - stamp <= RECENT_LINE_TTL_SECONDS:
+                        snapshot = json.loads(cached_payload)
+                        snapshot["snapshot"] = True
+                        await ws.send(json.dumps(snapshot, ensure_ascii=False))
                 continue
             if kind == "lyric":
                 sender = str(message.get("sender", ""))[:64]
@@ -49,7 +55,7 @@ async def handler(ws, path=None):
                 sender_realm = str(getattr(ws, "display_realm", ""))[:48]
                 speaker_id = str(getattr(ws, "speaker_id", ""))[:8]
                 seq = message.get("seq")
-                if not sender or not text or not isinstance(seq, int) or not hasattr(ws, "room_id"):
+                if not sender or sender != getattr(ws, "relay_sender", "") or not text or not isinstance(seq, int) or not hasattr(ws, "character_name"):
                     continue
                 now = time.monotonic()
                 events = [stamp for stamp in getattr(ws, "rate_events", []) if now - stamp < 1.0]
@@ -59,6 +65,10 @@ async def handler(ws, path=None):
                 events.append(now)
                 ws.rate_events = events
                 payload = json.dumps({"type":"lyric", "sender":sender, "sender_name":sender_name, "sender_realm":sender_realm, "speaker_id":speaker_id, "seq":seq, "text":text}, ensure_ascii=False)
+                for old_sender, (stamp, _) in tuple(RECENT_LINES.items()):
+                    if now - stamp > RECENT_LINE_TTL_SECONDS:
+                        RECENT_LINES.pop(old_sender, None)
+                RECENT_LINES[sender] = (now, payload)
             elif kind == "jam_invite":
                 invite_id = str(message.get("invite_id", ""))[:64]
                 sender_name = str(message.get("sender_name", ""))[:48]
@@ -69,7 +79,7 @@ async def handler(ws, path=None):
                 if len(recent) >= 3 or sender_name.casefold() != getattr(ws, "character_name", ""):
                     ws.jam_events = recent
                     continue
-                if not invite_id or not sender_name or not isinstance(recipients, list) or not recipients or host not in {"open.spotify.com", "spotify.link"} or not hasattr(ws, "room_id"):
+                if not invite_id or not sender_name or not isinstance(recipients, list) or not recipients or urlparse(url).scheme != "https" or host not in {"open.spotify.com", "spotify.link"}:
                     continue
                 recent.append(time.monotonic())
                 ws.jam_events = recent
@@ -83,7 +93,7 @@ async def handler(ws, path=None):
                 sender_name = str(message.get("sender_name", ""))[:48]
                 target_name = str(message.get("target_name", ""))[:48]
                 response = "accepted" if message.get("response") == "accepted" else "declined"
-                if not invite_id or not sender_name or not target_name or sender_name.casefold() != getattr(ws, "character_name", "") or not hasattr(ws, "room_id"):
+                if not invite_id or not sender_name or not target_name or sender_name.casefold() != getattr(ws, "character_name", ""):
                     continue
                 message["_targets"] = [target_name.casefold()]
                 payload = json.dumps({"type":"jam_response", "invite_id":invite_id, "sender_name":sender_name, "target_name":target_name, "response":response}, ensure_ascii=False)
@@ -92,7 +102,7 @@ async def handler(ws, path=None):
             stale = []
             for peer in tuple(CLIENTS):
                 try:
-                    if not hasattr(peer, "room_id") or getattr(peer, "room_id", None) != getattr(ws, "room_id", None):
+                    if not hasattr(peer, "character_name"):
                         continue
                     if peer is ws and kind == "lyric":
                         continue
@@ -110,7 +120,8 @@ async def handler(ws, path=None):
 async def health(path, request_headers):
     parsed = urlparse(path)
     if parsed.path == "/health":
-        body = json.dumps({"status":"ok", "clients":len(CLIENTS)}).encode()
+        connected = sum(1 for client in CLIENTS if hasattr(client, "character_name"))
+        body = json.dumps({"status":"ok", "clients":connected}).encode()
         return (200, [("Content-Type","application/json"), ("Content-Length",str(len(body)))], body)
     return None
 
