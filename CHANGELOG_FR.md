@@ -1,5 +1,9 @@
 # Journal des modifications
 
+## v1.7.2
+- Corrige la connexion Render : le bridge laisse désormais jusqu’à 10 secondes à la connexion WebSocket après le ping HTTP.
+- Évite de répéter « relais indisponible » à chaque tentative de reconnexion.
+
 ## v1.7.1
 - Corrige les noms de thèmes dans le paquet anglais : Silver Dawn et Fang Set.
 - Corrige les faux statuts Render : `/spn render` réveille/vérifie le service HTTP sans ouvrir de WebSocket temporaire ni écraser l’état de la connexion persistante.

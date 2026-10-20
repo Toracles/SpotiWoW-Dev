@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.7.2
+- Fixes the Render connection: the bridge now allows up to 10 seconds for the WebSocket connection after the HTTP health check.
+- Prevents repeated “relay unavailable” messages on each reconnect attempt.
+
 ## v1.7.1
 - Uses the requested English theme names, Silver Dawn and Fang Set, in the in-game theme selector.
 - Fixes Render status races: `/spn render` now wakes/checks the HTTP service without opening a temporary WebSocket or overwriting the persistent connection status.

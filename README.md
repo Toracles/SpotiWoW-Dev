@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.7.1
+# SpotiWoW-Dev v1.7.2
 
 <p align="center">
   <img src="companion/SpotiWoW-Dev.png" alt="SpotiWoW-Dev icon" width="180">

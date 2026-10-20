@@ -1,4 +1,4 @@
-# SpotiWoW-Dev v1.7.1 — Français
+# SpotiWoW-Dev v1.7.2 — Français
 
 > **Version de développement** — cette version est en cours d’évolution et peut contenir des changements expérimentaux. Elle est destinée aux tests ; des bugs ou changements de comportement restent possibles.
 

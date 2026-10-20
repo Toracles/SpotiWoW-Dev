@@ -78,11 +78,12 @@ class LyricsRelay:
             ws_url = urllib.parse.urlunparse((ws_scheme, parsed.netloc, "/", "", "", ""))
             sock = None
             try:
-                self._status("starting")
+                if self.last_status != "unavailable":
+                    self._status("starting")
                 # HTTP health request wakes a free Render instance before websocket connect.
                 if self.ping(timeout=90) != "reachable":
                     raise OSError("relay health endpoint is not ready")
-                sock = websocket.create_connection(ws_url, timeout=0.05, enable_multithread=True, http_proxy_host=None)
+                sock = websocket.create_connection(ws_url, timeout=10, enable_multithread=True, http_proxy_host=None)
                 last_name = ""
                 current_name = str(self.get_player_name())[:48]
                 sock.send(json.dumps({"type":"hello", "name":current_name}, ensure_ascii=False))
