@@ -783,6 +783,19 @@ local function PollBridgeUpdate()
     ShowLoginUpdateNotice()
 end
 local renderBubbles={}
+local function LatestRelayEventSequence(events)
+    local latest=nil; local eventStart=1
+    while eventStart<=string.len(events or "") do
+        local eventEnd=strfind(events,"^",eventStart,true)
+        local record=eventEnd and strsub(events,eventStart,eventEnd-1) or strsub(events,eventStart)
+        local separator=strfind(record,"!",1,true)
+        local sequence=separator and tonumber(strsub(record,1,separator-1))
+        if sequence then latest=sequence end
+        if not eventEnd then break end
+        eventStart=eventEnd+1
+    end
+    return latest
+end
 local function FindSpeakerUnit(speakerName)
     if not speakerName or speakerName=="" then return nil end
     local wanted=string.lower(speakerName)
@@ -901,8 +914,8 @@ local function PollBridgeState()
             if not identityEnd then break end; identityStart=identityEnd+1
         end
         local initializingRelayEvents=lastRelayLineSequence==nil
-        local firstEventSep=strfind(relayEvents,"!",1,true); local firstEventSeq=firstEventSep and tonumber(strsub(relayEvents,1,firstEventSep-1))
-        if lastRelayLineSequence and firstEventSeq and firstEventSeq<lastRelayLineSequence then lastRelayLineSequence=nil; initializingRelayEvents=true end
+        local latestEventSeq=LatestRelayEventSequence(relayEvents)
+        if lastRelayLineSequence and latestEventSeq and latestEventSeq<lastRelayLineSequence then lastRelayLineSequence=nil; initializingRelayEvents=true end
         local eventStart=1
         while eventStart<=string.len(relayEvents) do
             local eventEnd=strfind(relayEvents,"^",eventStart,true); local record=eventEnd and strsub(relayEvents,eventStart,eventEnd-1) or strsub(relayEvents,eventStart)
@@ -924,8 +937,8 @@ local function PollBridgeState()
     elseif relayEvents~="" then
         local legacyRelayEvents=DecodeField(relayEvents)
         local initializingRelayEvents=lastRelayLineSequence==nil
-        local firstEventSep=strfind(legacyRelayEvents,"!",1,true); local firstEventSeq=firstEventSep and tonumber(strsub(legacyRelayEvents,1,firstEventSep-1))
-        if lastRelayLineSequence and firstEventSeq and firstEventSeq<lastRelayLineSequence then lastRelayLineSequence=nil; initializingRelayEvents=true end
+        local latestEventSeq=LatestRelayEventSequence(legacyRelayEvents)
+        if lastRelayLineSequence and latestEventSeq and latestEventSeq<lastRelayLineSequence then lastRelayLineSequence=nil; initializingRelayEvents=true end
         local eventStart=1
         while eventStart<=string.len(legacyRelayEvents) do
             local eventEnd=strfind(legacyRelayEvents,"^",eventStart,true); local record=eventEnd and strsub(legacyRelayEvents,eventStart,eventEnd-1) or strsub(legacyRelayEvents,eventStart)

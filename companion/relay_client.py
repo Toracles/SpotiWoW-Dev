@@ -56,6 +56,17 @@ class LyricsRelay:
     def send_event(self, message):
         self.outgoing.put(message)
 
+    @staticmethod
+    def _send(sock, payload):
+        # The short timeout is only for frequent receive polling. Applying it
+        # to writes can abort a healthy Render connection on a brief network
+        # stall, which then drops the lyric stream while reconnecting.
+        sock.settimeout(3.0)
+        try:
+            sock.send(payload)
+        finally:
+            sock.settimeout(0.08)
+
     def run(self):
         while not self.stop_requested():
             if not self.get_enabled():
@@ -91,27 +102,27 @@ class LyricsRelay:
                 sock.settimeout(0.08)
                 last_identity = None
                 current_identity = self._identity()
-                sock.send(json.dumps({"type":"hello", "name":current_identity[0], "realm":current_identity[1], "speaker_id":current_identity[2], "sender":self.sender}, ensure_ascii=False))
+                self._send(sock, json.dumps({"type":"hello", "name":current_identity[0], "realm":current_identity[1], "speaker_id":current_identity[2], "sender":self.sender}, ensure_ascii=False))
                 last_identity = current_identity
                 self._status("connected")
                 while not self.stop_requested() and self.get_enabled():
                     current_identity = self._identity()
                     if current_identity != last_identity:
-                        sock.send(json.dumps({"type":"hello", "name":current_identity[0], "realm":current_identity[1], "speaker_id":current_identity[2], "sender":self.sender}, ensure_ascii=False))
+                        self._send(sock, json.dumps({"type":"hello", "name":current_identity[0], "realm":current_identity[1], "speaker_id":current_identity[2], "sender":self.sender}, ensure_ascii=False))
                         last_identity = current_identity
                     while True:
                         try:
                             event = self.outgoing.get_nowait()
                         except queue.Empty:
                             break
-                        sock.send(json.dumps(event, ensure_ascii=False))
+                        self._send(sock, json.dumps(event, ensure_ascii=False))
                     current = self.get_line()
                     if current:
                         seq, text = current
                         if seq != self.last_sent and text:
                             clean_text = str(text)[:350]
                             identity = self._identity()
-                            sock.send(json.dumps({"type":"lyric", "sender":self.sender, "seq":int(seq), "text":clean_text, "sender_name":identity[0], "sender_realm":identity[1], "speaker_id":identity[2]}, ensure_ascii=False))
+                            self._send(sock, json.dumps({"type":"lyric", "sender":self.sender, "seq":int(seq), "text":clean_text, "sender_name":identity[0], "sender_realm":identity[1], "speaker_id":identity[2]}, ensure_ascii=False))
                             self.last_sent = seq
                             self.on_line(clean_text, identity[0], identity[1], identity[2])
                     try:
@@ -128,7 +139,8 @@ class LyricsRelay:
                             self.on_response(message)
                     except websocket.WebSocketTimeoutException:
                         pass
-            except Exception:
+            except Exception as exc:
+                print(f"[Render] Relay connection failed: {type(exc).__name__}: {exc}")
                 self._status("unavailable")
                 time.sleep(3)
             finally:
